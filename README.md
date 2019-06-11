@@ -10,5 +10,5 @@ A web-UI for connecting to an Ergo node.
 
 ## Instructions 
 
-To run, first clone this repository and then type `sbt run` in a terminal. The UI will automatically open in the browser. If it does not open, you can go to <a href="http://localhost:8080" target="_blank">http://localhost:8080 manually</a> (link opens in a new tab).
+To run, first clone this repository and then type `sbt run` in a terminal. The UI will automatically open in the browser. If it does not open, you can open the page at [http://localhost:8080](http://localhost:8080) manually</a>.
 
