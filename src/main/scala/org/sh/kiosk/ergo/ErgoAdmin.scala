@@ -7,14 +7,6 @@ object ErgoAdmin extends App {
   new org.sh.easyweb.AutoWeb(List(ErgoAPI, Peers, Wallet, Utils), "ErgoDemo")
 }
 
-object Transactions {
-  // def push(json:String) = $q("peers/all", false, Get, Nil)
-  def unconfirmed(limit:Int, offset:Int) = $q(
-    "transactions/unconfirmed", false, Get,
-    Seq("limit" -> limit.toString, "offset" -> offset.toString)
-  )
-}
-
 object Peers {
   // vars, vals and defs starting with '$' won't appear in HTML
   def all = $q("peers/all", false, Get, Nil)
