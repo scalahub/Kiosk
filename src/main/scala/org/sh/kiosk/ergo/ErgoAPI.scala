@@ -15,6 +15,12 @@ object ErgoAPI {
   var $apiKey = "hello"
   var $baseUrl = "http://localhost:9052/"
 
+  var $isMainNet = false
+
+  def setMainNet(isMainNet:Boolean) = {
+    val $isMainNet$ = "false"
+    $isMainNet = isMainNet
+  }
   def setUrl(url:String) = {
     val $url$ = "http://localhost:9052/"
     $baseUrl = url

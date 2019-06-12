@@ -4,7 +4,7 @@ import org.sh.easyweb.Text
 import org.sh.kiosk.ergo.ErgoAPI._
 
 object ErgoAdmin extends App {
-  new org.sh.easyweb.AutoWeb(List(ErgoAPI, Peers, Wallet, Utils), "ErgoDemo")
+  new org.sh.easyweb.AutoWeb(List(ErgoScript, ErgoAPI, Peers, Wallet, Utils), "ErgoDemo")
 }
 
 object Peers {
@@ -31,6 +31,14 @@ object Wallet {
   def unlock(pass: String) = $q("wallet/unlock", true, PostJson,
     Seq("pass" -> pass)
   )
+
+  def deriveKey(derivationPath:String) = {
+    $q("wallet/deriveKey", true, PostJson, Seq("derivationPath" -> derivationPath))
+  }
+
+  def deriveNextKey = {
+    $q("wallet/deriveNextKey", true, Get, Nil)
+  }
 
   def lock = $q("wallet/lock", true, Get, Nil)
 
