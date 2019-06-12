@@ -12,9 +12,9 @@ import sigmastate.lang.SigmaCompiler
 import sigmastate.serialization.ErgoTreeSerializer
 import special.sigma.GroupElement
 
-case class ECPoint(point:Point) { // follows secp256k1 as in Bitcoin
-  def toSigma = SigmaDsl.GroupElement(SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger))
-}
+//case class ECPoint(point:Point) { // follows secp256k1 as in Bitcoin
+//  def toSigma = SigmaDsl.GroupElement(SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger))
+//}
 
 object ErgoScript {
   DefaultTypeHandler.addType[GroupElement](
@@ -31,7 +31,7 @@ object ErgoScript {
   def $compiler = SigmaCompiler($networkPrefix)
   implicit val $irContext = new CompiletimeIRContext
   def env_setGroupElement(name:String, groupElement: GroupElement) = {
-    val $info$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
+    val $INFO$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
     $env += name -> groupElement
     groupElement
   }
