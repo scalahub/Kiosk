@@ -7,7 +7,7 @@ scalaVersion := "2.12.8"
 lazy val EasyWeb = RootProject(uri("https://github.com/scalahub/EasyWeb.git"))
 //lazy val EasyWeb = RootProject(uri("../EasyWeb"))
 
-lazy val SigmaState = RootProject(uri("https://github.com/ScorexFoundation/sigmastate-interpreter"))
+lazy val SigmaState = RootProject(uri("https://github.com/ScorexFoundation/sigmastate-interpreter.git"))
 //lazy val SigmaState = RootProject(uri("../sigmastate-interpreter"))
 
 lazy val CryptoNode = RootProject(uri("https://github.com/scalahub/CryptoNode.git"))
