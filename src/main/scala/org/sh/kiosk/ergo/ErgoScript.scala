@@ -1,22 +1,23 @@
 package org.sh.kiosk.ergo
 
-import org.ergoplatform.ErgoAddressEncoder.TestnetNetworkPrefix
-import org.sh.easyweb.Text
+import org.ergoplatform.ErgoAddressEncoder.{MainnetNetworkPrefix, TestnetNetworkPrefix}
+import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress, Pay2SHAddress}
+import org.sh.cryptonode.ecc
 import org.sh.cryptonode.ecc.{ECCPubKey, Point}
 import org.sh.cryptonode.util.BytesUtil._
+import org.sh.cryptonode.util.StringUtil._
+import org.sh.easyweb.Text
 import org.sh.reflect.DefaultTypeHandler
+import sigmastate.Values.ErgoTree
 import sigmastate.basics.SecP256K1
 import sigmastate.eval.{CompiletimeIRContext, SigmaDsl}
 import sigmastate.interpreter.Interpreter.ScriptNameProp
 import sigmastate.lang.SigmaCompiler
-import sigmastate.serialization.ErgoTreeSerializer
+import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 import special.sigma.GroupElement
 
-//case class ECPoint(point:Point) { // follows secp256k1 as in Bitcoin
-//  def toSigma = SigmaDsl.GroupElement(SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger))
-//}
-
 object ErgoScript {
+
   DefaultTypeHandler.addType[GroupElement](
     classOf[GroupElement],
     hex => {
@@ -26,21 +27,28 @@ object ErgoScript {
     },
     g => g.getEncoded.toArray.encodeHex
   )
+
+  DefaultTypeHandler.addType[ErgoTree](
+    classOf[ErgoTree],
+    str => {
+      val bytes = str.decodeHex
+      DefaultSerializer.deserializeErgoTree(bytes)
+    },
+    DefaultSerializer.serializeErgoTree(_).encodeHex
+  )
+
   var $env:Map[String, Any] = Map()
-  def $networkPrefix = if (ErgoAPI.$isMainNet) TestnetNetworkPrefix else TestnetNetworkPrefix
+  def $networkPrefix = if (ErgoAPI.$isMainNet) MainnetNetworkPrefix else TestnetNetworkPrefix
   def $compiler = SigmaCompiler($networkPrefix)
   implicit val $irContext = new CompiletimeIRContext
+  implicit val $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder($networkPrefix)
+
   def env_setGroupElement(name:String, groupElement: GroupElement) = {
     val $INFO$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
     $env += name -> groupElement
     groupElement
   }
-  //  def env_setGroupElement(name:String, pubKey:Array[Byte]) = {
-  //    val $info$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
-  //    val point = ECCPubKey(pubKey.encodeHex).point
-  //    val secp256k1Point = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)
-  //    $env += name -> SigmaDsl.GroupElement(secp256k1Point)
-  //  }
+
   def env_clear = {
     $env = Map()
   }
@@ -59,9 +67,32 @@ object ErgoScript {
   def env_setCollCollByte(name:String, collCollBytes:Array[Array[Byte]]) = {
     $env += name -> collCollBytes
   }
-  def compile(ergoScript:Text) = {
+
+  def $compile(ergoScript:String):ErgoTree = {
     import sigmastate.lang.Terms._
-    val tree = $compiler.compile($env, ergoScript.getText).asSigmaProp
-    ErgoTreeSerializer.DefaultSerializer.serializeErgoTree(tree)
+    $compiler.compile($env, ergoScript).asSigmaProp
+  }
+  def compile(ergoScript:Text):ErgoTree = {
+    $compile(ergoScript.getText)
+  }
+
+  def getDefaultGenerator = {
+    new ECCPubKey(org.sh.cryptonode.ecc.Util.G, true).hex
+  }
+
+  def getGroupElement(exponent:BigInt) = {
+    val g = SecP256K1.generator
+    val h = SecP256K1.exponentiate(g, exponent.bigInteger).normalize()
+    val x = h.getXCoord.toBigInteger
+    val y = h.getYCoord.toBigInteger
+    ECCPubKey(Point(x, y), true).hex
+  }
+
+  def getP2SH_Address(ergoScript:Text) = {
+    Pay2SHAddress(compile(ergoScript)).toString
+  }
+
+  def getP2S_Address(ergoScript:Text) = {
+    Pay2SAddress(compile(ergoScript)).toString
   }
 }

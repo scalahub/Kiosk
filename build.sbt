@@ -4,13 +4,13 @@ version := "0.1"
 
 scalaVersion := "2.12.8"
 
-lazy val EasyWeb = RootProject(uri("https://github.com/scalahub/EasyWeb.git"))
+lazy val EasyWeb = RootProject(uri("git://github.com/scalahub/EasyWeb.git"))
 //lazy val EasyWeb = RootProject(uri("../EasyWeb"))
 
-lazy val SigmaState = RootProject(uri("https://github.com/ScorexFoundation/sigmastate-interpreter"))
+lazy val SigmaState = RootProject(uri("git://github.com/ScorexFoundation/sigmastate-interpreter.git"))
 //lazy val SigmaState = RootProject(uri("../sigmastate-interpreter"))
 
-lazy val CryptoNode = RootProject(uri("https://github.com/scalahub/CryptoNode.git"))
+lazy val CryptoNode = RootProject(uri("git://github.com/scalahub/CryptoNode.git"))
 //lazy val CryptoNode = RootProject(uri("../CryptoNode"))
 
 val bouncycastleBcprov = "org.bouncycastle" % "bcprov-jdk15on" % "1.60"
@@ -46,4 +46,4 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
 
 lazy val root = (project in file(".")).dependsOn(
   EasyWeb, SigmaState, CryptoNode
-).aggregate(EasyWeb, SigmaState, CryptoNode)
+)
