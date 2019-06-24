@@ -9,24 +9,45 @@ import sigmastate.basics.SecP256K1
 import org.sh.cryptonode.ecc.Util._
 
 object TestECMath extends App {
-  val g = SecP256K1.generator
+  val g_ergo = SecP256K1.generator
+  val g_ergo_normalized = g_ergo.normalize()
+  val g_cryptoNode = G
 
-  val g1 = g.normalize()
-  val g2 = G
-  assert(g1.getXCoord.toBigInteger == g2.x.bigInteger)
-  assert(g1.getYCoord.toBigInteger == g2.y.bigInteger)
+  assert(g_ergo_normalized.getXCoord.toBigInteger == g_cryptoNode.x.bigInteger)
+  assert(g_ergo_normalized.getYCoord.toBigInteger == g_cryptoNode.y.bigInteger)
 
   val one = BigInteger.ONE
   val qMinusOne = SecP256K1.q.subtract(one)
   val randNum = BigIntegers.createRandomInRange(one, qMinusOne, new SecureRandom)
 
-  val a = SecP256K1.exponentiate(g, randNum).normalize()
-  val b = G * randNum
+  val a_ergo = SecP256K1.exponentiate(g_ergo, randNum).normalize()
+  val a_cryptoNode = g_cryptoNode * randNum
 
-  assert(a.getXCoord.toBigInteger == b.x.bigInteger)
-  assert(a.getYCoord.toBigInteger == b.y.bigInteger)
+  assert(a_ergo.getXCoord.toBigInteger == a_cryptoNode.x.bigInteger)
+  assert(a_ergo.getYCoord.toBigInteger == a_cryptoNode.y.bigInteger)
 
-  val c = new ECCPrvKey(randNum, true).eccPubKey.hex
-  val d = ErgoScript.getGroupElement(randNum)
-  assert(c == d)
+  val b_cryptoNode = new ECCPrvKey(randNum, true).eccPubKey.hex
+  val b_ergo = ErgoScript.getGroupElement(randNum)
+
+  assert(b_cryptoNode == b_ergo)
+  val randNums = (1 to 1000).map {i =>
+    BigIntegers.createRandomInRange(one, qMinusOne, new SecureRandom)
+  }
+  val t0 = System.currentTimeMillis()
+  val c_cryptoNode = randNums.map {num =>
+    g_cryptoNode * num
+  }
+  val t1 = System.currentTimeMillis()
+  val c_ergo = randNums.map {num =>
+    SecP256K1.exponentiate(g_ergo, num).normalize()
+  }
+  val t2 = System.currentTimeMillis()
+  println(s"CryptoNode for ${randNums.size} elements ${t1-t0} millis")
+  println(s"ErgoScript for ${randNums.size} elements ${t2-t1} millis")
+  c_ergo zip c_cryptoNode foreach{
+    case (d_ergo, d_cryptoNode) =>
+      assert(d_ergo.getXCoord.toBigInteger == d_cryptoNode.x.bigInteger)
+      assert(d_ergo.getYCoord.toBigInteger == d_cryptoNode.y.bigInteger)
+  }
+  println("ECMath tests passed")
 }

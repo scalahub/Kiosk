@@ -2,7 +2,6 @@ package org.sh.kiosk.ergo
 
 import org.ergoplatform.ErgoAddressEncoder.{MainnetNetworkPrefix, TestnetNetworkPrefix}
 import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress, Pay2SHAddress}
-import org.sh.cryptonode.ecc
 import org.sh.cryptonode.ecc.{ECCPubKey, Point}
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.cryptonode.util.StringUtil._
@@ -58,7 +57,7 @@ object ErgoScript {
   def env_setInt(name:String, int:Int) = {
     $env += name -> int
   }
-  def env_setLong(name:String, long:Long  ) = {
+  def env_setLong(name:String, long:Long) = {
     $env += name -> long
   }
   def env_setCollByte(name:String, collBytes:Array[Byte]) = {
