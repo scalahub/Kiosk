@@ -4,7 +4,8 @@ import org.sh.easyweb.Text
 import org.sh.kiosk.ergo.ErgoAPI._
 
 object ErgoAdmin extends App {
-  new org.sh.easyweb.AutoWeb(List(ErgoScript, ErgoAPI, Peers, Wallet, Utils), "ErgoDemo")
+  val objects = List(ErgoScript, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
+  new org.sh.easyweb.AutoWeb(objects, "ErgoDemo")
 }
 
 object Peers {
@@ -32,6 +33,8 @@ object Wallet {
     Seq("pass" -> pass)
   )
 
+  def lock = $q("wallet/lock", true, Get, Nil)
+
   def deriveKey(derivationPath:String) = {
     $q("wallet/deriveKey", true, PostJson, Seq("derivationPath" -> derivationPath))
   }
@@ -40,11 +43,43 @@ object Wallet {
     $q("wallet/deriveNextKey", true, Get, Nil)
   }
 
-  def lock = $q("wallet/lock", true, Get, Nil)
+  def balances = {
+    val $INFO$ = "Get total amount of confirmed Ergo tokens and assets"
+    $q("wallet/balances", true, Get, Nil)
+  }
 
-  def confBalances = $q("wallet/balances", true, Get, Nil)
+  def transactions(minInclusionHeight:Int, maxInclusionHeight:Int) = {
+    //curl -X GET "http://127.0.0.1:9052/wallet/transactions?minInclusionHeight=10&maxInclusionHeight=100" -H "accept: application/json" -H "api_key: hello"
+    require(maxInclusionHeight > minInclusionHeight, s"maxInclusionHeight ($maxInclusionHeight) must be greater than minInclusionHeight ($minInclusionHeight)")
+    $q("wallet/transactions", true, Get,
+      Seq(
+        "minInclusionHeight" -> minInclusionHeight.toString,
+        "maxInclusionHeight" -> maxInclusionHeight.toString,
+      )
+    )
+  }
 
-  def allBalances = $q("wallet/balances/with_unconfirmed", true, Get, Nil)
+  def boxes(minConfirmations:Int, minInclusionHeight:Int) = {
+    // curl -X GET "http://127.0.0.1:9052/wallet/boxes?minConfirmations=19&minInclusionHeight=21" -H "accept: application/json" -H "api_key: hello"
+    $q("wallet/boxes", true, Get,
+      Seq(
+        "minConfirmations" -> minConfirmations.toString,
+        "minInclusionHeight" -> minInclusionHeight.toString
+      )
+    )
+  }
+
+  def boxes_unspent(minConfirmations:Int, minInclusionHeight:Int) = {
+    // curl -X GET "http://127.0.0.1:9052/wallet/boxes?minConfirmations=19&minInclusionHeight=21" -H "accept: application/json" -H "api_key: hello"
+    $q("wallet/boxes/unspent", true, Get,
+      Seq(
+        "minConfirmations" -> minConfirmations.toString,
+        "minInclusionHeight" -> minInclusionHeight.toString
+      )
+    )
+  }
+
+  def balances_with_unconfirmed= $q("wallet/balances/with_unconfirmed", true, Get, Nil)
 
   def addresses = $q("wallet/addresses", true, Get, Nil)
 
@@ -55,17 +90,46 @@ object Wallet {
     $q("wallet/p2sh_address", true, PostJson, Seq("source" -> source.getText))
 }
 
-object Utils {
+object Mining {
+  def candidate = {
+    $q(
+      "mining/candidate", true, Get, Nil
+    )
+  }
+  def rewardAddress = {
+    //curl -X GET "http://127.0.0.1:9052/mining/rewardAddress" -H "accept: application/json" -H "api_key: hello"
+    $q(
+      "mining/rewardAddress", true, Get, Nil
+    )
+  }
+  def solution(pk:String, w:String, n:String, d:String) = {
+    //curl -X POST "http://127.0.0.1:9052/mining/solution" -H "accept: application/json" -H "api_key: hello" -H "Content-Type: application/json" -d "{\"pk\":\"0350e25cee8562697d55275c96bb01b34228f9bd68fd9933f2a25ff195526864f5\",\"w\":\"0366ea253123dfdb8d6d9ca2cb9ea98629e8f34015b1e4ba942b1d88badfcc6a12\",\"n\":\"0000000000000000\",\"d\":987654321}"
+    $q(
+      "mining/rewardAddress", true, PostJson, Seq(
+        "pk" -> pk,
+        "w" -> w,
+        "n" -> n,
+        "d" -> d
+      )
+    )
+  }
+}
+
+object Info {
   def info = $q("info", false, Get, Nil)
+}
 
-  def blake2b(input:String) = $q("utils/hash/blake2b", false, PostJsonRaw, Nil, Some(input))
-
+object Utils {
   def seed = $q("utils/seed", false, Get, Nil, None)
+
+  def address(addr:String) = $q(s"utils/address/$addr", false, Get, Nil, None)
 
   def seed_length(length:String) = $q(s"utils/seed/$length", false, Get, Nil, None)
 
-  def compile(ergoScript:Text) = ???
+  def blake2b(input:String) = $q("utils/hash/blake2b", false, PostJsonRaw, Nil, Some(input))
+}
 
+object Transactions {
   // def pushTx(json:String) = $q("peers/all", false, Get, Nil)
   def unconfirmedTx(limit:Int, offset:Int) = {
     val $limit$ = "10"

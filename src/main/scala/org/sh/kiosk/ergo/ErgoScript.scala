@@ -128,30 +128,19 @@ object ErgoScript {
   }
   def env_setCollCollByte(name:String, collCollBytes:Array[Array[Byte]]) = {
     val $name$ = "d"
-    val $collCollBytes$ = "[0x1a2b3c4d5e6f,0xafbecddc123,0xa132]"
+    val $collCollBytes$ = "[0x1a2b3c4d5e6f,0xafbecddc12,0xa132]"
     $env += name -> collCollBytes
   }
 
   def compile(ergoScript:Text):ErgoTree = {
-    val $ergoScript$:String = "{\n  val x = blake2b256(c)\n\n  b == 1234.toBigInt &&\n  c == x &&\n  d(0) == x\n}"
+    val $ergoScript$:String = """
+{
+  val x = blake2b256(c)
+  b == 1234.toBigInt &&
+  c == x &&
+  d(0) == x
+}"""
     $compile(ergoScript.getText)
-  }
-
-  def abc(a:Text) = {
-    val $a$ = "{\n  val x = blake2b256(c)\n  b == 1234.toBigInt &&\n  c == x &&\n  d(0) == x\n}"
-    //val $x$ = "aaaaaa"
-
-    //    val $x$:String =
-    //      """{
-    //        |  val x = blake2b256(c)
-    //        |  b == 1234.toBigInt &&
-    //        |  c == x &&
-    //        |  d(0) == x
-    //        |}
-    //      """
-
-    //a.getText.toString
-    "Ok"
   }
 
   def getDefaultGenerator = {
