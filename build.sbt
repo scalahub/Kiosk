@@ -4,14 +4,14 @@ version := "0.1"
 
 scalaVersion := "2.12.8"
 
-lazy val EasyWeb = RootProject(uri("git://github.com/scalahub/EasyWeb.git"))
-//lazy val EasyWeb = RootProject(uri("../EasyWeb"))
+//lazy val EasyWeb = RootProject(uri("git://github.com/scalahub/EasyWeb.git"))
+lazy val EasyWeb = RootProject(uri("../EasyWeb"))
 
 lazy val SigmaState = RootProject(uri("git://github.com/ScorexFoundation/sigmastate-interpreter.git"))
 //lazy val SigmaState = RootProject(uri("../sigmastate-interpreter"))
 
-lazy val CryptoNode = RootProject(uri("git://github.com/scalahub/CryptoNode.git"))
-//lazy val CryptoNode = RootProject(uri("../CryptoNode"))
+//lazy val CryptoNode = RootProject(uri("git://github.com/scalahub/CryptoNode.git"))
+lazy val CryptoNode = RootProject(uri("../CryptoNode"))
 
 val bouncycastleBcprov = "org.bouncycastle" % "bcprov-jdk15on" % "1.60"
 val scrypto            = "org.scorexfoundation" %% "scrypto" % "2.1.6"
@@ -37,6 +37,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.4.+",
   "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.1.0",
   "com.lihaoyi" %% "fastparse" % "1.0.0",
+  "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 )
 
 resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",

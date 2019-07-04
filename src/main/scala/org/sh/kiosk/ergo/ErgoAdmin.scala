@@ -48,13 +48,16 @@ object Wallet {
     $q("wallet/balances", true, Get, Nil)
   }
 
-  def transactions(minInclusionHeight:Int, maxInclusionHeight:Int) = {
+  def transactions(minInclusionHeight:Int, maxInclusionHeight:Int, minConfirmations:Int, maxConfirmations:Int) = {
     //curl -X GET "http://127.0.0.1:9052/wallet/transactions?minInclusionHeight=10&maxInclusionHeight=100" -H "accept: application/json" -H "api_key: hello"
-    require(maxInclusionHeight > minInclusionHeight, s"maxInclusionHeight ($maxInclusionHeight) must be greater than minInclusionHeight ($minInclusionHeight)")
+    require(maxInclusionHeight >= minInclusionHeight, s"maxInclusionHeight ($maxInclusionHeight) must be greater than minInclusionHeight ($minInclusionHeight)")
+    require(maxConfirmations > minConfirmations, s"maxConfirmations ($maxConfirmations) must be greater than minConfirmations ($minConfirmations)")
     $q("wallet/transactions", true, Get,
       Seq(
         "minInclusionHeight" -> minInclusionHeight.toString,
         "maxInclusionHeight" -> maxInclusionHeight.toString,
+        "minConfirmations" -> minConfirmations.toString,
+        "maxConfirmations" -> maxConfirmations.toString
       )
     )
   }
