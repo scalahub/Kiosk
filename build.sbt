@@ -47,9 +47,4 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
 
 lazy val root = (project in file(".")).dependsOn(
   EasyWeb, SigmaState, CryptoNode
-).settings(
-  assemblyMergeStrategy in assembly := {
-   case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-   case x => MergeStrategy.first
-  }
 )
