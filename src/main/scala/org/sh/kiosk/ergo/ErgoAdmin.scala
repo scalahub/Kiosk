@@ -4,7 +4,8 @@ import org.sh.easyweb.Text
 import org.sh.kiosk.ergo.ErgoAPI._
 
 object ErgoAdmin extends App {
-  val objects = List(ErgoScript, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
+  //val objects = List(ErgoScript, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
+  val objects = List(ErgoScript, ErgoMix) //, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
   new org.sh.easyweb.AutoWeb(objects, "ErgoDemo")
 }
 
