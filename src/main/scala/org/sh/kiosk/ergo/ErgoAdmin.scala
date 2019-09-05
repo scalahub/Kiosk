@@ -109,7 +109,7 @@ object Mining {
   def solution(pk:String, w:String, n:String, d:String) = {
     //curl -X POST "http://127.0.0.1:9052/mining/solution" -H "accept: application/json" -H "api_key: hello" -H "Content-Type: application/json" -d "{\"pk\":\"0350e25cee8562697d55275c96bb01b34228f9bd68fd9933f2a25ff195526864f5\",\"w\":\"0366ea253123dfdb8d6d9ca2cb9ea98629e8f34015b1e4ba942b1d88badfcc6a12\",\"n\":\"0000000000000000\",\"d\":987654321}"
     $q(
-      "mining/rewardAddress", true, PostJson, Seq(
+      "mining/solution", true, PostJson, Seq(
         "pk" -> pk,
         "w" -> w,
         "n" -> n,
