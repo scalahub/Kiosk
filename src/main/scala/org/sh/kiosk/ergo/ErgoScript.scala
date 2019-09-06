@@ -18,16 +18,34 @@ import sigmastate.serialization.ValueSerializer
 import special.collection.Coll
 import special.sigma.GroupElement
 
-object ErgoScript {
+object ErgoScriptDemo extends ErgoScript {
+  env_setBigInt("b", BigInt("123456789012345678901234567890123456789012345678901234567890"))
+  env_setCollByte("c", "0x1a2b3c4d5e6f".decodeHex)
+  env_setGroupElement("g", $hexToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
 
+  def getPattern(ergoScript: Text, keysToMatch:Array[String]) = {
+    val $keysToMatch$ = "[b, c]"
+    val $ergoScript$ = """{
+  val x = blake2b256(c)
+  b == 1234.toBigInt &&
+  c == x
+}"""
+    val scriptBytes = DefaultSerializer.serializeErgoTree($compile(ergoScript.getText))
+    $matchScript(scriptBytes, keysToMatch: Array[String])
+  }
+
+}
+
+abstract class ErgoScript {
+  def $hexToGroupElement(hex:String) = {
+    val point = ECCPubKey(hex).point
+    val secp256k1Point = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)
+    SigmaDsl.GroupElement(secp256k1Point)
+  }
   DefaultTypeHandler.addType[GroupElement](
     classOf[GroupElement],
-    hex => {
-      val point = ECCPubKey(hex).point
-      val secp256k1Point = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)
-      SigmaDsl.GroupElement(secp256k1Point)
-    },
-    g => g.getEncoded.toArray.encodeHex
+    $hexToGroupElement,
+    _.getEncoded.toArray.encodeHex
   )
 
   DefaultTypeHandler.addType[ErgoTree](
@@ -171,11 +189,6 @@ object ErgoScript {
     BigInt(values).mod(SecP256K1.q)
   }
 
-  def getRandomKeyPair = {
-    val prv = $getRandomBigInt
-    Array("Private: "+prv.toString, "Public: "+$getGroupElement(prv))
-  }
-
   def getP2SH_Address(ergoScript:Text) = {
     val $ergoScript$ = """{
   val x = blake2b256(c)
@@ -185,8 +198,50 @@ object ErgoScript {
     Pay2SHAddress(compile(ergoScript)).toString
   }
 
-  def $getP2S_Address(ergoScript:Text) = {
+  def getP2S_Address(ergoScript:Text) = {
+    val $ergoScript$ = """{
+  val x = blake2b256(c)
+  b == 1234.toBigInt &&
+  c == x
+}"""
     Pay2SAddress(compile(ergoScript)).toString
   }
+
+  def getRandomKeyPair = {
+    val prv = $getRandomBigInt
+    Array("Private: "+prv.toString, "Public: "+$getGroupElement(prv))
+  }
+
+  def $matchScript(scriptBytes: Array[Byte], keysToMatch:Array[String]) = {
+    val keyValsToMatch = keysToMatch.map{key =>
+      val value = $convertedEnv.get(key).getOrElse(throw new Exception(s"Environment does not contain key $key"))
+      key -> value
+    }
+    keyValsToMatch.foldLeft(scriptBytes.encodeHex)(
+      (currStr, y) => {
+        val (keyword, value) = y
+
+        val serialized = value match {
+          case grp: GroupElement => grp.getEncoded.toArray
+          case bigInt: special.sigma.BigInt => bigInt.toBytes.toArray
+          case collByte: Coll[Byte] => collByte.toArray
+          case collCollByte: Coll[Coll[Byte]] => ??? // collCollByte.toArray.reduceLeft(_ ++ _):Array[Byte]
+          case any =>
+            println(s"ERROR [$keyword] => Any "+any+": "+any.getClass)
+            ???
+        }
+
+        val encodedValue = serialized.encodeHex
+        val value_r = encodedValue.length / 2
+        val value_l = encodedValue.length - value_r
+        val kw_r = keyword.length / 2
+        val kw_l = keyword.length - kw_r
+        val replacement = "<" + ("-" * (value_r - kw_r - 1)) + keyword + ("-" * (value_l - kw_l)) + ">"
+        currStr.replace(encodedValue, replacement)
+      }
+    )
+
+  }
+
 }
 
