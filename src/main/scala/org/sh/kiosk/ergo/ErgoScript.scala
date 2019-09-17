@@ -18,10 +18,33 @@ import sigmastate.serialization.ValueSerializer
 import special.collection.Coll
 import special.sigma.GroupElement
 
+object ErgoScriptUtil {
+  def hexToGroupElement(hex:String) = {
+    val point = ECCPubKey(hex).point
+    val secp256k1Point = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)
+    SigmaDsl.GroupElement(secp256k1Point)
+  }
+
+  def groupElementToHex(groupElement: GroupElement) = {
+    groupElement.getEncoded.toArray.encodeHex
+  }
+
+  def hexToErgoTree(hex:String) = {
+    val bytes = hex.decodeHex
+    DefaultSerializer.deserializeErgoTree(bytes)
+  }
+
+  def ergoTreeTohex(tree:ErgoTree) = {
+    DefaultSerializer.serializeErgoTree(tree).encodeHex
+  }
+}
+
+import ErgoScriptUtil._
+
 object ErgoScriptDemo extends ErgoScript {
   env_setBigInt("b", BigInt("123456789012345678901234567890123456789012345678901234567890"))
   env_setCollByte("c", "0x1a2b3c4d5e6f".decodeHex)
-  env_setGroupElement("g", $hexToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
+  env_setGroupElement("g", hexToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
 
   def getPattern(ergoScript: Text, keysToMatch:Array[String]) = {
     val $keysToMatch$ = "[b, c]"
@@ -37,25 +60,8 @@ object ErgoScriptDemo extends ErgoScript {
 }
 
 abstract class ErgoScript {
-  def $hexToGroupElement(hex:String) = {
-    val point = ECCPubKey(hex).point
-    val secp256k1Point = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)
-    SigmaDsl.GroupElement(secp256k1Point)
-  }
-  DefaultTypeHandler.addType[GroupElement](
-    classOf[GroupElement],
-    $hexToGroupElement,
-    _.getEncoded.toArray.encodeHex
-  )
-
-  DefaultTypeHandler.addType[ErgoTree](
-    classOf[ErgoTree],
-    str => {
-      val bytes = str.decodeHex
-      DefaultSerializer.deserializeErgoTree(bytes)
-    },
-    DefaultSerializer.serializeErgoTree(_).encodeHex
-  )
+  DefaultTypeHandler.addType[GroupElement](classOf[GroupElement], hexToGroupElement, groupElementToHex)
+  DefaultTypeHandler.addType[ErgoTree](classOf[ErgoTree], hexToErgoTree, ergoTreeTohex)
 
   var $env:Map[String, Any] = Map()
 
