@@ -1,9 +1,10 @@
 package org.sh.kiosk.ergo
 
+import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress, Pay2SHAddress}
 import org.sh.cryptonode.util.BytesUtil._
 import scorex.crypto.hash.Blake2b256
 import sigmastate.basics.SecP256K1
-import sigmastate.eval.SigmaDsl
+import sigmastate.eval.{CompiletimeIRContext, SigmaDsl}
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 import special.sigma.GroupElement
 
@@ -42,14 +43,22 @@ object ErgoMix {
 
   val $g = SigmaDsl.GroupElement(SecP256K1.generator)
 
+  // private key
   def $x: scala.math.BigInt = BigInt(Blake2b256("correct horse battery staple".getBytes)) // secret
+
+  // public key
   val $gX = SigmaDsl.GroupElement(SecP256K1.exponentiate(SecP256K1.generator, $x.bigInteger).normalize())
+
+  // encoded public key
   val $gX_encoded = $gX.getEncoded.toArray.encodeHex
 
+  // ergoscript source
   def getSource = $getSource($halfMixScriptSource, $fullMixScriptSource)
 
+  // ergoscript binary
   def getScripts = $getScripts($halfMixScriptSource, $fullMixScriptSource, Map("g" -> $g, "gX" -> $gX))
 
+  // ergoscript binary matched with env
   def getScriptsMatched = $getScriptsMatched($halfMixScriptSource, $fullMixScriptSource, Map("g" -> $g, "gX" -> $gX))
 
   def $getSource(halfMixScriptSource:String, fullMixScriptSource:String) = {
@@ -59,20 +68,42 @@ object ErgoMix {
     )
   }
 
+  import $ergoScript.$ergoAddressEncoder
+
+  def getHalfMixBoxAddresses = {
+    $getHalfMixBoxAddresses($halfMixScriptSource, $fullMixScriptSource, Map("g" -> $g, "gX" -> $gX))
+  }
+
+  def $getHalfMixBoxAddresses(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
+    val (_, halfMixTree) = $getRawScripts(halfMixScriptSource, fullMixScriptSource, env)
+    val p2s = Pay2SAddress(halfMixTree)
+    val p2sh = Pay2SHAddress(halfMixTree)
+    Array(
+      "P2S: "+p2s,
+      "P2SH: "+p2sh
+    )
+  }
+
   def $getRawScripts(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
     $ergoScript.env_clear
     env.foreach{
       case (name, value) => $ergoScript.env_setGroupElement(name, value)
     }
-    val fullMixScriptBytes = DefaultSerializer.serializeErgoTree($ergoScript.$compile(fullMixScriptSource))
+    val fullMixTree = $ergoScript.$compile(fullMixScriptSource)
+    val fullMixScriptBytes = DefaultSerializer.serializeErgoTree(fullMixTree)
     val fullMixScriptHash = scorex.crypto.hash.Blake2b256(fullMixScriptBytes)
     $ergoScript.env_setCollByte("fullMixScriptHash", fullMixScriptHash)
-    val halfMixScriptBytes = DefaultSerializer.serializeErgoTree($ergoScript.$compile(halfMixScriptSource))
-    (fullMixScriptBytes, halfMixScriptBytes)
+    val halfMixTree = $ergoScript.$compile(halfMixScriptSource)
+    (fullMixTree, halfMixTree)
   }
 
+  def $getScriptBytes(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
+    val (fullMixTree, halfMixTree) = $getRawScripts(halfMixScriptSource, fullMixScriptSource, env)
+    (DefaultSerializer.serializeErgoTree(halfMixTree), DefaultSerializer.serializeErgoTree(fullMixTree))
+  }
   def $getScripts(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
-    val (fullMixScriptBytes, halfMixScriptBytes) = $getRawScripts(halfMixScriptSource, fullMixScriptSource, env)
+    val (fullMixScriptBytes, halfMixScriptBytes) = $getScriptBytes(halfMixScriptSource, fullMixScriptSource, env)
+
     Array(
       s"gX = ${$gX_encoded}",
       s"fullMixScript = ${fullMixScriptBytes.encodeHex}".grouped(120).mkString("\n"),
@@ -80,22 +111,9 @@ object ErgoMix {
     )
   }
 
-  //  def $matchScript(scriptBytes:Array[Byte], env:Map[String, GroupElement]) = {
-  //    env.foldLeft(scriptBytes.encodeHex)(
-  //      (currStr, y) => {
-  //        val (keyword, value) = y
-  //        val encodedValue = value.getEncoded.toArray.encodeHex
-  //        val value_r = encodedValue.length / 2
-  //        val value_l = encodedValue.length - value_r
-  //        val kw_r = keyword.length / 2
-  //        val kw_l = keyword.length - kw_r
-  //        val replacement = " <" + ("-" * (value_r - kw_r - 2))+" " + keyword + " "+("-" * (value_l - kw_l - 3)) + "> "
-  //        currStr.replace(encodedValue, replacement)
-  //      }
-  //    )
-  //  }
   def $getScriptsMatched(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
-    val (fullMixScriptBytes, halfMixScriptBytes) = $getRawScripts(halfMixScriptSource, fullMixScriptSource, env)
+
+    val (fullMixScriptBytes, halfMixScriptBytes) = $getScriptBytes(halfMixScriptSource, fullMixScriptSource, env)
 
     $ergoScript.$env.collect{
       case (keyword, value:GroupElement) =>
