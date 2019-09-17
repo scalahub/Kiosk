@@ -6,7 +6,7 @@ A web-UI for connecting to an Ergo node.
 ## Pre-reqisites
 
 - SBT 1.0
-- JDK 11 or higher
+- JDK 8
 
 ## Instructions 
 
