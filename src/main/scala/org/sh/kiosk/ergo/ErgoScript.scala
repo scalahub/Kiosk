@@ -118,7 +118,7 @@ abstract class ErgoScript {
   }
   def env_setLong(name:String, long:Long) = {
     val $name$ = "long"
-    val $long$ = "123456789011112L"
+    val $long$ = "12345678901112"
     $env += name -> long
   }
   def env_setInt(name:String, int:Int) = {
