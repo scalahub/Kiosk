@@ -1,9 +1,13 @@
 package org.sh.kiosk.ergo
 
 //import org.bouncycastle.jcajce.provider.digest.Blake2b.Blake2b256
-import org.ergoplatform.Pay2SAddress
+import org.ergoplatform.{Pay2SAddress, Pay2SHAddress}
 import org.sh.kiosk.ergo.ErgoMix.$ergoScript
+import org.sh.kiosk.ergo.util.ErgoScriptUtil._
+import org.sh.cryptonode.util.BytesUtil._
+
 import scorex.crypto.hash.Blake2b256
+import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 
 object InterestFreeLoan {
   /* using the description at https://www.ergoforum.org/t/interest-free-loan-contract/67
@@ -19,22 +23,24 @@ object InterestFreeLoan {
 
 
    */
-  val rateOracleTokenID:Array[Byte] = Blake2b256("hello").toArray
+  val $startRate = 10 // 10 euros per erg
+
+  val $rateOracleTokenID:Array[Byte] = Blake2b256("hello").toArray
 
   val $ergoScript = new ErgoScript {}
-  $ergoScript.env_setCollByte("rateOracleTokenID", rateOracleTokenID)
+  $ergoScript.env_setCollByte("rateOracleTokenID", $rateOracleTokenID)
 
-  val alicePrivateKey = $ergoScript.$getRandomBigInt
+  val $alicePrivateKey = getRandomBigInt
 
-  import ErgoScriptUtil._
+  val alice = hexToGroupElement($ergoScript.$getGroupElement($alicePrivateKey))
 
-  val alice = hexToGroupElement($ergoScript.$getGroupElement(alicePrivateKey))
-
-  val bobPrivateKey = $ergoScript.$getRandomBigInt
-  val bob = hexToGroupElement($ergoScript.$getGroupElement(bobPrivateKey))
+  val $bobPrivateKey = getRandomBigInt
+  val bob = hexToGroupElement($ergoScript.$getGroupElement($bobPrivateKey))
 
   $ergoScript.env_setGroupElement("alice", alice)
   $ergoScript.env_setGroupElement("bob", bob)
+  $ergoScript.env_setInt("startRate", $startRate)
+
   val loanBoxSource =
     """{
       |  val dataInput = CONTEXT.dataInputs(0)
@@ -53,9 +59,22 @@ object InterestFreeLoan {
       |  correctDiff && correctScript && correctToken && proveDlog(alice) && proveDlog(bob)
       |}""".stripMargin
 
-  val loanBoxScript = $ergoScript.$compile(loanBoxSource)
+  val $loanBoxScript = $ergoScript.$compile(loanBoxSource)
 
+  val loanBoxScript = {
+    $ergoScript.$env.map{
+      case (keyword, value) =>
+        keyword + " = " + serialize(getConvertedValue(value)).encodeHex
+    }.toArray ++ Array(
+      $ergoScript.$matchScript(DefaultSerializer.serializeErgoTree($loanBoxScript), $ergoScript.$env.keys.toArray).grouped(120).mkString("\n")
+    )
+  }
   import $ergoScript.$ergoAddressEncoder
 
-  val loanBoxAddress = Pay2SAddress(loanBoxScript)
+  val loanBoxAddress = {
+    Array(
+      "p2s: "+Pay2SAddress($loanBoxScript),
+      "p2sh: "+Pay2SHAddress($loanBoxScript)
+    )
+  }
 }

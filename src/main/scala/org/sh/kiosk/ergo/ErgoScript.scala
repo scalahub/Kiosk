@@ -7,39 +7,17 @@ import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress, Pay2SHAddress}
 import org.sh.cryptonode.ecc.{ECCPubKey, Point}
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.cryptonode.util.StringUtil._
-import org.sh.easyweb.Text
-import org.sh.reflect.DefaultTypeHandler
 import sigmastate.Values.ErgoTree
 import sigmastate.basics.SecP256K1
-import sigmastate.eval.{CompiletimeIRContext, SigmaDsl}
+import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.SigmaCompiler
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
-import sigmastate.serialization.ValueSerializer
-import special.collection.Coll
 import special.sigma.GroupElement
-
-object ErgoScriptUtil {
-  def hexToGroupElement(hex:String) = {
-    val point = ECCPubKey(hex).point
-    val secp256k1Point = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)
-    SigmaDsl.GroupElement(secp256k1Point)
-  }
-
-  def groupElementToHex(groupElement: GroupElement) = {
-    groupElement.getEncoded.toArray.encodeHex
-  }
-
-  def hexToErgoTree(hex:String) = {
-    val bytes = hex.decodeHex
-    DefaultSerializer.deserializeErgoTree(bytes)
-  }
-
-  def ergoTreeTohex(tree:ErgoTree) = {
-    DefaultSerializer.serializeErgoTree(tree).encodeHex
-  }
-}
-
-import ErgoScriptUtil._
+import org.sh.kiosk.ergo.util.ErgoScriptUtil._
+import special.collection.Coll
+import org.sh.easyweb.Text
+import org.sh.reflect.DefaultTypeHandler
+import sigmastate.serialization.ValueSerializer
 
 object ErgoScriptDemo extends ErgoScript {
   env_setBigInt("b", BigInt("123456789012345678901234567890123456789012345678901234567890"))
@@ -63,6 +41,9 @@ abstract class ErgoScript {
   DefaultTypeHandler.addType[GroupElement](classOf[GroupElement], hexToGroupElement, groupElementToHex)
   DefaultTypeHandler.addType[ErgoTree](classOf[ErgoTree], hexToErgoTree, ergoTreeTohex)
 
+  // any variable/method starting with $ will not appear in front-end.
+  // so any variable to be hidden from front-end is prefixed with $
+
   var $env:Map[String, Any] = Map()
 
   def $networkPrefix = if (ErgoAPI.$isMainNet) MainnetNetworkPrefix else TestnetNetworkPrefix
@@ -73,7 +54,7 @@ abstract class ErgoScript {
   def $arrByteToCollByte(a:Array[Byte]) = sigmastate.eval.Colls.fromArray(a)
 
   @deprecated("Unused as of now", "27 Aug 2019")
-  def $arrArrByteToCollByte(a:Array[Array[Byte]]) = {
+  def $arrArrByteToCollCollByte(a:Array[Array[Byte]]) = {
     val collArray = a.map{colByte =>
       sigmastate.eval.Colls.fromArray(colByte)
     }
@@ -108,24 +89,9 @@ abstract class ErgoScript {
     }
   }
 
-  def $getConvertedValue(value:Any) = {
-    value match {
-      case bigInt:BigInt => SigmaDsl.BigInt(bigInt.bigInteger)
-      case collBytes:Array[Byte] => sigmastate.eval.Colls.fromArray(collBytes)
-        /*
-      case collCollBytes:Array[Array[Byte]] =>
-        val collArray = collCollBytes.map{collBytes =>
-          sigmastate.eval.Colls.fromArray(collBytes)
-        }
-        sigmastate.eval.Colls.fromArray(collArray)
-         */
-      case grp:GroupElement => grp
-      case any => ???
-    }
-  }
   def $convertedEnv = {
     $env.map{
-      case (key, value) => key -> $getConvertedValue(value)
+      case (key, value) => key -> getConvertedValue(value)
     }
   }
 
@@ -149,6 +115,16 @@ abstract class ErgoScript {
     val $name$ = "b"
     val $bigInt$ = "123456789012345678901234567890123456789012345678901234567890"
     $env += name -> bigInt
+  }
+  def env_setLong(name:String, long:Long) = {
+    val $name$ = "long"
+    val $long$ = "123456789011112L"
+    $env += name -> long
+  }
+  def env_setInt(name:String, int:Int) = {
+    val $name$ = "long"
+    val $int$ = "123456789"
+    $env += name -> int
   }
   def env_setCollByte(name:String, collBytes:Array[Byte]) = {
     val $name$ = "c"
@@ -180,19 +156,17 @@ abstract class ErgoScript {
     new ECCPubKey(org.sh.cryptonode.ecc.Util.G, true).hex
   }
 
+
+  def getRandomKeyPair = {
+    val prv = getRandomBigInt
+    Array("Private: "+prv.toString, "Public: "+$getGroupElement(prv))
+  }
   def $getGroupElement(exponent:BigInt) = {
     val g = SecP256K1.generator
     val h = SecP256K1.exponentiate(g, exponent.bigInteger).normalize()
     val x = h.getXCoord.toBigInteger
     val y = h.getYCoord.toBigInteger
     ECCPubKey(Point(x, y), true).hex
-  }
-
-  def $getRandomBigInt = {
-    val random = new SecureRandom()
-    val values = new Array[Byte](32)
-    random.nextBytes(values)
-    BigInt(values).mod(SecP256K1.q)
   }
 
   def getP2SH_Address(ergoScript:Text) = {
@@ -213,11 +187,6 @@ abstract class ErgoScript {
     Pay2SAddress(compile(ergoScript)).toString
   }
 
-  def getRandomKeyPair = {
-    val prv = $getRandomBigInt
-    Array("Private: "+prv.toString, "Public: "+$getGroupElement(prv))
-  }
-
   def $matchScript(scriptBytes: Array[Byte], keysToMatch:Array[String]) = {
     val keyValsToMatch = keysToMatch.map{key =>
       val value = $convertedEnv.get(key).getOrElse(throw new Exception(s"Environment does not contain key $key"))
@@ -227,16 +196,7 @@ abstract class ErgoScript {
       (currStr, y) => {
         val (keyword, value) = y
 
-        val serialized = value match {
-          case grp: GroupElement => grp.getEncoded.toArray
-          case bigInt: special.sigma.BigInt => bigInt.toBytes.toArray
-          case collByte: Coll[Byte] => collByte.toArray
-          case collCollByte: Coll[Coll[Byte]] => ??? // collCollByte.toArray.reduceLeft(_ ++ _):Array[Byte]
-          case any =>
-            println(s"ERROR [$keyword] => Any "+any+": "+any.getClass)
-            ???
-        }
-
+        val serialized:Array[Byte] = serialize(value)
         val encodedValue = serialized.encodeHex
         val value_r = encodedValue.length / 2
         val value_l = encodedValue.length - value_r

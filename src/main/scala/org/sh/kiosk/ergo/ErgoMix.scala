@@ -59,7 +59,8 @@ object ErgoMix {
   def getScripts = $getScripts($halfMixScriptSource, $fullMixScriptSource, Map("g" -> $g, "gX" -> $gX))
 
   // ergoscript binary matched with env
-  def getScriptsMatched = $getScriptsMatched($halfMixScriptSource, $fullMixScriptSource, Map("g" -> $g, "gX" -> $gX))
+  def getScriptsMatched =
+    $getScriptsMatched($halfMixScriptSource, $fullMixScriptSource, Map("g" -> $g, "gX" -> $gX))
 
   def $getSource(halfMixScriptSource:String, fullMixScriptSource:String) = {
     Array(
