@@ -202,7 +202,7 @@ abstract class ErgoScript {
         val value_l = encodedValue.length - value_r
         val kw_r = keyword.length / 2
         val kw_l = keyword.length - kw_r
-        val replacement = "<" + ("-" * (value_r - kw_r - 1)) + keyword + ("-" * (value_l - kw_l)) + ">"
+        val replacement = "<" + ("-" * (value_r - kw_r - 1)) + keyword + ("-" * (value_l - kw_l-1)) + ">"
         currStr.replace(encodedValue, replacement)
       }
     )
