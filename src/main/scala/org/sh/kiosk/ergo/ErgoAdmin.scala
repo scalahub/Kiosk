@@ -5,15 +5,15 @@ import org.sh.kiosk.ergo.ErgoAPI._
 
 object ErgoAdmin extends App {
   //val objects = List(ErgoScript, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
-  val objects = List(ErgoScriptDemo, ErgoMix, InterestFreeLoan) //, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
+  val objects = List(ErgoScriptDemo, ErgoMix, InterestFreeLoan, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions) //, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
   new org.sh.easyweb.AutoWeb(objects, "ErgoDemo")
 }
 
 object Peers {
   // vars, vals and defs starting with '$' won't appear in HTML
-  def all = $q("peers/all", false, Get, Nil)
-
-  def blacklisted = $q("peers/blacklisted", false, Get, Nil)
+  //  def all = $q("peers/all", false, Get, Nil)
+  //
+  //  def blacklisted = $q("peers/blacklisted", false, Get, Nil)
 
   def connected = $q("peers/connected", false, Get, Nil)
 
@@ -83,15 +83,15 @@ object Wallet {
     )
   }
 
-  def balances_with_unconfirmed= $q("wallet/balances/with_unconfirmed", true, Get, Nil)
+//  def balances_with_unconfirmed= $q("wallet/balances/with_unconfirmed", true, Get, Nil)
 
   def addresses = $q("wallet/addresses", true, Get, Nil)
 
-  def p2s_address(source: Text) =
-    $q("wallet/p2s_address", true, PostJson, Seq("source" -> source.getText))
+//  def p2s_address(source: Text) =
+//    $q("wallet/p2s_address", true, PostJson, Seq("source" -> source.getText))
 
-  def p2sh_address(source: Text) =
-    $q("wallet/p2sh_address", true, PostJson, Seq("source" -> source.getText))
+//  def p2sh_address(source: Text) =
+//    $q("wallet/p2sh_address", true, PostJson, Seq("source" -> source.getText))
 }
 
 object Mining {

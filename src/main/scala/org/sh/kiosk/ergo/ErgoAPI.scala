@@ -13,7 +13,7 @@ object PostJsonRaw extends ReqType(postJsonRaw)
 object ErgoAPI {
   // vars, vals and defs starting with '$' won't appear in HTML
   var $apiKey = "hello"
-  var $baseUrl = "http://localhost:9052/"
+  var $baseUrl = "http://192.168.0.123:9052/"
 
   var $isMainNet = false
 
@@ -22,7 +22,7 @@ object ErgoAPI {
     $isMainNet = isMainNet
   }
   def setUrl(url:String) = {
-    val $url$ = "http://localhost:9052/"
+    val $url$ = "http://192.168.0.123:9052/"
     $baseUrl = url
   }
 
