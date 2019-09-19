@@ -53,19 +53,37 @@ object ErgoMix {
   val $gX_encoded = $gX.getEncoded.toArray.encodeHex
 
   // ergoscript source
-  def getSource = $getSource($halfMixScriptSource, $fullMixScriptSource)
+  def getSource = {
+    Array(
+      "halfMixScript \n"+$halfMixScriptSource,
+      "fullMixScript \n"+$fullMixScriptSource
+    )
+
+  }
+
+  val $myEnv = Map("g" -> $g, "gX" -> $gX)
 
   // ergoscript binary
-  def getScripts = $getScripts($halfMixScriptSource, $fullMixScriptSource, Map("g" -> $g, "gX" -> $gX))
+  def getScripts = {
+    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes($halfMixScriptSource, $fullMixScriptSource, $myEnv)
+    Array(
+      s"gX = ${$gX_encoded}",
+      s"halfMixScript = ${halfMixScriptBytes.encodeHex}".grouped(120).mkString("\n"),
+      s"fullMixScript = ${fullMixScriptBytes.encodeHex}".grouped(120).mkString("\n")
+    )
+  }
 
   // ergoscript binary matched with env
-  def getScriptsMatched =
-    $getScriptsMatched($halfMixScriptSource, $fullMixScriptSource, Map("g" -> $g, "gX" -> $gX))
-
-  def $getSource(halfMixScriptSource:String, fullMixScriptSource:String) = {
-    Array(
-      "fullMixScript \n"+fullMixScriptSource,
-      "halfMixScript \n"+halfMixScriptSource
+  def getScriptsMatched(useRegex:Boolean) = {
+    val $useRegex$ = "false"
+    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes($halfMixScriptSource, $fullMixScriptSource, $myEnv)
+    val f:(Array[Byte], Array[String]) => String = if (useRegex) $ergoScript.$regex else $ergoScript.$matchScript
+    $ergoScript.$env.collect{
+      case (keyword, value:GroupElement) =>
+        keyword + " = " + value.getEncoded.toArray.encodeHex
+    }.toArray ++ Array(
+      ("halfMixScript = "+f(halfMixScriptBytes, $ergoScript.$env.keys.toArray)).grouped(120).mkString("\n"),
+      ("fullMixScript = "+f(fullMixScriptBytes, $ergoScript.$env.keys.toArray)).grouped(120).mkString("\n")
     )
   }
 
@@ -101,28 +119,5 @@ object ErgoMix {
   def $getScriptBytes(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
     val (halfMixTree, fullMixTree) = $getRawScripts(halfMixScriptSource, fullMixScriptSource, env)
     (DefaultSerializer.serializeErgoTree(halfMixTree), DefaultSerializer.serializeErgoTree(fullMixTree))
-  }
-  def $getScripts(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
-    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes(halfMixScriptSource, fullMixScriptSource, env)
-
-    Array(
-      s"gX = ${$gX_encoded}",
-      s"halfMixScript = ${halfMixScriptBytes.encodeHex}".grouped(120).mkString("\n"),
-      s"fullMixScript = ${fullMixScriptBytes.encodeHex}".grouped(120).mkString("\n")
-    )
-  }
-
-  def $getScriptsMatched(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
-
-    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes(halfMixScriptSource, fullMixScriptSource, env)
-
-    $ergoScript.$env.collect{
-      case (keyword, value:GroupElement) =>
-        keyword + " = " + value.getEncoded.toArray.encodeHex
-    }.toArray ++ Array(
-      ("halfMixScript = "+$ergoScript.$matchScript(halfMixScriptBytes, $ergoScript.$env.keys.toArray)).grouped(120).mkString("\n"),
-      ("fullMixScript = "+$ergoScript.$matchScript(fullMixScriptBytes, $ergoScript.$env.keys.toArray)).grouped(120).mkString("\n")
-    )
-
   }
 }

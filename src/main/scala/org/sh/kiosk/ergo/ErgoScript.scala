@@ -24,15 +24,17 @@ object ErgoScriptDemo extends ErgoScript {
   env_setCollByte("c", "0x1a2b3c4d5e6f".decodeHex)
   env_setGroupElement("g", hexToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
 
-  def getPattern(ergoScript: Text, keysToMatch:Array[String]) = {
+  def getPattern(ergoScript: Text, keysToMatch:Array[String], useRegex:Boolean) = {
+    val $useRegex$ = "false"
     val $keysToMatch$ = "[b, c]"
     val $ergoScript$ = """{
   val x = blake2b256(c)
   b == 1234.toBigInt &&
   c == x
 }"""
-    val scriptBytes = DefaultSerializer.serializeErgoTree($compile(ergoScript.getText))
-    $matchScript(scriptBytes, keysToMatch: Array[String])
+    val f:(Array[Byte], Array[String]) => String = if (useRegex) $regex else $matchScript
+
+    f(DefaultSerializer.serializeErgoTree($compile(ergoScript.getText)), keysToMatch: Array[String])
   }
 
 }
@@ -61,28 +63,14 @@ abstract class ErgoScript {
     sigmastate.eval.Colls.fromArray(collArray)
   }
 
-  //  def env_getSerialized = {
-  //    $convertedEnv.toArray.map{
-  //      case (name, value) =>
-  //        val (elValue, elType) = value match {
-  //          case grp: GroupElement => (ValueSerializer.serialize(grp), "GroupElement")
-  //          case bigInt: special.sigma.BigInt => (ValueSerializer.serialize(bigInt), "BigInt")
-  //          case bytes: Coll[Byte] => (ValueSerializer.serialize(???), "Coll[Byte]")
-  //          case any => ???
-  //        }
-  //        s"""{"name":"$name", "value":"${elValue.encodeHex}", "type":"${elType}"}"""
-  //    }
-  //  }
-
   def env_get = {
     $env.toArray.map{
       case (name, value) =>
         val (elValue, elType) = value match {
           case grp: GroupElement => (grp.getEncoded.toArray.encodeHex, "GroupElement")
           case bigInt: BigInt => (bigInt.toString(10), "BigInt")
-          // case bigInt: special.sigma.BigInt => (bigInt.toBytes.toArray.encodeHex, "BigInt")
-          case collByte: Array[Byte] => (DefaultTypeHandler.typeToString(collByte.getClass, collByte), "Coll[Byte]")
-          //case collCollByte: Array[Array[Byte]] => (DefaultTypeHandler.typeToString(collCollByte.getClass, collCollByte), "Coll[Coll[Byte]]")
+          case arrayByte: Array[Byte] => (DefaultTypeHandler.typeToString(arrayByte.getClass, arrayByte), "Coll[Byte]")
+          case arrayArrayByte: Array[Array[Byte]] => (DefaultTypeHandler.typeToString(arrayArrayByte.getClass, arrayArrayByte), "Coll[Coll[Byte]]")
           case any => (any.toString, any.getClass)
         }
         s"""{"name":"$name", "value":"${elValue}", "type":"${elType}"}"""
@@ -90,9 +78,8 @@ abstract class ErgoScript {
   }
 
   def $convertedEnv = {
-    $env.map{
-      case (key, value) => key -> getConvertedValue(value)
-    }
+    // use def because $env can be modified anytime and we need to use the latest one
+    $env.map{ case (key, value) => key -> getConvertedValue(value) }
   }
 
   def $compile(ergoScript:String):ErgoTree = {
@@ -132,15 +119,12 @@ abstract class ErgoScript {
     $env += name -> collBytes
   }
 
-  /* // not fully tested
-
-  def env_setCollCollByte(name:String, collCollBytes:Array[Array[Byte]]) = {
+  @deprecated("Not fully supported")
+  def $env_setCollCollByte(name:String, collCollBytes:Array[Array[Byte]]) = {
     val $name$ = "d"
     val $collCollBytes$ = "[0x1a2b3c4d5e6f,0xafbecddc12,0xa132]"
     $env += name -> collCollBytes
   }
-
-  */
 
   def compile(ergoScript:Text):ErgoTree = {
     val $ergoScript$:String = """
@@ -187,12 +171,27 @@ abstract class ErgoScript {
     Pay2SAddress(compile(ergoScript)).toString
   }
 
-  def $matchScript(scriptBytes: Array[Byte], keysToMatch:Array[String]) = {
-    val keyValsToMatch = keysToMatch.map{key =>
+  def $getKeysFromEnv(keys:Array[String]) = {
+    keys.map{key =>
       val value = $convertedEnv.get(key).getOrElse(throw new Exception(s"Environment does not contain key $key"))
       key -> value
     }
-    keyValsToMatch.foldLeft(scriptBytes.encodeHex)(
+  }
+  def $regex(scriptBytes: Array[Byte], keysToMatch:Array[String]) = {
+    val hex = scriptBytes.encodeHex
+    val startRegex = s"^$hex$$"
+    $getKeysFromEnv(keysToMatch).foldLeft(startRegex)(
+      (currRegex, y) => {
+        val (keyword, value) = y
+        val serialized:Array[Byte] = serialize(value)
+        val encodedValue = serialized.encodeHex
+        val replacement = s"[0-9a-fA-F]{${encodedValue.size}}"
+        currRegex.replace(encodedValue, replacement)
+      }
+    )
+  }
+  def $matchScript(scriptBytes: Array[Byte], keysToMatch:Array[String]) = {
+    $getKeysFromEnv(keysToMatch).foldLeft(scriptBytes.encodeHex)(
       (currStr, y) => {
         val (keyword, value) = y
 

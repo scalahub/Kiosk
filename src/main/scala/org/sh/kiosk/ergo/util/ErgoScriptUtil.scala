@@ -33,6 +33,8 @@ object ErgoScriptUtil {
     DefaultSerializer.serializeErgoTree(tree).encodeHex
   }
 
+  // converts from Scala's native types (such as Array[Byte], BigInt) to SigmaDsl types (such as SigmaDsl.BigInt, Coll[Byte])
+  // Scala's types are used for getting input from end-user and then this method is used to convert them to types that we will use
   def getConvertedValue(value:Any) = {
     value match {
       case bigInt:BigInt => SigmaDsl.BigInt(bigInt.bigInteger)
@@ -51,9 +53,13 @@ object ErgoScriptUtil {
     }
   }
 
+  /*
+    Serializes SigmaDsl data types. Note that it only accepts SigmaDsl types (such as Coll[Byte], etc) and Scala's native types (such as Array[Byte])
+     must be converted to SigmaDsl types first (using getConvertedValue method) before being passed to this method.
+   */
   def serialize(value:Any) = value match {
-    case grp: GroupElement => grp.getEncoded.toArray
-    case bigInt: special.sigma.BigInt => bigInt.toBytes.toArray
+    case grp: GroupElement => grp.getEncoded.toArray // ValueSerializer.serialize(grp)
+    case bigInt: special.sigma.BigInt => bigInt.toBytes.toArray // ValueSerializer.serialize(bigInt)
     case int: Int => ValueSerializer.serialize(int)
     case long: Long => ValueSerializer.serialize(long)
     case collByte: Coll[Byte] => collByte.toArray
