@@ -2,9 +2,11 @@ package org.sh.kiosk.ergo.util
 
 import java.security.SecureRandom
 
+import org.json.JSONObject
 import org.sh.cryptonode.ecc.ECCPubKey
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.cryptonode.util.StringUtil._
+import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.Values.ErgoTree
 import sigmastate.basics.SecP256K1
 import sigmastate.eval.SigmaDsl
@@ -29,7 +31,7 @@ object ErgoScriptUtil {
     DefaultSerializer.deserializeErgoTree(bytes)
   }
 
-  def ergoTreeTohex(tree:ErgoTree) = {
+  def ergoTreeToHex(tree:ErgoTree) = {
     DefaultSerializer.serializeErgoTree(tree).encodeHex
   }
 
@@ -40,14 +42,12 @@ object ErgoScriptUtil {
       case bigInt:BigInt => SigmaDsl.BigInt(bigInt.bigInteger)
       case int:Int => int
       case long:Long => long
-      case collBytes:Array[Byte] => sigmastate.eval.Colls.fromArray(collBytes)
-      /*
-    case collCollBytes:Array[Array[Byte]] =>
-      val collArray = collCollBytes.map{collBytes =>
-        sigmastate.eval.Colls.fromArray(collBytes)
-      }
-      sigmastate.eval.Colls.fromArray(collArray)
-       */
+      case arrayBytes:Array[Byte] => sigmastate.eval.Colls.fromArray(arrayBytes)
+      case arrayArrayBytes:Array[Array[Byte]] =>
+        val collArray = arrayArrayBytes.map{arrayBytes =>
+          sigmastate.eval.Colls.fromArray(arrayBytes)
+        }
+        sigmastate.eval.Colls.fromArray(collArray)
       case grp:GroupElement => grp
       case any => ???
     }
@@ -63,6 +63,7 @@ object ErgoScriptUtil {
     case int: Int => ValueSerializer.serialize(int)
     case long: Long => ValueSerializer.serialize(long)
     case collByte: Coll[Byte] => collByte.toArray
+    case ergoTree: ErgoTree => DefaultSerializer.serializeErgoTree(ergoTree)
     case any => ???
   }
 
@@ -71,6 +72,44 @@ object ErgoScriptUtil {
     val values = new Array[Byte](32)
     random.nextBytes(values)
     BigInt(values).mod(SecP256K1.q)
+  }
+
+
+  type Register = Array[Byte]
+  type Registers = Array[Register]
+  type ID = Array[Byte]
+  type Amount = Long
+
+  type Token = (ID, Amount)
+  type Tokens = Array[Token]
+
+  def $fromRegs(registers: Registers) = {
+    var ctr = 4
+    registers.map{register =>
+      val jo = new JSONObject()
+      val name = s"R$ctr"
+      jo.put(name, register.encodeHex)
+      ctr += 1
+      jo
+    }
+  }
+
+  def $fromTokens(tokens: Tokens) = {
+    var ctr = 0
+    tokens.map{token =>
+      val jo = new JSONObject()
+      val (id, amount) = token
+      jo.put("index", ctr)
+      jo.put("id", id)
+      jo.put("amount", amount)
+      ctr += 1
+      jo
+    }
+  }
+
+  case class Box(ergoTree: ErgoTree, registers: Registers, tokens: Tokens) extends JsonFormatted {
+    val keys = Array[String]("ergoTree", "registers", "tokens")
+    val vals = Array[Any](serialize(ergoTree).encodeHex, $fromRegs(registers), $fromTokens(tokens))
   }
 
 

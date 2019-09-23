@@ -17,6 +17,7 @@ object ErgoAPI {
 
   var $isMainNet = false
 
+  def info = $q("info", false, Get, Nil)
   def setMainNet(isMainNet:Boolean) = {
     val $isMainNet$ = "false"
     $isMainNet = isMainNet

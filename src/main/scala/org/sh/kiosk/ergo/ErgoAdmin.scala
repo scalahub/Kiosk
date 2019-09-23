@@ -5,7 +5,18 @@ import org.sh.kiosk.ergo.ErgoAPI._
 
 object ErgoAdmin extends App {
   //val objects = List(ErgoScript, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
-  val objects = List(ErgoScriptDemo, ErgoMix, InterestFreeLoan, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions) //, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
+  val objects = List(
+    ErgoScriptDemo,
+    InterestFreeLoan,
+    ErgoAPI,
+//    Peers,
+//    Wallet,
+//    Mining,
+//    Info,
+//    Utils,
+//    Transactions
+    ErgoMix
+  ) //, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
   new org.sh.easyweb.AutoWeb(objects, "ErgoDemo")
 }
 
@@ -83,9 +94,15 @@ object Wallet {
     )
   }
 
-//  def balances_with_unconfirmed= $q("wallet/balances/with_unconfirmed", true, Get, Nil)
+  //  def balances_with_unconfirmed= $q("wallet/balances/with_unconfirmed", true, Get, Nil)
 
   def addresses = $q("wallet/addresses", true, Get, Nil)
+
+  def $generate() = {
+    // to do
+    ???
+  }
+
 
 //  def p2s_address(source: Text) =
 //    $q("wallet/p2s_address", true, PostJson, Seq("source" -> source.getText))
@@ -119,9 +136,9 @@ object Mining {
   }
 }
 
-object Info {
-  def info = $q("info", false, Get, Nil)
-}
+//object Info {
+//  def info = $q("info", false, Get, Nil)
+//}
 
 object Utils {
   def seed = $q("utils/seed", false, Get, Nil, None)

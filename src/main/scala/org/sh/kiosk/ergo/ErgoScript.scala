@@ -4,6 +4,7 @@ import java.security.SecureRandom
 
 import org.ergoplatform.ErgoAddressEncoder.{MainnetNetworkPrefix, TestnetNetworkPrefix}
 import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress, Pay2SHAddress}
+import org.json.JSONObject
 import org.sh.cryptonode.ecc.{ECCPubKey, Point}
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.cryptonode.util.StringUtil._
@@ -17,6 +18,7 @@ import org.sh.kiosk.ergo.util.ErgoScriptUtil._
 import special.collection.Coll
 import org.sh.easyweb.Text
 import org.sh.reflect.DefaultTypeHandler
+import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.serialization.ValueSerializer
 
 object ErgoScriptDemo extends ErgoScript {
@@ -41,12 +43,12 @@ object ErgoScriptDemo extends ErgoScript {
 
 abstract class ErgoScript {
   DefaultTypeHandler.addType[GroupElement](classOf[GroupElement], hexToGroupElement, groupElementToHex)
-  DefaultTypeHandler.addType[ErgoTree](classOf[ErgoTree], hexToErgoTree, ergoTreeTohex)
+  DefaultTypeHandler.addType[ErgoTree](classOf[ErgoTree], hexToErgoTree, ergoTreeToHex)
 
   // any variable/method starting with $ will not appear in front-end.
   // so any variable to be hidden from front-end is prefixed with $
 
-  var $env:Map[String, Any] = Map()
+  private var $scala_env:Map[String, Any] = Map()
 
   def $networkPrefix = if (ErgoAPI.$isMainNet) MainnetNetworkPrefix else TestnetNetworkPrefix
   def $compiler = SigmaCompiler($networkPrefix)
@@ -64,7 +66,7 @@ abstract class ErgoScript {
   }
 
   def env_get = {
-    $env.toArray.map{
+    $scala_env.toArray.map{
       case (name, value) =>
         val (elValue, elType) = value match {
           case grp: GroupElement => (grp.getEncoded.toArray.encodeHex, "GroupElement")
@@ -77,53 +79,53 @@ abstract class ErgoScript {
     }
   }
 
-  def $convertedEnv = {
-    // use def because $env can be modified anytime and we need to use the latest one
-    $env.map{ case (key, value) => key -> getConvertedValue(value) }
+  def $env = {
+    // use def because $scala_env can be modified anytime and we need to use the latest one
+    $scala_env.map{ case (key, value) => key -> getConvertedValue(value) }
   }
 
   def $compile(ergoScript:String):ErgoTree = {
     import sigmastate.lang.Terms._
-    $compiler.compile($convertedEnv, ergoScript).asSigmaProp
+    $compiler.compile($env, ergoScript).asSigmaProp
   }
 
   def env_setGroupElement(name:String, groupElement: GroupElement) = {
     val $INFO$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
     val $name$ = "g"
     val $groupElement$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
-    $env += name -> groupElement
+    $scala_env += name -> groupElement
     groupElement
   }
 
   def env_clear = {
-    $env = Map()
+    $scala_env = Map()
   }
   def env_setBigInt(name:String, bigInt:BigInt) = {
     val $name$ = "b"
     val $bigInt$ = "123456789012345678901234567890123456789012345678901234567890"
-    $env += name -> bigInt
+    $scala_env += name -> bigInt
   }
   def env_setLong(name:String, long:Long) = {
     val $name$ = "long"
     val $long$ = "12345678901112"
-    $env += name -> long
+    $scala_env += name -> long
   }
   def env_setInt(name:String, int:Int) = {
     val $name$ = "long"
     val $int$ = "123456789"
-    $env += name -> int
+    $scala_env += name -> int
   }
   def env_setCollByte(name:String, collBytes:Array[Byte]) = {
     val $name$ = "c"
     val $collBytes$ = "0x1a2b3c4d5e6f"
-    $env += name -> collBytes
+    $scala_env += name -> collBytes
   }
 
   @deprecated("Not fully supported")
-  def $env_setCollCollByte(name:String, collCollBytes:Array[Array[Byte]]) = {
+  def $scala_env_setCollCollByte(name:String, collCollBytes:Array[Array[Byte]]) = {
     val $name$ = "d"
     val $collCollBytes$ = "[0x1a2b3c4d5e6f,0xafbecddc12,0xa132]"
-    $env += name -> collCollBytes
+    $scala_env += name -> collCollBytes
   }
 
   def compile(ergoScript:Text):ErgoTree = {
@@ -173,7 +175,7 @@ abstract class ErgoScript {
 
   def $getKeysFromEnv(keys:Array[String]) = {
     keys.map{key =>
-      val value = $convertedEnv.get(key).getOrElse(throw new Exception(s"Environment does not contain key $key"))
+      val value = $env.get(key).getOrElse(throw new Exception(s"Environment does not contain key $key"))
       key -> value
     }
   }
@@ -190,7 +192,7 @@ abstract class ErgoScript {
       }
     )
   }
-  def $matchScript(scriptBytes: Array[Byte], keysToMatch:Array[String]) = {
+  def $matchScript(scriptBytes: Array[Byte], keysToMatch:Array[String]):String = {
     $getKeysFromEnv(keysToMatch).foldLeft(scriptBytes.encodeHex)(
       (currStr, y) => {
         val (keyword, value) = y
@@ -205,7 +207,60 @@ abstract class ErgoScript {
         currStr.replace(encodedValue, replacement)
       }
     )
+  }
 
+  var $boxes:Map[String, Box] = Map() // boxName -> Box
+
+  def box_delete(boxName:String) = {
+    if (!$boxes.contains(boxName)) throw new Exception(s"Name $boxName does not exist.")
+    $boxes -= boxName
+  }
+
+  def box_deleteAll = {$boxes = Map()}
+
+  def box_create(boxName:String, ergoScript:Text, registerKeys:Array[String], tokenIDs:Array[Array[Byte]], tokenAmts:Array[Long]) = {
+    val $boxName$ = "box1"
+    val $ergoScript$ = """{
+  val x = blake2b256(c)
+  b == 1234.toBigInt &&
+  c == x
+}"""
+    val $registerKeys$ = "[b,c]"
+    val $tokenIDs$ = "[]"
+    val $tokenAmts$ = "[]"
+
+    if ($boxes.contains(boxName)) throw new Exception(s"Name $boxName already exists. Use a different name")
+    require(tokenIDs.size == tokenAmts.size, s"Number of tokenIDs (${tokenIDs.size}) does not match number of amounts (${tokenAmts.size})")
+    val availableKeys = $scala_env.keys.foldLeft("")(_ + " "+ _)
+    val registers:Registers = registerKeys.map{key =>
+      val value = $env.get(key).getOrElse(throw new Exception(s"Key $key not found in environment. Available keys [$availableKeys]"))
+      serialize(value)
+    }
+    val tokens:Tokens = tokenIDs zip tokenAmts
+    $boxes += (boxName -> Box(compile(ergoScript), registers, tokens))
+  }
+
+  def tx_create(inBoxBytes:Array[Array[Byte]], outBoxNames:Array[String]) = {
+    val $inBoxBytes$ = "[]"
+    val $outBoxNames$ = "[box1]"
+    val outBoxes = outBoxNames.map{boxName =>
+      $boxes.get(boxName).getOrElse(throw new Exception(s"No such box $boxName"))
+    }
+
+  }
+
+  def box_getAll: Array[JsonFormatted] = {
+    $boxes.map{
+      case (name, box) =>
+      new JsonFormatted {
+        override val keys: Array[String] = Array("name") ++ box.keys
+        override val vals: Array[Any] = Array(name) ++ box.vals
+      }
+    }.toArray
+  }
+
+  def box_get(boxName:String) = {
+    $boxes.get(boxName)
   }
 
 }
