@@ -64,6 +64,34 @@ abstract class ErgoScript {
     }
     sigmastate.eval.Colls.fromArray(collArray)
   }
+  def box_create(boxName:String, ergoScript:Text, registerKeys:Array[String], tokenIDs:Array[Array[Byte]], tokenAmts:Array[Long], useP2S:Boolean, value:Long) = {
+    val $INFO$ = "If use P2S is false then it will use P2SH address"
+    val $boxName$ = "box1"
+    val $useP2S$ = "false"
+    val $value$ = "1"
+    val $ergoScript$ = """{
+  val x = blake2b256(c)
+  b == 1234.toBigInt &&
+  c == x
+}"""
+    val $registerKeys$ = "[b,c]"
+    val $tokenIDs$ = "[]"
+    val $tokenAmts$ = "[]"
+//    val useP2S:Boolean = false
+
+    if ($boxes.contains(boxName)) throw new Exception(s"Name $boxName already exists. Use a different name")
+    require(tokenIDs.size == tokenAmts.size, s"Number of tokenIDs (${tokenIDs.size}) does not match number of amounts (${tokenAmts.size})")
+    val availableKeys = $scala_env.keys.foldLeft("")(_ + " "+ _)
+    val registers:Registers = registerKeys.map{key =>
+      val value = $env.get(key).getOrElse(throw new Exception(s"Key $key not found in environment. Available keys [$availableKeys]"))
+      serialize(value)
+    }
+    val tokens:Tokens = tokenIDs zip tokenAmts
+    val ergoTree = compile(ergoScript)
+    val address = if (useP2S) Pay2SAddress(ergoTree).toString else  Pay2SHAddress(ergoTree).toString
+    $boxes += (boxName -> Box(address, value, registers, tokens))
+  }
+
 
   def env_get = {
     $scala_env.toArray.map{
@@ -192,6 +220,7 @@ abstract class ErgoScript {
       }
     )
   }
+
   def $matchScript(scriptBytes: Array[Byte], keysToMatch:Array[String]):String = {
     $getKeysFromEnv(keysToMatch).foldLeft(scriptBytes.encodeHex)(
       (currStr, y) => {
@@ -218,28 +247,6 @@ abstract class ErgoScript {
 
   def box_deleteAll = {$boxes = Map()}
 
-  def box_create(boxName:String, ergoScript:Text, registerKeys:Array[String], tokenIDs:Array[Array[Byte]], tokenAmts:Array[Long]) = {
-    val $boxName$ = "box1"
-    val $ergoScript$ = """{
-  val x = blake2b256(c)
-  b == 1234.toBigInt &&
-  c == x
-}"""
-    val $registerKeys$ = "[b,c]"
-    val $tokenIDs$ = "[]"
-    val $tokenAmts$ = "[]"
-
-    if ($boxes.contains(boxName)) throw new Exception(s"Name $boxName already exists. Use a different name")
-    require(tokenIDs.size == tokenAmts.size, s"Number of tokenIDs (${tokenIDs.size}) does not match number of amounts (${tokenAmts.size})")
-    val availableKeys = $scala_env.keys.foldLeft("")(_ + " "+ _)
-    val registers:Registers = registerKeys.map{key =>
-      val value = $env.get(key).getOrElse(throw new Exception(s"Key $key not found in environment. Available keys [$availableKeys]"))
-      serialize(value)
-    }
-    val tokens:Tokens = tokenIDs zip tokenAmts
-    $boxes += (boxName -> Box(compile(ergoScript), registers, tokens))
-  }
-
   def tx_create(inBoxBytes:Array[Array[Byte]], outBoxNames:Array[String]) = {
     val $inBoxBytes$ = "[]"
     val $outBoxNames$ = "[box1]"
@@ -247,6 +254,56 @@ abstract class ErgoScript {
       $boxes.get(boxName).getOrElse(throw new Exception(s"No such box $boxName"))
     }
 
+    /*
+{
+  "requests": [
+    {
+      "address": "3WwbzW6u8hKWBcL1W7kNVMr25s2UHfSBnYtwSHvrRQt7DdPuoXrt",
+      "value": 1,
+      "assets": [
+        {
+          "tokenId": "4ab9da11fc216660e974842cc3b7705e62ebb9e0bf5ff78e53f9cd40abadd117",
+          "amount": 1000
+        }
+      ],
+      "registers": {
+        "R4": "100204a00b08cd0336100ef59ced80ba5f89c4178ebd57b6c1dd0f3d135ee1db9f62fc634d637041ea02d192a39a8cc7a70173007301"
+      }
+    }, {...}
+    ]
+
+     */
+
+    //case class Box(address:String, value:Long, registers: Registers, tokens: Tokens) extends JsonFormatted {
+    def registerJson(id:Int, register:Register) = {
+      s""""R$id":"${register.encodeHex}""""
+    }
+
+    def assetStr(token:Token):String = {
+      val (id, amt) = token
+      s"""{"tokenId":"${id.encodeHex}","amount":$amt}""".stripMargin
+    }
+
+    def getBoxJson(b:Box) = {
+      val assetJson = b.tokens.map(assetStr).mkString(",")
+      val registersJson = b.registers.zipWithIndex.map{case (data, id) => registerJson(id+4, data)}.mkString(",")
+      s"""{"address":"${b.address}","value":${b.value},"assets":[$assetJson],"registers":{$registersJson}}""".stripMargin
+    }
+
+    val request = outBoxes.map(getBoxJson ).mkString(",")
+    val json = s"""{"requests":[$request],"inputsRaw":["string"]}"""
+
+//    val test = """{"requests":[{"address":"3WwbzW6u8hKWBcL1W7kNVMr25s2UHfSBnYtwSHvrRQt7DdPuoXrt","value":1,"assets":[{"tokenId":"4ab9da11fc216660e974842cc3b7705e62ebb9e0bf5ff78e53f9cd40abadd117","amount":1000}],"registers":{"R4":"100204a00b08cd0336100ef59ced80ba5f89c4178ebd57b6c1dd0f3d135ee1db9f62fc634d637041ea02d192a39a8cc7a70173007301"}}],"fee":1000000,"inputsRaw":["string"]}"""
+//    val j = test.replace("\"", "\\\"")
+//    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(j))
+//    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(test))
+//    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(j))
+//    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(json.replace("\"", "\\\""))
+
+    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(json))
+    Array(r, json)
+//    Array(r, test)
+//    Array(r, j)
   }
 
   def box_getAll: Array[JsonFormatted] = {

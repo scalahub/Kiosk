@@ -28,7 +28,7 @@ object Peers {
 
   def connected = $q("peers/connected", false, Get, Nil)
 
-  def connect(url:String) = $q("peers/connect", false, PostJsonRaw, Nil, Some(url))
+  def connect(url:String) = $q("peers/connect", false, PostJsonRaw, Nil, Some(s""""$url""""))
 }
 
 object Wallet {
@@ -48,7 +48,7 @@ object Wallet {
   def lock = $q("wallet/lock", true, Get, Nil)
 
   def deriveKey(derivationPath:String) = {
-    $q("wallet/deriveKey", true, PostJson, Seq("derivationPath" -> derivationPath))
+    ErgoAPI.$q("wallet/deriveKey", true, PostJson, Seq("derivationPath" -> derivationPath))
   }
 
   def deriveNextKey = {
@@ -147,7 +147,8 @@ object Utils {
 
   def seed_length(length:String) = $q(s"utils/seed/$length", false, Get, Nil, None)
 
-  def blake2b(input:String) = $q("utils/hash/blake2b", false, PostJsonRaw, Nil, Some(input))
+  def blake2b(input:String) = $q("utils/hash/blake2b", false, PostJsonRaw, Nil, Some(s""""$input""""))
+
 }
 
 object Transactions {

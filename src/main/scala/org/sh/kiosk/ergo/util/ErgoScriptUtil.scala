@@ -7,11 +7,12 @@ import org.sh.cryptonode.ecc.ECCPubKey
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.cryptonode.util.StringUtil._
 import org.sh.utils.json.JSONUtil.JsonFormatted
-import sigmastate.Values.ErgoTree
+import sigmastate.Values.{ByteArrayConstant, ErgoTree, Value}
 import sigmastate.basics.SecP256K1
 import sigmastate.eval.SigmaDsl
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
-import sigmastate.serialization.ValueSerializer
+import sigmastate.serialization.{DataSerializer, OpCodes, SigmaSerializer, ValueSerializer}
+import sigmastate.utils.SigmaByteWriter
 import special.collection.Coll
 import special.sigma.GroupElement
 
@@ -58,11 +59,13 @@ object ErgoScriptUtil {
      must be converted to SigmaDsl types first (using getConvertedValue method) before being passed to this method.
    */
   def serialize(value:Any) = value match {
-    case grp: GroupElement => grp.getEncoded.toArray // ValueSerializer.serialize(grp)
-    case bigInt: special.sigma.BigInt => bigInt.toBytes.toArray // ValueSerializer.serialize(bigInt)
+    case grp: GroupElement => ValueSerializer.serialize(grp) //grp.getEncoded.toArray // ValueSerializer.serialize(grp)
+    case bigInt: special.sigma.BigInt => ValueSerializer.serialize(bigInt) // bigInt.toBytes.toArray // ValueSerializer.serialize(bigInt)
     case int: Int => ValueSerializer.serialize(int)
     case long: Long => ValueSerializer.serialize(long)
-    case collByte: Coll[Byte] => collByte.toArray
+    case collByte: Coll[Byte] =>
+      //Array[Byte](0x0e,collByte.size.toByte)++collByte.toArray
+      sigmastate.serialization.ValueSerializer.serialize(ByteArrayConstant(collByte))
     case ergoTree: ErgoTree => DefaultSerializer.serializeErgoTree(ergoTree)
     case any => ???
   }
@@ -107,9 +110,9 @@ object ErgoScriptUtil {
     }
   }
 
-  case class Box(ergoTree: ErgoTree, registers: Registers, tokens: Tokens) extends JsonFormatted {
-    val keys = Array[String]("ergoTree", "registers", "tokens")
-    val vals = Array[Any](serialize(ergoTree).encodeHex, $fromRegs(registers), $fromTokens(tokens))
+  case class Box(address:String, value:Long, registers: Registers, tokens: Tokens) extends JsonFormatted {
+    val keys = Array[String]("address", "value", "registers", "tokens")
+    val vals = Array[Any](address, value, $fromRegs(registers), $fromTokens(tokens))
   }
 
 

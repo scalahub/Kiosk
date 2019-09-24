@@ -6,14 +6,20 @@ case class ReqType(text:String)
 
 object Post extends ReqType(post)
 object Get extends ReqType(get)
+
+/*
+Below for
+ */
 object PostJson extends ReqType(postJson)
+
+
 object PostJsonRaw extends ReqType(postJsonRaw)
 
 
 object ErgoAPI {
   // vars, vals and defs starting with '$' won't appear in HTML
   var $apiKey = "hello"
-  var $baseUrl = "http://192.168.0.123:9052/"
+  var $baseUrl = "http://localhost:9052/"
 
   var $isMainNet = false
 
