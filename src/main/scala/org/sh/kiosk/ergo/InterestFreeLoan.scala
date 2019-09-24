@@ -31,9 +31,10 @@ object InterestFreeLoan {
   val $euroTokenID:Array[Byte] = Blake2b256("euro").toArray
 
 
-  val $ergoScript = new ErgoScript {}
-  $ergoScript.env_setCollByte("rateOracleTokenID", $rateOracleTokenID)
-  $ergoScript.env_setCollByte("euroTokenID", $euroTokenID)
+  val $env = new Env
+  val $ergoScript = new ErgoScript($env) {}
+  $ergoScript.$myEnv.setCollByte("rateOracleTokenID", $rateOracleTokenID)
+  $ergoScript.$myEnv.setCollByte("euroTokenID", $euroTokenID)
 
   // borrower
   val $alicePrivateKey = getRandomBigInt
@@ -43,11 +44,11 @@ object InterestFreeLoan {
   val $bobPrivateKey = getRandomBigInt
   val bob = hexToGroupElement($ergoScript.$getGroupElement($bobPrivateKey))
 
-  $ergoScript.env_setGroupElement("alice", alice)
-  $ergoScript.env_setGroupElement("bob", bob)
-  $ergoScript.env_setInt("startRate", $startRate)
+  $ergoScript.$myEnv.setGroupElement("alice", alice)
+  $ergoScript.$myEnv.setGroupElement("bob", bob)
+  $ergoScript.$myEnv.setInt("startRate", $startRate)
 
-  val env = $ergoScript.env_get
+  val env = $ergoScript.$myEnv.getAll
   val ergoScript =
     """{
       |  val dataInput = CONTEXT.dataInputs(0)
@@ -69,11 +70,11 @@ object InterestFreeLoan {
   val $ergoTree = $ergoScript.$compile(ergoScript)
 
   val serializedScript = {
-    $ergoScript.$env.map{
+    $ergoScript.$myEnv.$getEnv.map{
       case (keyword, value) =>
         keyword + " = " + serialize(value).encodeHex
     }.toArray ++ Array(
-      $ergoScript.$matchScript(DefaultSerializer.serializeErgoTree($ergoTree), $ergoScript.$env.keys.toArray).grouped(120).mkString("\n")
+      $ergoScript.$matchScript(DefaultSerializer.serializeErgoTree($ergoTree), $ergoScript.$myEnv.$getEnv.keys.toArray).grouped(120).mkString("\n")
     )
   }
   import $ergoScript.$ergoAddressEncoder

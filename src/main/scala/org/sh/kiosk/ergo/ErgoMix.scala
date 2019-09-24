@@ -37,7 +37,8 @@ object ErgoMix {
       |  }
       |}""".stripMargin
 
-  val $ergoScript = new ErgoScript {}
+  val $env = new Env
+  val $ergoScript = new ErgoScript($env) {}
   // any variable/method starting with $ will not appear in front-end.
   // so any variable to be hidden from front-end is prefixed with $
 
@@ -61,11 +62,11 @@ object ErgoMix {
 
   }
 
-  val $myEnv = Map("g" -> $g, "gX" -> $gX)
+  val $envMap = Map("g" -> $g, "gX" -> $gX)
 
   // ergoscript binary
   def getScripts = {
-    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes($halfMixScriptSource, $fullMixScriptSource, $myEnv)
+    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes($halfMixScriptSource, $fullMixScriptSource, $envMap)
     Array(
       s"gX = ${$gX_encoded}",
       s"halfMixScript = ${halfMixScriptBytes.encodeHex}".grouped(120).mkString("\n"),
@@ -76,14 +77,14 @@ object ErgoMix {
   // ergoscript binary matched with env
   def getScriptsMatched(useRegex:Boolean) = {
     val $useRegex$ = "false"
-    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes($halfMixScriptSource, $fullMixScriptSource, $myEnv)
+    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes($halfMixScriptSource, $fullMixScriptSource, $envMap)
     val f:(Array[Byte], Array[String]) => String = if (useRegex) $ergoScript.$regex else $ergoScript.$matchScript
-    $ergoScript.$env.collect{
+    $ergoScript.$myEnv.$getEnv.collect{
       case (keyword, value:GroupElement) =>
         keyword + " = " + value.getEncoded.toArray.encodeHex
     }.toArray ++ Array(
-      ("halfMixScript = "+f(halfMixScriptBytes, $ergoScript.$env.keys.toArray)).grouped(120).mkString("\n"),
-      ("fullMixScript = "+f(fullMixScriptBytes, $ergoScript.$env.keys.toArray)).grouped(120).mkString("\n")
+      ("halfMixScript = "+f(halfMixScriptBytes, $ergoScript.$myEnv.$getEnv.keys.toArray)).grouped(120).mkString("\n"),
+      ("fullMixScript = "+f(fullMixScriptBytes, $ergoScript.$myEnv.$getEnv.keys.toArray)).grouped(120).mkString("\n")
     )
   }
 
@@ -104,14 +105,14 @@ object ErgoMix {
   }
 
   def $getRawScripts(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
-    $ergoScript.env_clear
+    $ergoScript.$myEnv.deleteAll
     env.foreach{
-      case (name, value) => $ergoScript.env_setGroupElement(name, value)
+      case (name, value) => $ergoScript.$myEnv.setGroupElement(name, value)
     }
     val fullMixTree = $ergoScript.$compile(fullMixScriptSource)
     val fullMixScriptBytes = DefaultSerializer.serializeErgoTree(fullMixTree)
     val fullMixScriptHash = scorex.crypto.hash.Blake2b256(fullMixScriptBytes)
-    $ergoScript.env_setCollByte("fullMixScriptHash", fullMixScriptHash)
+    $ergoScript.$myEnv.setCollByte("fullMixScriptHash", fullMixScriptHash)
     val halfMixTree = $ergoScript.$compile(halfMixScriptSource)
     (halfMixTree, fullMixTree)
   }

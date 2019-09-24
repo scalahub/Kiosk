@@ -6,6 +6,7 @@ import org.json.JSONObject
 import org.sh.cryptonode.ecc.ECCPubKey
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.cryptonode.util.StringUtil._
+import org.sh.reflect.DefaultTypeHandler
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.Values.{ByteArrayConstant, ErgoTree, Value}
 import sigmastate.basics.SecP256K1
@@ -17,6 +18,19 @@ import special.collection.Coll
 import special.sigma.GroupElement
 
 object ErgoScriptUtil {
+  DefaultTypeHandler.addType[GroupElement](classOf[GroupElement], hexToGroupElement, groupElementToHex)
+  DefaultTypeHandler.addType[ErgoTree](classOf[ErgoTree], hexToErgoTree, ergoTreeToHex)
+
+
+  @deprecated("Unused as of now", "27 Aug 2019")
+  def arrArrByteToCollCollByte(a:Array[Array[Byte]]) = {
+    val collArray = a.map{colByte =>
+      sigmastate.eval.Colls.fromArray(colByte)
+    }
+    sigmastate.eval.Colls.fromArray(collArray)
+  }
+
+  def arrByteToCollByte(a:Array[Byte]) = sigmastate.eval.Colls.fromArray(a)
   def hexToGroupElement(hex:String) = {
     val point = ECCPubKey(hex).point
     val secp256k1Point = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)

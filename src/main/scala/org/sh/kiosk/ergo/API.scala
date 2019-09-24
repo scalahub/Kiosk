@@ -16,7 +16,7 @@ object PostJson extends ReqType(postJson)
 object PostJsonRaw extends ReqType(postJsonRaw)
 
 
-object ErgoAPI {
+object API {
   // vars, vals and defs starting with '$' won't appear in HTML
   var $apiKey = "hello"
   var $baseUrl = "http://localhost:9052/"
@@ -39,6 +39,19 @@ object ErgoAPI {
   }
 
   def getUrl = $baseUrl
+
+  def initWallet(pass: String, optional_mnemonicPass: Option[String]) = $q("wallet/init", true, PostJson,
+    Seq("pass" -> pass) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
+  )
+  //def restoreWallet(pass: String, mnemonic: String, optional_mnemonicPass: Option[String]) = $q("wallet/restore", true, PostJson,
+    //Seq("pass" -> pass, "mnemonic" -> mnemonic) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
+  //)
+
+  def unlockWallet(pass: String) = $q("wallet/unlock", true, PostJson,
+    Seq("pass" -> pass)
+  )
+
+  //def lockWallet = $q("wallet/lock", true, Get, Nil)
 
   def $authHeader = Array(
     ("accept", "application/json"),

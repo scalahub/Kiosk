@@ -1,21 +1,23 @@
 package org.sh.kiosk.ergo
 
 import org.sh.easyweb.Text
-import org.sh.kiosk.ergo.ErgoAPI._
+import org.sh.kiosk.ergo.API._
 
-object ErgoAdmin extends App {
+object Admin extends App {
   //val objects = List(ErgoScript, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
+
   val objects = List(
-    ErgoScriptDemo,
-    InterestFreeLoan,
-    ErgoAPI,
+    ErgoEnv,
+    PlayGround,
+//    InterestFreeLoan,
 //    Peers,
 //    Wallet,
 //    Mining,
 //    Info,
 //    Utils,
 //    Transactions
-    ErgoMix
+//    ErgoMix,
+    API
   ) //, ErgoAPI, Peers, Wallet, Mining, Info, Utils, Transactions)
   new org.sh.easyweb.AutoWeb(objects, "ErgoDemo")
 }
@@ -33,22 +35,22 @@ object Peers {
 
 object Wallet {
   // vars, vals and defs starting with '' won't appear in HTML
-  def init(pass: String, optional_mnemonicPass: Option[String]) = $q("wallet/init", true, PostJson,
-    Seq("pass" -> pass) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
-  )
+  //  def init(pass: String, optional_mnemonicPass: Option[String]) = $q("wallet/init", true, PostJson,
+  //    Seq("pass" -> pass) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
+  //  )
 
-  def restore(pass: String, mnemonic: String, optional_mnemonicPass: Option[String]) = $q("wallet/restore", true, PostJson,
-    Seq("pass" -> pass, "mnemonic" -> mnemonic) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
-  )
-
-  def unlock(pass: String) = $q("wallet/unlock", true, PostJson,
-    Seq("pass" -> pass)
-  )
-
-  def lock = $q("wallet/lock", true, Get, Nil)
+  //  def restore(pass: String, mnemonic: String, optional_mnemonicPass: Option[String]) = $q("wallet/restore", true, PostJson,
+  //    Seq("pass" -> pass, "mnemonic" -> mnemonic) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
+  //  )
+  //
+  //  def unlock(pass: String) = $q("wallet/unlock", true, PostJson,
+  //    Seq("pass" -> pass)
+  //  )
+  //
+  //  def lock = $q("wallet/lock", true, Get, Nil)
 
   def deriveKey(derivationPath:String) = {
-    ErgoAPI.$q("wallet/deriveKey", true, PostJson, Seq("derivationPath" -> derivationPath))
+    $q("wallet/deriveKey", true, PostJson, Seq("derivationPath" -> derivationPath))
   }
 
   def deriveNextKey = {
@@ -97,12 +99,6 @@ object Wallet {
   //  def balances_with_unconfirmed= $q("wallet/balances/with_unconfirmed", true, Get, Nil)
 
   def addresses = $q("wallet/addresses", true, Get, Nil)
-
-  def $generate() = {
-    // to do
-    ???
-  }
-
 
 //  def p2s_address(source: Text) =
 //    $q("wallet/p2s_address", true, PostJson, Seq("source" -> source.getText))

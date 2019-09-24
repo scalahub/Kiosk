@@ -21,12 +21,13 @@ import org.sh.reflect.DefaultTypeHandler
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.serialization.ValueSerializer
 
-object ErgoScriptDemo extends ErgoScript {
-  env_setBigInt("b", BigInt("123456789012345678901234567890123456789012345678901234567890"))
-  env_setCollByte("c", "0x1a2b3c4d5e6f".decodeHex)
-  env_setGroupElement("g", hexToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
+object ErgoEnv extends Env
+object PlayGround extends ErgoScript(ErgoEnv) {
+  ErgoEnv.setBigInt("b", BigInt("123456789012345678901234567890123456789012345678901234567890"))
+  ErgoEnv.setCollByte("c", "0x1a2b3c4d5e6f".decodeHex)
+  ErgoEnv.setGroupElement("g", hexToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
 
-  def getPattern(ergoScript: Text, keysToMatch:Array[String], useRegex:Boolean) = {
+  def $getPattern(ergoScript: Text, keysToMatch:Array[String], useRegex:Boolean) = {
     val $useRegex$ = "false"
     val $keysToMatch$ = "[b, c]"
     val $ergoScript$ = """{
@@ -34,41 +35,27 @@ object ErgoScriptDemo extends ErgoScript {
   b == 1234.toBigInt &&
   c == x
 }"""
-    val f:(Array[Byte], Array[String]) => String = if (useRegex) $regex else $matchScript
+    val f:(Array[Byte], Array[String]) => String = if (useRegex) $myEnv.$regex else $myEnv.$matchScript
 
     f(DefaultSerializer.serializeErgoTree($compile(ergoScript.getText)), keysToMatch: Array[String])
   }
 
 }
 
-abstract class ErgoScript {
-  DefaultTypeHandler.addType[GroupElement](classOf[GroupElement], hexToGroupElement, groupElementToHex)
-  DefaultTypeHandler.addType[ErgoTree](classOf[ErgoTree], hexToErgoTree, ergoTreeToHex)
-
+class ErgoScript(val $myEnv:Env) {
   // any variable/method starting with $ will not appear in front-end.
   // so any variable to be hidden from front-end is prefixed with $
-
-  private var $scala_env:Map[String, Any] = Map()
-
-  def $networkPrefix = if (ErgoAPI.$isMainNet) MainnetNetworkPrefix else TestnetNetworkPrefix
+  import $myEnv._
+  def $networkPrefix = if (API.$isMainNet) MainnetNetworkPrefix else TestnetNetworkPrefix
   def $compiler = SigmaCompiler($networkPrefix)
   implicit val $irContext = new CompiletimeIRContext
   implicit val $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder($networkPrefix)
 
-  def $arrByteToCollByte(a:Array[Byte]) = sigmastate.eval.Colls.fromArray(a)
-
-  @deprecated("Unused as of now", "27 Aug 2019")
-  def $arrArrByteToCollCollByte(a:Array[Array[Byte]]) = {
-    val collArray = a.map{colByte =>
-      sigmastate.eval.Colls.fromArray(colByte)
-    }
-    sigmastate.eval.Colls.fromArray(collArray)
-  }
   def box_create(boxName:String, ergoScript:Text, registerKeys:Array[String], tokenIDs:Array[Array[Byte]], tokenAmts:Array[Long], useP2S:Boolean, value:Long) = {
     val $INFO$ = "If use P2S is false then it will use P2SH address"
     val $boxName$ = "box1"
     val $useP2S$ = "false"
-    val $value$ = "1"
+    val $value$ = "10000"
     val $ergoScript$ = """{
   val x = blake2b256(c)
   b == 1234.toBigInt &&
@@ -77,86 +64,27 @@ abstract class ErgoScript {
     val $registerKeys$ = "[b,c]"
     val $tokenIDs$ = "[]"
     val $tokenAmts$ = "[]"
-//    val useP2S:Boolean = false
 
     if ($boxes.contains(boxName)) throw new Exception(s"Name $boxName already exists. Use a different name")
     require(tokenIDs.size == tokenAmts.size, s"Number of tokenIDs (${tokenIDs.size}) does not match number of amounts (${tokenAmts.size})")
-    val availableKeys = $scala_env.keys.foldLeft("")(_ + " "+ _)
+    val availableKeys = $myEnv.$scala_env.keys.foldLeft("")(_ + " "+ _)
     val registers:Registers = registerKeys.map{key =>
-      val value = $env.get(key).getOrElse(throw new Exception(s"Key $key not found in environment. Available keys [$availableKeys]"))
+      val value = $myEnv.$getEnv.get(key).getOrElse(throw new Exception(s"Key $key not found in environment. Available keys [$availableKeys]"))
       serialize(value)
     }
     val tokens:Tokens = tokenIDs zip tokenAmts
-    val ergoTree = compile(ergoScript)
+    val ergoTree = $compile(ergoScript)
     val address = if (useP2S) Pay2SAddress(ergoTree).toString else  Pay2SHAddress(ergoTree).toString
     $boxes += (boxName -> Box(address, value, registers, tokens))
   }
 
 
-  def env_get = {
-    $scala_env.toArray.map{
-      case (name, value) =>
-        val (elValue, elType) = value match {
-          case grp: GroupElement => (grp.getEncoded.toArray.encodeHex, "GroupElement")
-          case bigInt: BigInt => (bigInt.toString(10), "BigInt")
-          case arrayByte: Array[Byte] => (DefaultTypeHandler.typeToString(arrayByte.getClass, arrayByte), "Coll[Byte]")
-          case arrayArrayByte: Array[Array[Byte]] => (DefaultTypeHandler.typeToString(arrayArrayByte.getClass, arrayArrayByte), "Coll[Coll[Byte]]")
-          case any => (any.toString, any.getClass)
-        }
-        s"""{"name":"$name", "value":"${elValue}", "type":"${elType}"}"""
-    }
-  }
-
-  def $env = {
-    // use def because $scala_env can be modified anytime and we need to use the latest one
-    $scala_env.map{ case (key, value) => key -> getConvertedValue(value) }
-  }
-
   def $compile(ergoScript:String):ErgoTree = {
     import sigmastate.lang.Terms._
-    $compiler.compile($env, ergoScript).asSigmaProp
+    $compiler.compile($myEnv.$getEnv, ergoScript).asSigmaProp
   }
 
-  def env_setGroupElement(name:String, groupElement: GroupElement) = {
-    val $INFO$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
-    val $name$ = "g"
-    val $groupElement$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
-    $scala_env += name -> groupElement
-    groupElement
-  }
-
-  def env_clear = {
-    $scala_env = Map()
-  }
-  def env_setBigInt(name:String, bigInt:BigInt) = {
-    val $name$ = "b"
-    val $bigInt$ = "123456789012345678901234567890123456789012345678901234567890"
-    $scala_env += name -> bigInt
-  }
-  def env_setLong(name:String, long:Long) = {
-    val $name$ = "long"
-    val $long$ = "12345678901112"
-    $scala_env += name -> long
-  }
-  def env_setInt(name:String, int:Int) = {
-    val $name$ = "long"
-    val $int$ = "123456789"
-    $scala_env += name -> int
-  }
-  def env_setCollByte(name:String, collBytes:Array[Byte]) = {
-    val $name$ = "c"
-    val $collBytes$ = "0x1a2b3c4d5e6f"
-    $scala_env += name -> collBytes
-  }
-
-  @deprecated("Not fully supported")
-  def $scala_env_setCollCollByte(name:String, collCollBytes:Array[Array[Byte]]) = {
-    val $name$ = "d"
-    val $collCollBytes$ = "[0x1a2b3c4d5e6f,0xafbecddc12,0xa132]"
-    $scala_env += name -> collCollBytes
-  }
-
-  def compile(ergoScript:Text):ErgoTree = {
+  def $compile(ergoScript:Text):ErgoTree = {
     val $ergoScript$:String = """
 {
   val x = blake2b256(c)
@@ -171,7 +99,7 @@ abstract class ErgoScript {
   }
 
 
-  def getRandomKeyPair = {
+  def $getRandomKeyPair = {
     val prv = getRandomBigInt
     Array("Private: "+prv.toString, "Public: "+$getGroupElement(prv))
   }
@@ -183,27 +111,27 @@ abstract class ErgoScript {
     ECCPubKey(Point(x, y), true).hex
   }
 
-  def getP2SH_Address(ergoScript:Text) = {
+  def $getP2SH_Address(ergoScript:Text) = {
     val $ergoScript$ = """{
   val x = blake2b256(c)
   b == 1234.toBigInt &&
   c == x
 }"""
-    Pay2SHAddress(compile(ergoScript)).toString
+    Pay2SHAddress($compile(ergoScript)).toString
   }
 
-  def getP2S_Address(ergoScript:Text) = {
+  def $getP2S_Address(ergoScript:Text) = {
     val $ergoScript$ = """{
   val x = blake2b256(c)
   b == 1234.toBigInt &&
   c == x
 }"""
-    Pay2SAddress(compile(ergoScript)).toString
+    Pay2SAddress($compile(ergoScript)).toString
   }
 
   def $getKeysFromEnv(keys:Array[String]) = {
     keys.map{key =>
-      val value = $env.get(key).getOrElse(throw new Exception(s"Environment does not contain key $key"))
+      val value = $myEnv.$getEnv.get(key).getOrElse(throw new Exception(s"Environment does not contain key $key"))
       key -> value
     }
   }
@@ -291,19 +219,10 @@ abstract class ErgoScript {
     }
 
     val request = outBoxes.map(getBoxJson ).mkString(",")
-    val json = s"""{"requests":[$request],"inputsRaw":["string"]}"""
+    val json = s"""{"requests":[$request],"inputsRaw":[]}"""
 
-//    val test = """{"requests":[{"address":"3WwbzW6u8hKWBcL1W7kNVMr25s2UHfSBnYtwSHvrRQt7DdPuoXrt","value":1,"assets":[{"tokenId":"4ab9da11fc216660e974842cc3b7705e62ebb9e0bf5ff78e53f9cd40abadd117","amount":1000}],"registers":{"R4":"100204a00b08cd0336100ef59ced80ba5f89c4178ebd57b6c1dd0f3d135ee1db9f62fc634d637041ea02d192a39a8cc7a70173007301"}}],"fee":1000000,"inputsRaw":["string"]}"""
-//    val j = test.replace("\"", "\\\"")
-//    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(j))
-//    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(test))
-//    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(j))
-//    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(json.replace("\"", "\\\""))
-
-    val r = ErgoAPI.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(json))
-    Array(r, json)
-//    Array(r, test)
-//    Array(r, j)
+    val resp = API.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(json))
+    Array(resp, json)
   }
 
   def box_getAll: Array[JsonFormatted] = {
