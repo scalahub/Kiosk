@@ -4,6 +4,7 @@ import org.sh.kiosk.ergo.util.ErgoScriptUtil.{getConvertedValue, serialize}
 import org.sh.reflect.DefaultTypeHandler
 import special.sigma.GroupElement
 import org.sh.cryptonode.util.BytesUtil._
+import scorex.crypto.hash.Blake2b256
 
 class Env {
 
@@ -56,7 +57,7 @@ class Env {
     $scala_env += name -> long
   }
   def setInt(name:String, int:Int) = {
-    val $name$ = "long"
+    val $name$ = "int"
     val $int$ = "123456789"
     $scala_env += name -> int
   }

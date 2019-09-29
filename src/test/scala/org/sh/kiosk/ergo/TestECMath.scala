@@ -44,6 +44,11 @@ object TestECMath extends App {
   val t2 = System.currentTimeMillis()
   println(s"CryptoNode for ${randNums.size} elements ${t1-t0} millis")
   println(s"ErgoScript for ${randNums.size} elements ${t2-t1} millis")
+  // Note that BouncyCastle uses projective coordinates while CryptoNode uses normalized coordinates.
+  // Hence CryptoNode does an additional division at each step. So the time will be much higher.
+  // ToDo: Fix CryptoNode to use projective coordinates and normalize only at last step
+  //  See following for example: https://www.nayuki.io/page/elliptic-curve-point-addition-in-projective-coordinates
+
   c_ergo zip c_cryptoNode foreach{
     case (d_ergo, d_cryptoNode) =>
       assert(d_ergo.getXCoord.toBigInteger == d_cryptoNode.x.bigInteger)

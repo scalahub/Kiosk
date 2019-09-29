@@ -4,6 +4,8 @@ version := "0.1"
 
 scalaVersion := "2.12.8"
 
+updateOptions := updateOptions.value.withLatestSnapshots(false)
+
 lazy val EasyWeb = RootProject(uri("git://github.com/scalahub/EasyWeb.git"))
 //lazy val EasyWeb = RootProject(uri("../EasyWeb"))
 
@@ -47,4 +49,12 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
 
 lazy val root = (project in file(".")).dependsOn(
   EasyWeb, SigmaState, CryptoNode
+).settings(
+  updateOptions := updateOptions.value.withLatestSnapshots(false),
+  mainClass in (Compile, run) := Some("org.sh.kiosk.ergo.Admin"),
+  assemblyMergeStrategy in assembly := {
+    case PathList("reference.conf") => MergeStrategy.concat
+    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+    case x => MergeStrategy.first
+  }
 )

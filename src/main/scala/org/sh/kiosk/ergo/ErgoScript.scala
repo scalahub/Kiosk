@@ -1,39 +1,37 @@
 package org.sh.kiosk.ergo
 
-import java.security.SecureRandom
-
 import org.ergoplatform.ErgoAddressEncoder.{MainnetNetworkPrefix, TestnetNetworkPrefix}
 import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress, Pay2SHAddress}
-import org.json.JSONObject
 import org.sh.cryptonode.ecc.{ECCPubKey, Point}
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.cryptonode.util.StringUtil._
+import org.sh.easyweb.Text
+import org.sh.kiosk.ergo.util.ErgoScriptUtil._
+import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.Values.ErgoTree
 import sigmastate.basics.SecP256K1
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.SigmaCompiler
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
-import special.sigma.GroupElement
-import org.sh.kiosk.ergo.util.ErgoScriptUtil._
-import special.collection.Coll
-import org.sh.easyweb.Text
-import org.sh.reflect.DefaultTypeHandler
-import org.sh.utils.json.JSONUtil.JsonFormatted
-import sigmastate.serialization.ValueSerializer
 
 object ErgoEnv extends Env
 object PlayGround extends ErgoScript(ErgoEnv) {
+  ErgoEnv.setCollByte("a", "f091616c10378d94b04ed7afb6e7e8da3ec8dd2a9be4a343f886dd520f688563".decodeHex)
   ErgoEnv.setBigInt("b", BigInt("123456789012345678901234567890123456789012345678901234567890"))
   ErgoEnv.setCollByte("c", "0x1a2b3c4d5e6f".decodeHex)
   ErgoEnv.setGroupElement("g", hexToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
 
   def $getPattern(ergoScript: Text, keysToMatch:Array[String], useRegex:Boolean) = {
     val $useRegex$ = "false"
-    val $keysToMatch$ = "[b, c]"
+    val $keysToMatch$ = "[a, b, c]"
     val $ergoScript$ = """{
+  // Following values (among many others) can make this spendable
+  //   a = 0xf091616c10378d94b04ed7afb6e7e8da3ec8dd2a9be4a343f886dd520f688563
+  //   c = 0x1a2b3c4d5e6f
+  //   b = any BigInt greater than 1234
   val x = blake2b256(c)
-  b == 1234.toBigInt &&
-  c == x
+  b > 1234.toBigInt &&
+  a == x
 }"""
     val f:(Array[Byte], Array[String]) => String = if (useRegex) $myEnv.$regex else $myEnv.$matchScript
 
@@ -45,23 +43,34 @@ object PlayGround extends ErgoScript(ErgoEnv) {
 class ErgoScript(val $myEnv:Env) {
   // any variable/method starting with $ will not appear in front-end.
   // so any variable to be hidden from front-end is prefixed with $
-  import $myEnv._
-  def $networkPrefix = if (API.$isMainNet) MainnetNetworkPrefix else TestnetNetworkPrefix
+  def $networkPrefix = if (ErgoAPI.$isMainNet) MainnetNetworkPrefix else TestnetNetworkPrefix
   def $compiler = SigmaCompiler($networkPrefix)
   implicit val $irContext = new CompiletimeIRContext
   implicit val $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder($networkPrefix)
 
   def box_create(boxName:String, ergoScript:Text, registerKeys:Array[String], tokenIDs:Array[Array[Byte]], tokenAmts:Array[Long], useP2S:Boolean, value:Long) = {
-    val $INFO$ = "If use P2S is false then it will use P2SH address"
+    val $INFO$ =
+      """
+1. If useP2S is false then box will pay to P2SH address
+2. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these arrya to empty (i.e., [])
+3. registerKeys must refer to keys of ErgoEnv. Registers will be populated with the corresponding values starting with R4
+
+
+As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
+Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]"""
     val $boxName$ = "box1"
     val $useP2S$ = "false"
-    val $value$ = "10000"
+    val $value$ = "123456"
     val $ergoScript$ = """{
+  // Following values (among many others) can make this spendable
+  //   a = 0xf091616c10378d94b04ed7afb6e7e8da3ec8dd2a9be4a343f886dd520f688563
+  //   c = 0x1a2b3c4d5e6f
+  //   b = any BigInt greater than 1234
   val x = blake2b256(c)
-  b == 1234.toBigInt &&
-  c == x
+  b > 1234.toBigInt &&
+  a == x
 }"""
-    val $registerKeys$ = "[b,c]"
+    val $registerKeys$ = "[a,b,c]"
     val $tokenIDs$ = "[]"
     val $tokenAmts$ = "[]"
 
@@ -85,11 +94,10 @@ class ErgoScript(val $myEnv:Env) {
   }
 
   def $compile(ergoScript:Text):ErgoTree = {
-    val $ergoScript$:String = """
-{
+    val $ergoScript$:String = """{
   val x = blake2b256(c)
-  b == 1234.toBigInt &&
-  c == x
+  b > 1234.toBigInt &&
+  a == x
 }"""
     $compile(ergoScript.getText)
   }
@@ -114,8 +122,8 @@ class ErgoScript(val $myEnv:Env) {
   def $getP2SH_Address(ergoScript:Text) = {
     val $ergoScript$ = """{
   val x = blake2b256(c)
-  b == 1234.toBigInt &&
-  c == x
+  b > 1234.toBigInt &&
+  a == x
 }"""
     Pay2SHAddress($compile(ergoScript)).toString
   }
@@ -123,8 +131,8 @@ class ErgoScript(val $myEnv:Env) {
   def $getP2S_Address(ergoScript:Text) = {
     val $ergoScript$ = """{
   val x = blake2b256(c)
-  b == 1234.toBigInt &&
-  c == x
+  b > 1234.toBigInt &&
+  a == x
 }"""
     Pay2SAddress($compile(ergoScript)).toString
   }
@@ -175,34 +183,13 @@ class ErgoScript(val $myEnv:Env) {
 
   def box_deleteAll = {$boxes = Map()}
 
-  def tx_create(inBoxBytes:Array[Array[Byte]], outBoxNames:Array[String]) = {
+  def tx_send(inBoxBytes:Array[Array[Byte]], outBoxNames:Array[String]) = {
     val $inBoxBytes$ = "[]"
     val $outBoxNames$ = "[box1]"
     val outBoxes = outBoxNames.map{boxName =>
       $boxes.get(boxName).getOrElse(throw new Exception(s"No such box $boxName"))
     }
 
-    /*
-{
-  "requests": [
-    {
-      "address": "3WwbzW6u8hKWBcL1W7kNVMr25s2UHfSBnYtwSHvrRQt7DdPuoXrt",
-      "value": 1,
-      "assets": [
-        {
-          "tokenId": "4ab9da11fc216660e974842cc3b7705e62ebb9e0bf5ff78e53f9cd40abadd117",
-          "amount": 1000
-        }
-      ],
-      "registers": {
-        "R4": "100204a00b08cd0336100ef59ced80ba5f89c4178ebd57b6c1dd0f3d135ee1db9f62fc634d637041ea02d192a39a8cc7a70173007301"
-      }
-    }, {...}
-    ]
-
-     */
-
-    //case class Box(address:String, value:Long, registers: Registers, tokens: Tokens) extends JsonFormatted {
     def registerJson(id:Int, register:Register) = {
       s""""R$id":"${register.encodeHex}""""
     }
@@ -219,9 +206,9 @@ class ErgoScript(val $myEnv:Env) {
     }
 
     val request = outBoxes.map(getBoxJson ).mkString(",")
-    val json = s"""{"requests":[$request],"inputsRaw":[]}"""
+    val json = s"""[$request]"""
 
-    val resp = API.$q("wallet/transaction/generate", true, PostJsonRaw, Nil, Some(json))
+    val resp = ErgoAPI.$q("wallet/payment/send", true, PostJsonRaw, Nil, Some(json))
     Array(resp, json)
   }
 
