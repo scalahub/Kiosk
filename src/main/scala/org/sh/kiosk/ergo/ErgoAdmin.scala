@@ -7,7 +7,8 @@ object Admin extends App {
   val objects = List(
     ErgoEnv,
     PlayGround,
-    ErgoAPI
+    ErgoAPI,
+    Wallet
   )
   new org.sh.easyweb.AutoWeb(objects, "ErgoDemo")
 }
@@ -26,19 +27,19 @@ object Peers {
 
 object Wallet {
   // vars, vals and defs starting with '' won't appear in HTML
-  //  def init(pass: String, optional_mnemonicPass: Option[String]) = $q("wallet/init", true, PostJson,
-  //    Seq("pass" -> pass) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
-  //  )
+  def init(pass: String, optional_mnemonicPass: Option[String]) = $q("wallet/init", true, PostJson,
+    Seq("pass" -> pass) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
+  )
 
-  //  def restore(pass: String, mnemonic: String, optional_mnemonicPass: Option[String]) = $q("wallet/restore", true, PostJson,
-  //    Seq("pass" -> pass, "mnemonic" -> mnemonic) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
-  //  )
-  //
-  //  def unlock(pass: String) = $q("wallet/unlock", true, PostJson,
-  //    Seq("pass" -> pass)
-  //  )
-  //
-  //  def lock = $q("wallet/lock", true, Get, Nil)
+  def restore(pass: String, mnemonic: String, optional_mnemonicPass: Option[String]) = $q("wallet/restore", true, PostJson,
+    Seq("pass" -> pass, "mnemonic" -> mnemonic) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
+  )
+
+  def unlock(pass: String) = $q("wallet/unlock", true, PostJson,
+    Seq("pass" -> pass)
+  )
+
+  def lock = $q("wallet/lock", true, Get, Nil)
 
   def deriveKey(derivationPath:String) = {
     $q("wallet/deriveKey", true, PostJson, Seq("derivationPath" -> derivationPath))
@@ -67,25 +68,25 @@ object Wallet {
     )
   }
 
-  def boxes(minConfirmations:Int, minInclusionHeight:Int) = {
-    // curl -X GET "http://127.0.0.1:9052/wallet/boxes?minConfirmations=19&minInclusionHeight=21" -H "accept: application/json" -H "api_key: hello"
-    $q("wallet/boxes", true, Get,
-      Seq(
-        "minConfirmations" -> minConfirmations.toString,
-        "minInclusionHeight" -> minInclusionHeight.toString
-      )
-    )
-  }
-
-  def boxes_unspent(minConfirmations:Int, minInclusionHeight:Int) = {
-    // curl -X GET "http://127.0.0.1:9052/wallet/boxes?minConfirmations=19&minInclusionHeight=21" -H "accept: application/json" -H "api_key: hello"
-    $q("wallet/boxes/unspent", true, Get,
-      Seq(
-        "minConfirmations" -> minConfirmations.toString,
-        "minInclusionHeight" -> minInclusionHeight.toString
-      )
-    )
-  }
+  //  def boxes(minConfirmations:Int, minInclusionHeight:Int) = {
+  //    // curl -X GET "http://127.0.0.1:9052/wallet/boxes?minConfirmations=19&minInclusionHeight=21" -H "accept: application/json" -H "api_key: hello"
+  //    $q("wallet/boxes", true, Get,
+  //      Seq(
+  //        "minConfirmations" -> minConfirmations.toString,
+  //        "minInclusionHeight" -> minInclusionHeight.toString
+  //      )
+  //    )
+  //  }
+  //
+  //  def boxes_unspent(minConfirmations:Int, minInclusionHeight:Int) = {
+  //    // curl -X GET "http://127.0.0.1:9052/wallet/boxes?minConfirmations=19&minInclusionHeight=21" -H "accept: application/json" -H "api_key: hello"
+  //    $q("wallet/boxes/unspent", true, Get,
+  //      Seq(
+  //        "minConfirmations" -> minConfirmations.toString,
+  //        "minInclusionHeight" -> minInclusionHeight.toString
+  //      )
+  //    )
+  //  }
 
   //  def balances_with_unconfirmed= $q("wallet/balances/with_unconfirmed", true, Get, Nil)
 

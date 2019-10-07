@@ -5,6 +5,9 @@ import org.sh.reflect.DefaultTypeHandler
 import special.sigma.GroupElement
 import org.sh.cryptonode.util.BytesUtil._
 import scorex.crypto.hash.Blake2b256
+import sigmastate.basics.SecP256K1
+import org.sh.cryptonode.ecc.{ECCPubKey, Point}
+import org.sh.kiosk.ergo.util.ErgoScriptUtil._
 
 class Env {
 
@@ -35,6 +38,18 @@ class Env {
     val $groupElement$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
     $scala_env += name -> groupElement
     groupElement
+  }
+
+  def getRandomKeyPair = {
+    val prv = getRandomBigInt
+    Array("Private: "+prv.toString, "Public: "+getGroupElement(prv))
+  }
+  def getGroupElement(exponent:BigInt) = {
+    val g = SecP256K1.generator
+    val h = SecP256K1.exponentiate(g, exponent.bigInteger).normalize()
+    val x = h.getXCoord.toBigInteger
+    val y = h.getYCoord.toBigInteger
+    ECCPubKey(Point(x, y), true).hex
   }
 
   def deleteAll = {
