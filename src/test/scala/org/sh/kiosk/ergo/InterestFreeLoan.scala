@@ -42,11 +42,11 @@ object InterestFreeLoan extends App {
 
   // borrower
   val $alicePrivateKey = getRandomBigInt
-  val alice = hexToGroupElement($ergoScript.$getGroupElement($alicePrivateKey))
+  val alice = hexToGroupElement($env.getGroupElement($alicePrivateKey))
 
   // lender
   val $bobPrivateKey = getRandomBigInt
-  val bob = hexToGroupElement($ergoScript.$getGroupElement($bobPrivateKey))
+  val bob = hexToGroupElement($env.getGroupElement($bobPrivateKey))
   val $oneMonth = 720*30 // 720 blocks per day
   val $fiveDays = 720*5 // 720 blocks per day
   val $emi = 1000 // Euros per month // equal monthly installment

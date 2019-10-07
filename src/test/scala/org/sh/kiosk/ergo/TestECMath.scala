@@ -25,9 +25,10 @@ object TestECMath extends App {
 
   assert(a_ergo.getXCoord.toBigInteger == a_cryptoNode.x.bigInteger)
   assert(a_ergo.getYCoord.toBigInteger == a_cryptoNode.y.bigInteger)
-  val ergoScript = new ErgoScript(new Env)
+  val env = new Env
+  val ergoScript = new ErgoScript(env)
   val b_cryptoNode = new ECCPrvKey(randNum, true).eccPubKey.hex
-  val b_ergo = ergoScript.$getGroupElement(randNum)
+  val b_ergo = env.getGroupElement(randNum)
 
   assert(b_cryptoNode == b_ergo)
   val randNums = (1 to 1000).map {i =>
