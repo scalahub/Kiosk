@@ -13,9 +13,9 @@ object ErgoAPI {
 
   // In EasyWeb, any var, val and def starting with '$' won't appear in HTML
   var $apiKey = "hello"
-  var $baseUrl = "http://localhost:9052/"
+  var $baseUrl = "http://localhost:9053/"
 
-  var $isMainNet = false
+  var $isMainNet = true
 
   def info = $q("info", false, Get, Nil)
   def setMainNet(isMainNet:Boolean) = {
@@ -34,19 +34,20 @@ object ErgoAPI {
 
   def getUrl = $baseUrl
 
-  def initWallet(pass: String, optional_mnemonicPass: Option[String]) = $q("wallet/init", true, PostJson,
-    Seq("pass" -> pass) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
-  )
-
-  def restoreWallet(pass: String, mnemonic: String, optional_mnemonicPass: Option[String]) = $q("wallet/restore", true, PostJson,
-    Seq("pass" -> pass, "mnemonic" -> mnemonic) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
-  )
-
-  def unlockWallet(pass: String) = $q("wallet/unlock", true, PostJson,
-    Seq("pass" -> pass)
-  )
-
-  def lockWallet = $q("wallet/lock", true, Get, Nil)
+  // below moved to Wallet
+  //  def initWallet(pass: String, optional_mnemonicPass: Option[String]) = $q("wallet/init", true, PostJson,
+  //    Seq("pass" -> pass) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
+  //  )
+  //
+  //  def restoreWallet(pass: String, mnemonic: String, optional_mnemonicPass: Option[String]) = $q("wallet/restore", true, PostJson,
+  //    Seq("pass" -> pass, "mnemonic" -> mnemonic) ++ optional_mnemonicPass.map{ mnemonicPass => "mnemonicPass" -> mnemonicPass}
+  //  )
+  //
+  //  def unlockWallet(pass: String) = $q("wallet/unlock", true, PostJson,
+  //    Seq("pass" -> pass)
+  //  )
+  //
+  //  def lockWallet = $q("wallet/lock", true, Get, Nil)
 
   def $authHeader = Array(
     ("accept", "application/json"),
