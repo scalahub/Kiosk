@@ -50,12 +50,14 @@ class ErgoScript(val $myEnv:Env) {
   implicit def $irContext = new RuntimeIRContext
   implicit def $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder($networkPrefix)
 
-  def box_create(boxName:String, ergoScript:Text, registerKeys:Array[String], tokenIDs:Array[Array[Byte]], tokenAmts:Array[Long], useP2S:Boolean, value:Long) = {
+  def box_create(boxName:String, ergoScript:Text, registerKeys:Array[String], tokenIDs:Array[Array[Byte]], tokenAmts:Array[Long],
+//                 useP2S:Boolean,
+                 value:Long) = {
+//    1. If useP2S is false then box will pay to P2SH address
     val $INFO$ =
       """
-1. If useP2S is false then box will pay to P2SH address
-2. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these arrya to empty (i.e., [])
-3. registerKeys must refer to keys of ErgoEnv. Registers will be populated with the corresponding values starting with R4
+1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these arrya to empty (i.e., [])
+2. registerKeys must refer to keys of ErgoEnv. Registers will be populated with the corresponding values starting with R4
 
 
 As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
@@ -85,25 +87,31 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     }
     val tokens:Tokens = tokenIDs zip tokenAmts
     val ergoTree = $compile(ergoScript)
-      val address = if (useP2S) Pay2SAddress(ergoTree).toString else  Pay2SHAddress(ergoTree).toString
+    val address =
+//      if (useP2S)
+      Pay2SAddress(ergoTree).toString
+//      else  Pay2SHAddress(ergoTree).toString
     val box = Box(address, value, registers, tokens)
     $boxes += (boxName -> Box(address, value, registers, tokens))
     box
   }
 
-/*
-   // Following sample snippet from kushti
-   val sigmaCompiler = SigmaCompiler(ErgoAddressEncoder.MainnetNetworkPrefix)
-   implicit val enc = ErgoAddressEncoder(ErgoAddressEncoder.MainnetNetworkPrefix)
-   implicit val context = new RuntimeIRContext
-   val env: Map[String, Any] = Map()
-   val ergoTree = sigmaCompiler.compile(env, "{1 < 2}").asInstanceOf[Value[SBoolean.type]].toSigmaProp
-   val addr = Pay2SAddress(ergoTree).toString
-   println(addr)
- */
+  def getScriptHash(ergoScript:Text):Array[Byte] = {
+    val $ergoScript$:String = """{
+  val x = blake2b256(c)
+  b > 1234.toBigInt &&
+  a == x
+}"""
+
+    val ergoTree = $compile(ergoScript.getText)
+    val scriptBytes = DefaultSerializer.serializeErgoTree(ergoTree)
+    scorex.crypto.hash.Blake2b256(scriptBytes).toArray
+  }
+
   def $compile(ergoScript:String):ErgoTree = {
     import sigmastate.lang.Terms._
-    $compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
+    //$compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
+    $compiler.compile($myEnv.$getEnv, ergoScript).asSigmaProp //.asInstanceOf[Value[SBoolean.type]].toSigmaProp
   }
 
   def $compile(ergoScript:Text):ErgoTree = {
@@ -119,14 +127,14 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     new ECCPubKey(org.sh.cryptonode.ecc.Util.G, true).hex
   }
 
-  def getP2SH_Address(ergoScript:Text) = {
-    val $ergoScript$ = """{
-  val x = blake2b256(c)
-  b > 1234.toBigInt &&
-  a == x
-}"""
-    Pay2SHAddress($compile(ergoScript)).toString
-  }
+  //  def getP2SH_Address(ergoScript:Text) = {
+  //    val $ergoScript$ = """{
+  //  val x = blake2b256(c)
+  //  b > 1234.toBigInt &&
+  //  a == x
+  //}"""
+  //    Pay2SHAddress($compile(ergoScript)).toString
+  //  }
 
   def getP2S_Address(ergoScript:Text) = {
     val $ergoScript$ = """{
@@ -229,7 +237,8 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
   }
   /*
   Syntax is as follows
-  for wallet/transaction/generate
+  for wallet/transaction/generate and wallet/transaction/send
+
 {
   "requests": [
     {
@@ -263,7 +272,6 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
   ]
 }
 */
-/* For wallet/transaction/send: same as wallet/transaction/generate */
 /* For wallet/payment/send:
 
 [
@@ -285,35 +293,6 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
 
    */
 
-  //  def tx_send(inBoxBytes:Array[Array[Byte]], outBoxNames:Array[String]) = {
-  //    val $inBoxBytes$ = "[]"
-  //    val $outBoxNames$ = "[box1]"
-  //    val outBoxes = outBoxNames.map{boxName =>
-  //      $boxes.get(boxName).getOrElse(throw new Exception(s"No such box $boxName"))
-  //    }
-  //
-  //    def registerJson(id:Int, register:Register) = {
-  //      s""""R$id":"${register.encodeHex}""""
-  //    }
-  //
-  //    def assetStr(token:Token):String = {
-  //      val (id, amt) = token
-  //      s"""{"tokenId":"${id.encodeHex}","amount":$amt}""".stripMargin
-  //    }
-  //
-  //    def getBoxJson(b:Box) = {
-  //      val assetJson = b.tokens.map(assetStr).mkString(",")
-  //      val registersJson = b.registers.zipWithIndex.map{case (data, id) => registerJson(id+4, data)}.mkString(",")
-  //      s"""{"address":"${b.address}","value":${b.value},"assets":[$assetJson],"registers":{$registersJson}}""".stripMargin
-  //    }
-  //
-  //    val request = outBoxes.map(getBoxJson ).mkString(",")
-  //    val json = s"""[$request]"""
-  //
-  //    val resp = ErgoAPI.$q("wallet/payment/send", true, PostJsonRaw, Nil, Some(json))
-  //    Array(resp, json)
-  //  }
-  //
   def box_getAll: Array[JsonFormatted] = {
     $boxes.map{
       case (name, box) =>

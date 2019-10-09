@@ -90,6 +90,9 @@ object Wallet {
 
   //  def balances_with_unconfirmed= $q("wallet/balances/with_unconfirmed", true, Get, Nil)
 
+  def getGroupElementFromP2PK(address:String) =
+    $q(s"/utils/addressToRaw/$address", false, Get, Nil)
+
   def addresses = $q("wallet/addresses", true, Get, Nil)
 
   //  def p2s_address(source: Text) =
