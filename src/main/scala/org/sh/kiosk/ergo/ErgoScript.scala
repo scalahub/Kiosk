@@ -1,5 +1,7 @@
 package org.sh.kiosk.ergo
 
+import org.bouncycastle.math.ec.ECPoint
+import org.bouncycastle.math.ec.custom.sec.SecP256K1Point
 import org.ergoplatform.ErgoAddressEncoder.{MainnetNetworkPrefix, TestnetNetworkPrefix}
 import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress, Pay2SHAddress}
 import org.sh.cryptonode.ecc.{ECCPubKey, Point}
@@ -14,8 +16,39 @@ import sigmastate.basics.SecP256K1
 import sigmastate.eval.{CompiletimeIRContext, RuntimeIRContext}
 import sigmastate.lang.SigmaCompiler
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
+import special.sigma.GroupElement
 
 object ErgoEnv extends Env
+
+object ECC {
+
+  def $gX(g:SecP256K1Point, x:BigInt) = {
+    val u:ECPoint = SecP256K1.exponentiate(g, x.bigInteger).normalize()
+    val uX = u.getXCoord.toBigInteger
+    val uY = u.getYCoord.toBigInteger
+    ECCPubKey(Point(uX, uY), true).hex
+  }
+  def gExp(x:BigInt) = {
+    val $INFO$ = "Computes g^x for default generator g"
+    $gX(SecP256K1.generator, x)
+  }
+
+  def $getRandomKeyPair = {
+    val prv = getRandomBigInt
+    Array("Private: "+prv.toString, "Public: "+gExp(prv))
+  }
+
+  def hExp(h:GroupElement, x:BigInt) = {
+    val $INFO$ = "Computes h^x for supplied generator h"
+    val point = ECCPubKey(h.getEncoded.toArray.encodeHex).point
+    val base = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)
+    $gX(base, x)
+  }
+
+  def getGroupElementFromP2PK(address:String) =
+    ErgoAPI.$q(s"/utils/addressToRaw/$address", false, Get, Nil)
+
+}
 object PlayGround extends ErgoScript(ErgoEnv) {
   ErgoEnv.setCollByte("a", "f091616c10378d94b04ed7afb6e7e8da3ec8dd2a9be4a343f886dd520f688563".decodeHex)
   ErgoEnv.setBigInt("b", BigInt("123456789012345678901234567890123456789012345678901234567890"))
@@ -51,9 +84,7 @@ class ErgoScript(val $myEnv:Env) {
   implicit def $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder($networkPrefix)
 
   def box_create(boxName:String, ergoScript:Text, registerKeys:Array[String], tokenIDs:Array[Array[Byte]], tokenAmts:Array[Long],
-//                 useP2S:Boolean,
                  value:Long) = {
-//    1. If useP2S is false then box will pay to P2SH address
     val $INFO$ =
       """
 1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these arrya to empty (i.e., [])
@@ -87,10 +118,7 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     }
     val tokens:Tokens = tokenIDs zip tokenAmts
     val ergoTree = $compile(ergoScript)
-    val address =
-//      if (useP2S)
-      Pay2SAddress(ergoTree).toString
-//      else  Pay2SHAddress(ergoTree).toString
+    val address = Pay2SAddress(ergoTree).toString
     val box = Box(address, value, registers, tokens)
     $boxes += (boxName -> Box(address, value, registers, tokens))
     box
@@ -126,15 +154,6 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
   def $getDefaultGenerator = {
     new ECCPubKey(org.sh.cryptonode.ecc.Util.G, true).hex
   }
-
-  //  def getP2SH_Address(ergoScript:Text) = {
-  //    val $ergoScript$ = """{
-  //  val x = blake2b256(c)
-  //  b > 1234.toBigInt &&
-  //  a == x
-  //}"""
-  //    Pay2SHAddress($compile(ergoScript)).toString
-  //  }
 
   def getP2S_Address(ergoScript:Text) = {
     val $ergoScript$ = """{

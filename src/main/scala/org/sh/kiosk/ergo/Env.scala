@@ -40,18 +40,6 @@ class Env {
     groupElement
   }
 
-  def getRandomKeyPair = {
-    val prv = getRandomBigInt
-    Array("Private: "+prv.toString, "Public: "+getGroupElement(prv))
-  }
-  def getGroupElement(exponent:BigInt) = {
-    val g = SecP256K1.generator
-    val h = SecP256K1.exponentiate(g, exponent.bigInteger).normalize()
-    val x = h.getXCoord.toBigInteger
-    val y = h.getYCoord.toBigInteger
-    ECCPubKey(Point(x, y), true).hex
-  }
-
   def deleteAll = {
     $scala_env = Map()
   }
