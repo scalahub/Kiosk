@@ -38,8 +38,8 @@ Bob only sells those tokens via the token box whose code is given in the contrac
   val env = $ergoScript.$myEnv.getAll // for displaying
   val ergoScript =
     """{
-      |  val newSelf = OUTPUTS(0)
-      |  val bobOut = OUTPUTS(1)
+      |  val newSelf = OUTPUTS(0) // new box created as a replica of current box
+      |  val bobOut = OUTPUTS(1) // box paying to Bob
       |
       |  val bobNanoErgs = bobOut.value
       |  val validBobBox = bobOut.propositionBytes == proveDlog(bob).propBytes
