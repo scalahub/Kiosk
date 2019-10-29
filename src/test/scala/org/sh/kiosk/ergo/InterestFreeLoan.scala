@@ -27,7 +27,7 @@ object InterestFreeLoan extends App {
       Repayment will be in secondary tokens tethered to USD.
 
    */
-
+  runTest
   def runTest = {
     val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray
     val usdTokenID:Array[Byte] = Blake2b256("USD").toArray // bob's one-way USD token
@@ -94,7 +94,7 @@ object InterestFreeLoan extends App {
         |
         |  val marginCall = currentUSD * rate > SELF.value
         |
-        |  (marginCall && bob) || (correctTx && ((proveDlog(alice) && correctBobBox) || (proveDlog(bob) && nonPayment)))
+        |  (marginCall && proveDlog(bob)) || (correctTx && ((proveDlog(alice) && correctBobBox) || (proveDlog(bob) && nonPayment)))
         |
         |}""".stripMargin
 
