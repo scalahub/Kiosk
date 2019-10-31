@@ -108,7 +108,7 @@ object InterestFreeLoan extends App {
         |
         |  //   4. Price increases anytime (profit sharing)
         |  val reqd = currentUSD * rate * 12 / 10
-        |  val profit = SELF.value - reqd
+        |  val profit = (SELF.value - reqd)/2
         |  val ergPriceHigh = profit > 0
         |  val profitSharing = ergPriceHigh && correctScript && out.value == reqd && usdDiff == 0 &&
         |  OUTPUTS(1).propositionBytes == proveDlog(bob).propBytes && OUTPUTS(1).value == profit &&
