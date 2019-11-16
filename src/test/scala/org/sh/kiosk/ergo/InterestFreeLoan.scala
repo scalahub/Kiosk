@@ -29,7 +29,7 @@ object InterestFreeLoan extends App {
    */
   runTest
   def runTest = {
-    val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray
+    val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // gives rate in nanoErgs per usdCent
     val usdTokenID:Array[Byte] = Blake2b256("USD").toArray // bob's one-way USD token
 
     val env = new Env
@@ -61,7 +61,7 @@ object InterestFreeLoan extends App {
     val src =
       """{
         |  val dataInput = CONTEXT.dataInputs(0)
-        |  val rate = dataInput.R4[Long].get // rate (how many USD for 1 ERG)
+        |  val rate = dataInput.R4[Long].get // rate (how many nanoErgs per usdCent)
         |
         |  // Check 1: CORRECT RATE ORACLE (has the correct token id)
         |  val correctRateOracle = dataInput.tokens(0)._1 == rateOracleTokenID

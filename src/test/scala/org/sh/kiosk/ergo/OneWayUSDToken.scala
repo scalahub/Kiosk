@@ -23,20 +23,18 @@ To accept tokens in lieu of USD at 1:1 rate.
 Bob only sells those tokens via the token box whose code is given in the contract below.
 
    */
-  val $rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // To use the correct id in real world
+  val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // To use the correct id in real world
 
-  val $env = new Env
-  val $ergoScript = new ErgoScript($env) {}
-  $ergoScript.$myEnv.setCollByte("rateTokenID", $rateOracleTokenID)
+  val env = new Env
+  env.setCollByte("rateTokenID", rateOracleTokenID)
 
   // lender
-  val $bobPrivateKey = getRandomBigInt
-  val bob = hexToGroupElement(ECC.gExp($bobPrivateKey))
+  val bobPrivateKey = getRandomBigInt
+  val bob = hexToGroupElement(ECC.gExp(bobPrivateKey))
 
-  $env.setGroupElement("bob", bob)
+  env.setGroupElement("bob", bob)
 
-  val env = $ergoScript.$myEnv.getAll // for displaying
-  val ergoScript =
+  val source =
     """{
       |  val newSelf = OUTPUTS(0) // new box created as a replica of current box
       |  val bobOut = OUTPUTS(1) // box paying to Bob
@@ -59,27 +57,29 @@ Bob only sells those tokens via the token box whose code is given in the contrac
       |  val rate = rateBox.R4[Long].get
       |  val validRateBox = rateBox.tokens(0)._1 == rateTokenID
       |
-      |  // rate gives USDCent per nanoErg.
-      |  // Thus, bobNanoErgs NanoErgs will cost bobNanoErgs * rate usd cents
+      |  // rate gives nanoErgo per USDCent
+      |  // Thus, bobNanoErgs NanoErgs will cost bobNanoErgs / rate usd cents
       |
-      |  val usdCDiff = bobNanoErgs * rate
+      |  val usdCDiff = bobNanoErgs / rate
       |
       |  tokenDiff <= usdCDiff && validRateBox && validNewSelf && validBobBox
       |}""".stripMargin
 
-  val $ergoTree = $ergoScript.$compile(ergoScript)
+  val ergoCompiler = new ErgoScript(env) {}
+
+  val ergoTree = ergoCompiler.$compile(source)
 
   val serializedScript = {
-    $ergoScript.$myEnv.$getEnv.map{
+    env.$getEnv.map{
       case (keyword, value) =>
         keyword + " = " + serialize(value).encodeHex
     }.toArray ++ Array(
-      $ergoScript.$matchScript(DefaultSerializer.serializeErgoTree($ergoTree), $ergoScript.$myEnv.$getEnv.keys.toArray).grouped(120).mkString("\n")
+      ergoCompiler.$matchScript(DefaultSerializer.serializeErgoTree(ergoTree), env.$getEnv.keys.toArray).grouped(120).mkString("\n")
     )
   }
 
-  import $ergoScript.$ergoAddressEncoder
+  import ergoCompiler.$ergoAddressEncoder
 
-  println("Bobs address: "+Pay2SAddress($ergoTree))
+  println("Bobs address: "+Pay2SAddress(ergoTree))
 }
 
