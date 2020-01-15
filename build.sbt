@@ -7,9 +7,6 @@ updateOptions := updateOptions.value.withLatestSnapshots(false)
 lazy val EasyWeb = RootProject(uri("git://github.com/scalahub/EasyWeb.git"))
 //lazy val EasyWeb = RootProject(uri("../EasyWeb"))
 
-lazy val ScalaUtils = RootProject(uri("git://github.com/scalahub/ScalaUtils.git"))
-//lazy val ScalaUtils = RootProject(uri("../ScalaUtils"))
-
 lazy val SigmaState = RootProject(uri("git://github.com/ScorexFoundation/sigmastate-interpreter.git"))
 //lazy val SigmaState = RootProject(uri("../sigmastate-interpreter"))
 
