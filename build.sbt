@@ -52,7 +52,7 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
 
 lazy val root = (project in file(".")).dependsOn(
-  EasyWeb, SigmaState, CryptoNode, ScalaUtils
+  EasyWeb, SigmaState, CryptoNode
 ).settings(
   updateOptions := updateOptions.value.withLatestSnapshots(false),
   mainClass in (Compile, run) := Some("org.sh.kiosk.ergo.Admin"),
