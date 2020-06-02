@@ -28,7 +28,7 @@ Bob only sells those tokens via the token box whose code is given in the contrac
   env.setCollByte("rateTokenID", rateOracleTokenID)
 
   // lender
-  val bobPrivateKey = ECC.randBigInt
+  val bobPrivateKey = ECC.$randBigInt
   val bob = ScalaErgoConverters.stringToGroupElement(ECC.gX(bobPrivateKey))
 
   env.setGroupElement("bob", bob)

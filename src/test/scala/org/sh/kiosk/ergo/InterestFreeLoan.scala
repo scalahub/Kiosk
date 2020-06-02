@@ -34,11 +34,11 @@ object InterestFreeLoan extends App {
     env.setCollByte("usdTokenID", usdTokenID)
 
     // borrower
-    val alicePrivateKey = ECC.randBigInt
+    val alicePrivateKey = ECC.$randBigInt
     val alice = ScalaErgoConverters.stringToGroupElement(ECC.gX(alicePrivateKey))
 
     // lender
-    val bobPrivateKey = ECC.randBigInt
+    val bobPrivateKey = ECC.$randBigInt
     val bob = ScalaErgoConverters.stringToGroupElement(ECC.gX(bobPrivateKey))
 
     val oneMonth = 720*30 // 720 blocks per day

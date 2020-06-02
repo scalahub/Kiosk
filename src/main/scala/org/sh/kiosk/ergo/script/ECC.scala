@@ -19,16 +19,12 @@ object ECC {
     toPubKey(SecP256K1.exponentiate(g, x.bigInteger).normalize())
   }
 
-  val g: String = {
-    toPubKey(SecP256K1.generator.normalize())
-  }
-
   def gX(x:BigInt): String = {
     val $INFO$ = "Computes g^x for default generator g"
     gExpX(SecP256K1.generator, x)
   }
 
-  def randBigInt: BigInt = {
+  def $randBigInt: BigInt = {
     val random = new SecureRandom()
     val values = new Array[Byte](32)
     random.nextBytes(values)

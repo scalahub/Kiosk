@@ -8,7 +8,7 @@ object Auction extends App {
   val env = new ErgoScriptEnv
 
   // seller
-  val alicePrivateKey = ECC.randBigInt
+  val alicePrivateKey = ECC.$randBigInt
   val alice = ScalaErgoConverters.stringToGroupElement(ECC.gX(alicePrivateKey))
 
   env.setGroupElement("alice", alice)

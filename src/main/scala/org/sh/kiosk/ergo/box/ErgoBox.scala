@@ -1,17 +1,23 @@
 package org.sh.kiosk.ergo.box
 
+import java.util
+
 import org.ergoplatform.Pay2SAddress
+import org.ergoplatform.appkit.{ErgoToken, ErgoValue, InputBox, OutBox, OutBoxBuilder}
+import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.sh.easyweb.Text
 import org.sh.kiosk.ergo
+import org.sh.kiosk.ergo.appkit.Client
 import org.sh.kiosk.ergo.script.ErgoScript
 import org.sh.kiosk.ergo.script.ErgoScript.$ergoAddressEncoder
-import org.sh.kiosk.ergo.{Box, Tokens}
+import org.sh.kiosk.ergo.{Box, KioskType, Token, Tokens}
 import org.sh.utils.json.JSONUtil.JsonFormatted
 
+// ToDo: Add context variable to each box created
 class ErgoBox($ergoScript:ErgoScript) {
   var $boxes:Map[String, Box] = Map() // boxName -> Box
 
-  def boxGetAll: Array[JsonFormatted] = {
+  def getAll: Array[JsonFormatted] = {
     $boxes.map{
       case (name, box) =>
         new JsonFormatted {
@@ -21,11 +27,7 @@ class ErgoBox($ergoScript:ErgoScript) {
     }.toArray
   }
 
-  def boxGet(boxName:String) = {
-    $boxes.get(boxName)
-  }
-
-  def boxCreate(boxName:String, script:Text, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
+  def create(boxName:String, script:Text, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
     val $INFO$ =
       """
 1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these array to empty (i.e., [])
@@ -64,11 +66,56 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     box
   }
 
-  def boxDelete(boxName:String) = {
+  def delete(boxName:String) = {
     if (!$boxes.contains(boxName)) throw new Exception(s"Name $boxName does not exist.")
     $boxes -= boxName
   }
 
-  def boxDeleteAll = {$boxes = Map()}
+  def deleteAll = {$boxes = Map()}
 
+  private def addTokens(outBoxBuilder: OutBoxBuilder)(tokens:Seq[Token]) = {
+    if (tokens.isEmpty) outBoxBuilder else {
+      outBoxBuilder.tokens(
+        tokens.map{token =>
+          val (id, value) = token
+          new ErgoToken(id, value)
+        }: _*
+      )
+    }
+  }
+
+  private def addRegisters(outBoxBuilder: OutBoxBuilder)(registers:Array[KioskType[_]]) = {
+    if (registers.isEmpty) outBoxBuilder else {
+      outBoxBuilder.registers(registers.map(_.getErgoValue): _*)
+    }
+  }
+
+  def createTx(inputBoxIds:Array[String], outputBoxNames:Array[String], fee:Long, changeAddress:String, proveDlogSecrets:Array[String], broadcast:Boolean) = {
+    val boxesToCreate: Array[Box] = outputBoxNames.map(outputBoxName => $boxes(outputBoxName))
+    Client.usingClient{ctx =>
+      val inputBoxes: Array[InputBox] = ctx.getBoxesById(inputBoxIds: _*)
+      val txB = ctx.newTxBuilder
+      val outputBoxes: Array[OutBox] = boxesToCreate.map{ b =>
+        val outBoxBuilder: OutBoxBuilder = txB.outBoxBuilder().value(b.value).contract(
+          new ErgoTreeContract(ergo.getAddressFromString(b.address).script)
+        )
+        val outBoxBuilderWithTokens: OutBoxBuilder = addTokens(outBoxBuilder)(b.tokens)
+        val outBox: OutBox = addRegisters(outBoxBuilderWithTokens)(b.registers).build
+        outBox
+      }
+      val inputs = new util.ArrayList[InputBox]()
+      inputBoxes.foreach(inputs.add)
+      val txToSign = ctx.newTxBuilder().boxesToSpend(inputs)
+        .outputs(outputBoxes: _*)
+        .fee(fee)
+        .sendChangeTo(ergo.getAddressFromString(changeAddress)).build()
+
+      val dlogProver = proveDlogSecrets.foldLeft(ctx.newProverBuilder()){
+        case (oldProverBuilder, newDlogSecret) => oldProverBuilder.withDLogSecret(BigInt(newDlogSecret).bigInteger)
+      }.build()
+      val signedTx = dlogProver.sign(txToSign)
+      if (broadcast) ctx.sendTransaction(signedTx)
+      signedTx.toJson(false)
+    }
+  }
 }
