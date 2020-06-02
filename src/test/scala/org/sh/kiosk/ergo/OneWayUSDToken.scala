@@ -73,11 +73,11 @@ Bob only sells those tokens via the token box whose code is given in the contrac
       case (keyword, value) =>
         keyword + " = " + ScalaErgoConverters.serialize(value).encodeHex
     }.toArray ++ Array(
-      ergoCompiler.$myEnv.matchScript(ScalaErgoConverters.ergoTreeToHex(ergoTree), env.$getEnv.keys.toArray).grouped(120).mkString("\n")
+      ScalaErgoConverters.ergoTreeToHex(ergoTree), env.$getEnv.keys.toArray.grouped(120).mkString("\n")
     )
   }
 
-  import ErgoScript.ergoAddressEncoder
+  import ErgoScript.$ergoAddressEncoder
 
   println("Bobs address: "+Pay2SAddress(ergoTree))
 }

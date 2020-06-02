@@ -1,15 +1,16 @@
 package org.sh.kiosk.ergo.easyweb
 
-import org.sh.kiosk.ergo.fullnode.API
+import org.sh.kiosk.ergo.encoding.EasyWebEncoder
 import org.sh.kiosk.ergo.script.ECC
 
-object Admin extends App {
+object KioskWeb extends App {
+
   val objects = List(
     Env,
     Kiosk,
-    API,
     ECC
   )
+  EasyWebEncoder
   new org.sh.easyweb.AutoWeb(objects, "KioskDemo")
 }
 

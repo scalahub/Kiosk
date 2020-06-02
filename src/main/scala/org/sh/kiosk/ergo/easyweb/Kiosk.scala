@@ -1,7 +1,6 @@
 package org.sh.kiosk.ergo.easyweb
 
 import org.sh.cryptonode.util.StringUtil._
-import org.sh.easyweb.Text
 import org.sh.kiosk.ergo.encoding.ScalaErgoConverters._
 import org.sh.kiosk.ergo.script.ErgoScript
 
@@ -10,21 +9,4 @@ object Kiosk extends ErgoScript(Env) {
   $myEnv.setBigInt("b", BigInt("123456789012345678901234567890123456789012345678901234567890"))
   $myEnv.setCollByte("c", "0x1a2b3c4d5e6f".decodeHex)
   $myEnv.setGroupElement("g", hexToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
-
-  def $getPattern(ergoScript: Text, keysToMatch:Array[String], useRegex:Boolean) = {
-    val $useRegex$ = "false"
-    val $keysToMatch$ = "[a, b, c]"
-    val $ergoScript$ = """{
-  // Following values (among many others) can make this spendable
-  //   a = 0xf091616c10378d94b04ed7afb6e7e8da3ec8dd2a9be4a343f886dd520f688563
-  //   c = 0x1a2b3c4d5e6f
-  //   b = any BigInt greater than 1234
-  val x = blake2b256(c)
-  b > 1234.toBigInt &&
-  a == x
-}"""
-    val f:(String, Array[String]) => String = if (useRegex) $myEnv.getRegex else $myEnv.matchScript
-
-    f(ergoTreeToHex(compile(ergoScript)), keysToMatch: Array[String])
-  }
 }

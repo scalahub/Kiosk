@@ -49,7 +49,7 @@ object Auction extends App {
 
   val ergoTree = ergoScript.$compile(source)
 
-  import ErgoScript.ergoAddressEncoder
+  import ErgoScript.$ergoAddressEncoder
 
   println("Auction address: "+Pay2SAddress(ergoTree))
 
