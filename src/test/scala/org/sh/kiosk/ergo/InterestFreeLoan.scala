@@ -125,7 +125,7 @@ object InterestFreeLoan extends App {
 
     val ergoTree = ergoScript.$compile(src)
 
-    import ErgoScript.ergoAddressEncoder
+    import ErgoScript.$ergoAddressEncoder
 
     println(Pay2SAddress(ergoTree))
   }

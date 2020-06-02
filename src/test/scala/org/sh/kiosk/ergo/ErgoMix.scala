@@ -84,20 +84,6 @@ object ErgoMix {
     )
   }
 
-  // ergoscript binary matched with env
-  def getScriptsMatched(useRegex:Boolean) = {
-    val $useRegex$ = "false"
-    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes($halfMixScriptSource, $fullMixScriptSource, $envMap)
-    val f:(String, Array[String]) => String = if (useRegex) $ergoScript.$myEnv.getRegex else $ergoScript.$myEnv.matchScript
-    $ergoScript.$myEnv.$getEnv.collect{
-      case (keyword, value:GroupElement) =>
-        keyword + " = " + value.getEncoded.toArray.encodeHex
-    }.toArray ++ Array(
-      ("halfMixScript = "+f(halfMixScriptBytes.encodeHex, $ergoScript.$myEnv.$getEnv.keys.toArray)).grouped(120).mkString("\n"),
-      ("fullMixScript = "+f(fullMixScriptBytes.encodeHex, $ergoScript.$myEnv.$getEnv.keys.toArray)).grouped(120).mkString("\n")
-    )
-  }
-
   import ErgoScript._
 
   def getHalfMixBoxAddresses = {

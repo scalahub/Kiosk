@@ -2,14 +2,14 @@ package org.sh.kiosk.ergo.box
 
 import org.ergoplatform.Pay2SAddress
 import org.sh.easyweb.Text
-import org.sh.kiosk.ergo.{Box, Register, Registers, Token, Tokens}
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
-import org.sh.kiosk.ergo.script.ErgoScript
-import org.sh.utils.json.JSONUtil.JsonFormatted
-import ErgoScript.ergoAddressEncoder
 import org.sh.kiosk.ergo.fullnode.API
 import org.sh.kiosk.ergo.fullnode.ReqType.PostJsonRaw
+import org.sh.kiosk.ergo.script.ErgoScript
+import org.sh.kiosk.ergo.script.ErgoScript.$ergoAddressEncoder
+import org.sh.kiosk.ergo.{Box, Register, Registers, Token, Tokens}
+import org.sh.utils.json.JSONUtil.JsonFormatted
 
 class ErgoBox($ergoScript:ErgoScript) {
   var $boxes:Map[String, Box] = Map() // boxName -> Box
@@ -74,12 +74,8 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
 
   def boxDeleteAll = {$boxes = Map()}
 
-  def createTx(inBoxIds:Array[String]) = {
-
-  }
-
-  def tx_getJsonReq(inBoxBytes:Array[Array[Byte]],
-                    outBoxNames:Array[String], usePaymentSend:Boolean, generateOnly:Boolean) = {
+  def createTx(inBoxBytes:Array[Array[Byte]],
+                    outBoxNames:Array[String], generateOnly:Boolean) = {
     val $INFO$ = """
     This method will generate and optionally also send an Ergo transaction.
     If `usePaymentSend` is true, endpoint is /wallet/payment/send otherwise it is /wallet/transaction/send
@@ -110,18 +106,12 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     val request = outBoxes.map(getBoxJson ).mkString(",")
     val requestJson = s"""[$request]"""
 
-    def inputJson(bytes:Array[Byte]) = s""""${bytes.encodeHex}""""
-
-    val (json, endPt) = if (usePaymentSend) (requestJson, "/wallet/payment/send") else {
-      val inputsJson = inBoxBytes.map(inputJson).mkString(",")
-      (s"""{"requests":[$request],"fee":1000000,"inputsRaw":[$inputsJson]}""", "/wallet/transaction/send")
-    }
-
-    if (generateOnly) Array(json) else {
-      val resp = API.nodeQuery(endPt, true, PostJsonRaw, Array.empty, Array.empty, Some(json))
-      Array(resp, json)
+    if (generateOnly) {
+      Array(requestJson)
+    } else {
+      val resp = API.nodeQuery("/wallet/payment/send", true, PostJsonRaw, Array.empty, Array.empty, Some(requestJson))
+      Array(resp, requestJson)
     }
   }
-
 
 }

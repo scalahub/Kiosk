@@ -5,12 +5,10 @@ import org.sh.reflect.DefaultTypeHandler
 import sigmastate.Values.ErgoTree
 import special.sigma.GroupElement
 import org.sh.cryptonode.util.BytesUtil._
-import org.sh.kiosk.ergo.fullnode.ReqType
 
 object EasyWebEncoder {
   DefaultTypeHandler.addType[GroupElement](classOf[GroupElement], hexToGroupElement, groupElementToHex)
   DefaultTypeHandler.addType[ErgoTree](classOf[ErgoTree], hexToErgoTree, ergoTreeToHex)
-  DefaultTypeHandler.addType[ReqType](classOf[ReqType], ReqType.fromString, reqType => reqType.value)
 
 
   def encodeToString(nameValue:(String, Any)): String = {

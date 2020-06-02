@@ -1,6 +1,5 @@
 package org.sh.kiosk.ergo.script
 
-import org.sh.cryptonode.util.BytesUtil._
 import org.sh.kiosk.ergo.encoding.{EasyWebEncoder, ScalaErgoConverters}
 import special.sigma.GroupElement
 
@@ -40,7 +39,7 @@ class ErgoScriptEnv {
   }
 
   // ToDo: Test below
-  def setCollCollByte(name:String, collCollBytes:Array[Array[Byte]]) = {
+  def $setCollCollByte(name:String, collCollBytes:Array[Array[Byte]]) = {
     val $name$ = "d"
     val $collCollBytes$ = "[0x1a2b3c4d5e6f,0xafbecddc12,0xa132]"
     $scala_env += name -> collCollBytes
@@ -49,42 +48,10 @@ class ErgoScriptEnv {
   def deleteAll = $scala_env = Map()
   // use def for all get methods because $scala_env can be modified anytime and we need to use the latest one
   def getAll: Array[String] = $scala_env.toArray.map(EasyWebEncoder.encodeToString)
-  def get(key:String): Option[String] = $scala_env.get(key).map(value => EasyWebEncoder.encodeToString((key, value)))
+  def $get(key:String): Option[String] = $scala_env.get(key).map(value => EasyWebEncoder.encodeToString((key, value)))
 
   def $getEnv: Map[String, Any] = {
     $scala_env.map{ case (key, value) => key -> ScalaErgoConverters.getConvertedValue(value) }
   }
 
-  // below used only for displaying which parts of script contain the encoded constants
-  def $getValuesFromEnv(keys:Array[String]): Array[Any] = {
-    keys.map(key => $getEnv.get(key).getOrElse(throw new Exception(s"Environment does not contain key $key")))
-  }
-
-  def getRegex(scriptHex: String, keysToMatch:Array[String]) = {
-    val startRegex = s"^$scriptHex$$"
-    $getValuesFromEnv(keysToMatch).foldLeft(startRegex)(
-      (currRegex, value) => {
-        val serialized:Array[Byte] = ScalaErgoConverters.serialize(value)
-        val encodedValue = serialized.encodeHex
-        val replacement = s"[0-9a-fA-F]{${encodedValue.size}}"
-        currRegex.replace(encodedValue, replacement)
-      }
-    )
-  }
-
-  def matchScript(scriptHex: String, keysToMatch:Array[String]):String = {
-    (keysToMatch zip $getValuesFromEnv(keysToMatch)).foldLeft(scriptHex)(
-      (currStr, y) => {
-        val (keyword, value) = y
-        val serialized:Array[Byte] = ScalaErgoConverters.serialize(value)
-        val encodedValue = serialized.encodeHex
-        val value_r = encodedValue.length / 2
-        val value_l = encodedValue.length - value_r
-        val kw_r = keyword.length / 2
-        val kw_l = keyword.length - kw_r
-        val replacement = "<" + ("-" * (value_r - kw_r - 1)) + keyword + ("-" * (value_l - kw_l-1)) + ">"
-        currStr.replace(encodedValue, replacement)
-      }
-    )
-  }
 }

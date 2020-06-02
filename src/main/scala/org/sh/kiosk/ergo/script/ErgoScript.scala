@@ -10,10 +10,10 @@ import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 
 // Any variable/method starting with $ will not appear in EasyWeb front-end.
 object ErgoScript {
-  val networkPrefix = MainnetNetworkPrefix
-  def compiler = SigmaCompiler(MainnetNetworkPrefix)
-  implicit val irContext = new RuntimeIRContext // new CompiletimeIRContext
-  implicit val ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder(MainnetNetworkPrefix)
+  val $networkPrefix = MainnetNetworkPrefix
+  def $sigmaCompiler = SigmaCompiler(MainnetNetworkPrefix)
+  implicit val $irContext = new RuntimeIRContext // new CompiletimeIRContext
+  implicit val $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder(MainnetNetworkPrefix)
 }
 
 class ErgoScript(val $myEnv:ErgoScriptEnv) {
@@ -50,7 +50,7 @@ class ErgoScript(val $myEnv:ErgoScriptEnv) {
 
   def $compile(ergoScript:String):ErgoTree = {
     import sigmastate.lang.Terms._
-    compiler.compile($myEnv.$getEnv, ergoScript).asSigmaProp //compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
+    $sigmaCompiler.compile($myEnv.$getEnv, ergoScript).asSigmaProp //compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
   }
 
 }
