@@ -1,6 +1,7 @@
 package org.sh.kiosk.ergo
 
-import org.sh.kiosk.ergo.util.ErgoScriptUtil.{getRandomBigInt, hexToGroupElement}
+import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
+import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
 import scorex.crypto.hash.Blake2b256
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 
@@ -89,10 +90,10 @@ object YieldProtocol extends App {
 
   val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // To use the correct id in real world
   // issuer
-  val alicePrivateKey = getRandomBigInt
-  val alice = hexToGroupElement(ECC.gExp(alicePrivateKey))
+  val alicePrivateKey = ECC.randBigInt
+  val alice = ScalaErgoConverters.hexToGroupElement(ECC.gX(alicePrivateKey))
 
-  val env = new Env
+  val env = new ErgoScriptEnv
   env.setCollByte("rateTokenID", rateOracleTokenID)
   env.setGroupElement("alice", alice)
 

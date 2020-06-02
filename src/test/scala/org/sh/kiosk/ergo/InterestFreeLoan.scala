@@ -1,12 +1,9 @@
 package org.sh.kiosk.ergo
 
-import org.ergoplatform.{Pay2SAddress, Pay2SHAddress}
-import org.sh.kiosk.ergo.ErgoMix.$ergoScript
-import org.sh.kiosk.ergo.util.ErgoScriptUtil._
-import org.sh.cryptonode.util.BytesUtil._
-
+import org.ergoplatform.Pay2SAddress
+import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
+import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
 import scorex.crypto.hash.Blake2b256
-import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 
 object InterestFreeLoan extends App {
   /* using the description at https://www.ergoforum.org/t/interest-free-loan-contract/67
@@ -32,17 +29,17 @@ object InterestFreeLoan extends App {
     val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // gives rate in nanoErgs per usdCent
     val usdTokenID:Array[Byte] = Blake2b256("USD").toArray // bob's one-way USD token
 
-    val env = new Env
+    val env = new ErgoScriptEnv
     env.setCollByte("rateOracleTokenID", rateOracleTokenID)
     env.setCollByte("usdTokenID", usdTokenID)
 
     // borrower
-    val alicePrivateKey = getRandomBigInt
-    val alice = hexToGroupElement(ECC.gExp(alicePrivateKey))
+    val alicePrivateKey = ECC.randBigInt
+    val alice = ScalaErgoConverters.hexToGroupElement(ECC.gX(alicePrivateKey))
 
     // lender
-    val bobPrivateKey = getRandomBigInt
-    val bob = hexToGroupElement(ECC.gExp(bobPrivateKey))
+    val bobPrivateKey = ECC.randBigInt
+    val bob = ScalaErgoConverters.hexToGroupElement(ECC.gX(bobPrivateKey))
 
     val oneMonth = 720*30 // 720 blocks per day
     val fiveDays = 720*5 // 720 blocks per day
@@ -128,7 +125,7 @@ object InterestFreeLoan extends App {
 
     val ergoTree = ergoScript.$compile(src)
 
-    import ergoScript.$ergoAddressEncoder
+    import ErgoScript.ergoAddressEncoder
 
     println(Pay2SAddress(ergoTree))
   }

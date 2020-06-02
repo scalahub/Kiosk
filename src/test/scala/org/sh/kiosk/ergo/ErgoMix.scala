@@ -1,10 +1,11 @@
 package org.sh.kiosk.ergo
 
-import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress, Pay2SHAddress}
+import org.ergoplatform.{Pay2SAddress, Pay2SHAddress}
 import org.sh.cryptonode.util.BytesUtil._
+import org.sh.kiosk.ergo.script.{ErgoScript, ErgoScriptEnv}
 import scorex.crypto.hash.Blake2b256
 import sigmastate.basics.SecP256K1
-import sigmastate.eval.{CompiletimeIRContext, SigmaDsl}
+import sigmastate.eval.SigmaDsl
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 import special.sigma.GroupElement
 
@@ -14,30 +15,36 @@ object ErgoMix {
 
   val $fullMixScriptSource =
     """{
+      |  val g = groupGenerator
       |  val c1 = SELF.R4[GroupElement].get
       |  val c2 = SELF.R5[GroupElement].get
+      |  val gX = SELF.R6[GroupElement].get
       |  proveDlog(c2) ||            // either c2 is g^y
       |  proveDHTuple(g, c1, gX, c2) // or c2 is u^y = g^xy
       |}""".stripMargin
 
   val $halfMixScriptSource =
     """{
+      |  val g = groupGenerator
+      |  val gX = SELF.R4[GroupElement].get
+      |
       |  val c1 = OUTPUTS(0).R4[GroupElement].get
       |  val c2 = OUTPUTS(0).R5[GroupElement].get
       |
-      |  OUTPUTS.size == 2 &&
       |  OUTPUTS(0).value == SELF.value &&
       |  OUTPUTS(1).value == SELF.value &&
+      |  OUTPUTS(0).R6[GroupElement].get == gX &&
+      |  OUTPUTS(1).R6[GroupElement].get == gX &&
       |  blake2b256(OUTPUTS(0).propositionBytes) == fullMixScriptHash &&
       |  blake2b256(OUTPUTS(1).propositionBytes) == fullMixScriptHash &&
       |  OUTPUTS(1).R4[GroupElement].get == c2 &&
       |  OUTPUTS(1).R5[GroupElement].get == c1 && {
       |    proveDHTuple(g, gX, c1, c2) ||
       |    proveDHTuple(g, gX, c2, c1)
-      |  }
+      |  } && SELF.id == INPUTS(0).id
       |}""".stripMargin
 
-  val $env = new Env
+  val $env = new ErgoScriptEnv
   val $ergoScript = new ErgoScript($env) {}
   // any variable/method starting with $ will not appear in front-end.
   // so any variable to be hidden from front-end is prefixed with $
@@ -62,7 +69,10 @@ object ErgoMix {
 
   }
 
-  val $envMap = Map("g" -> $g, "gX" -> $gX)
+  val $envMap = Map(
+    "ggg" -> $g,
+    "gggX" -> $gX
+  )
 
   // ergoscript binary
   def getScripts = {
@@ -78,20 +88,24 @@ object ErgoMix {
   def getScriptsMatched(useRegex:Boolean) = {
     val $useRegex$ = "false"
     val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes($halfMixScriptSource, $fullMixScriptSource, $envMap)
-    val f:(Array[Byte], Array[String]) => String = if (useRegex) $ergoScript.$regex else $ergoScript.$matchScript
+    val f:(String, Array[String]) => String = if (useRegex) $ergoScript.$myEnv.getRegex else $ergoScript.$myEnv.matchScript
     $ergoScript.$myEnv.$getEnv.collect{
       case (keyword, value:GroupElement) =>
         keyword + " = " + value.getEncoded.toArray.encodeHex
     }.toArray ++ Array(
-      ("halfMixScript = "+f(halfMixScriptBytes, $ergoScript.$myEnv.$getEnv.keys.toArray)).grouped(120).mkString("\n"),
-      ("fullMixScript = "+f(fullMixScriptBytes, $ergoScript.$myEnv.$getEnv.keys.toArray)).grouped(120).mkString("\n")
+      ("halfMixScript = "+f(halfMixScriptBytes.encodeHex, $ergoScript.$myEnv.$getEnv.keys.toArray)).grouped(120).mkString("\n"),
+      ("fullMixScript = "+f(fullMixScriptBytes.encodeHex, $ergoScript.$myEnv.$getEnv.keys.toArray)).grouped(120).mkString("\n")
     )
   }
 
-  import $ergoScript.$ergoAddressEncoder
+  import ErgoScript._
 
   def getHalfMixBoxAddresses = {
-    $getHalfMixBoxAddresses($halfMixScriptSource, $fullMixScriptSource, Map("g" -> $g, "gX" -> $gX))
+    $getHalfMixBoxAddresses($halfMixScriptSource, $fullMixScriptSource, Map(
+        "ggg1" -> $g,
+        "ggg1X" -> $gX
+      )
+    )
   }
 
   def $getHalfMixBoxAddresses(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
