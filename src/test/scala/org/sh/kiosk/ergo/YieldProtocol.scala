@@ -91,7 +91,7 @@ object YieldProtocol extends App {
   val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // To use the correct id in real world
   // issuer
   val alicePrivateKey = ECC.randBigInt
-  val alice = ScalaErgoConverters.hexToGroupElement(ECC.gX(alicePrivateKey))
+  val alice = ScalaErgoConverters.stringToGroupElement(ECC.gX(alicePrivateKey))
 
   val env = new ErgoScriptEnv
   env.setCollByte("rateTokenID", rateOracleTokenID)

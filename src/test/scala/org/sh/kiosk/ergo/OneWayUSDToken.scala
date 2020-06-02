@@ -29,7 +29,7 @@ Bob only sells those tokens via the token box whose code is given in the contrac
 
   // lender
   val bobPrivateKey = ECC.randBigInt
-  val bob = ScalaErgoConverters.hexToGroupElement(ECC.gX(bobPrivateKey))
+  val bob = ScalaErgoConverters.stringToGroupElement(ECC.gX(bobPrivateKey))
 
   env.setGroupElement("bob", bob)
 
@@ -69,15 +69,15 @@ Bob only sells those tokens via the token box whose code is given in the contrac
   val ergoTree = ergoCompiler.$compile(source)
 
   val serializedScript = {
-    env.$getEnv.map{
+    env.$envMap.map{
       case (keyword, value) =>
-        keyword + " = " + ScalaErgoConverters.serialize(value).encodeHex
+        keyword + " = " + value.serialize.encodeHex
     }.toArray ++ Array(
-      ergoCompiler.$myEnv.matchScript(ScalaErgoConverters.ergoTreeToHex(ergoTree), env.$getEnv.keys.toArray).grouped(120).mkString("\n")
+      KioskErgoTree(ergoTree).hex.grouped(120).mkString("\n")
     )
   }
 
-  import ErgoScript.ergoAddressEncoder
+  import ErgoScript.$ergoAddressEncoder
 
   println("Bobs address: "+Pay2SAddress(ergoTree))
 }

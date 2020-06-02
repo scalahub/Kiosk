@@ -35,11 +35,11 @@ object InterestFreeLoan extends App {
 
     // borrower
     val alicePrivateKey = ECC.randBigInt
-    val alice = ScalaErgoConverters.hexToGroupElement(ECC.gX(alicePrivateKey))
+    val alice = ScalaErgoConverters.stringToGroupElement(ECC.gX(alicePrivateKey))
 
     // lender
     val bobPrivateKey = ECC.randBigInt
-    val bob = ScalaErgoConverters.hexToGroupElement(ECC.gX(bobPrivateKey))
+    val bob = ScalaErgoConverters.stringToGroupElement(ECC.gX(bobPrivateKey))
 
     val oneMonth = 720*30 // 720 blocks per day
     val fiveDays = 720*5 // 720 blocks per day
@@ -125,7 +125,7 @@ object InterestFreeLoan extends App {
 
     val ergoTree = ergoScript.$compile(src)
 
-    import ErgoScript.ergoAddressEncoder
+    import ErgoScript.$ergoAddressEncoder
 
     println(Pay2SAddress(ergoTree))
   }

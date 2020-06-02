@@ -1,13 +1,52 @@
 package org.sh.kiosk
 
 import org.json.JSONObject
-import org.sh.utils.json.JSONUtil.JsonFormatted
 import org.sh.cryptonode.util.BytesUtil._
+import org.sh.utils.json.JSONUtil.JsonFormatted
+import sigmastate.Values.{ByteArrayConstant, ErgoTree}
+import sigmastate.eval.SigmaDsl
+import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
+import sigmastate.serialization.ValueSerializer
+import special.collection.Coll
+import special.sigma
+import special.sigma.GroupElement
 
 package object ergo {
-  type Register = Array[Byte]
-  type Registers = Array[Register]
-  type ID = Array[Byte]
+  sealed trait KioskType[T]{
+    val serialize:Array[Byte]
+    val value:T
+    lazy val hex = serialize.encodeHex
+
+    def typeName = value.getClass.getCanonicalName
+    override def toString = value.toString
+  }
+
+  case class KioskCollByte(arrayBytes:Array[Byte]) extends KioskType[Coll[Byte]] {
+    override val value: Coll[Byte] = sigmastate.eval.Colls.fromArray(arrayBytes)
+    override val serialize: Array[Byte] = ValueSerializer.serialize(ByteArrayConstant(value))
+    override def toString: String = arrayBytes.encodeHex
+  }
+
+  case class KioskInt(value:Int) extends KioskType[Int] {
+    override val serialize: Array[Byte] = ValueSerializer.serialize(value)
+  }
+  case class KioskLong(value:Long) extends KioskType[Long] {
+    override val serialize: Array[Byte] = ValueSerializer.serialize(value)
+  }
+  case class KioskBigInt(bigInt:BigInt) extends KioskType[sigma.BigInt] {
+    override val value: sigma.BigInt = SigmaDsl.BigInt(bigInt.bigInteger)
+    override val serialize: Array[Byte] = ValueSerializer.serialize(value)
+  }
+  case class KioskGroupElement(value:GroupElement) extends KioskType[GroupElement] {
+    override val serialize: Array[Byte] = ValueSerializer.serialize(value)
+    override def toString: String = value.getEncoded.toArray.encodeHex
+  }
+  case class KioskErgoTree(value:ErgoTree) extends KioskType[ErgoTree] {
+    override val serialize: Array[Byte] = DefaultSerializer.serializeErgoTree(value)
+  }
+
+  type Registers = Array[KioskType[_]]
+  type ID = String
   type Amount = Long
 
   type Token = (ID, Amount)
@@ -18,7 +57,7 @@ package object ergo {
     registers.map{register =>
       val jo = new JSONObject()
       val name = s"R$ctr"
-      jo.put(name, register.encodeHex)
+      jo.put(name, register.serialize.encodeHex)
       ctr += 1
       jo
     }

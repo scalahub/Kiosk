@@ -4,16 +4,16 @@ import org.ergoplatform.ErgoAddressEncoder.MainnetNetworkPrefix
 import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress}
 import org.sh.easyweb.Text
 import sigmastate.Values.ErgoTree
-import sigmastate.eval.RuntimeIRContext
+import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.SigmaCompiler
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 
 // Any variable/method starting with $ will not appear in EasyWeb front-end.
 object ErgoScript {
-  val networkPrefix = MainnetNetworkPrefix
-  def compiler = SigmaCompiler(MainnetNetworkPrefix)
-  implicit val irContext = new RuntimeIRContext // new CompiletimeIRContext
-  implicit val ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder(MainnetNetworkPrefix)
+  val $networkPrefix = MainnetNetworkPrefix
+  val $compiler = SigmaCompiler($networkPrefix)
+  implicit val $irContext = new CompiletimeIRContext
+  implicit val $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder($networkPrefix)
 }
 
 class ErgoScript(val $myEnv:ErgoScriptEnv) {
@@ -50,7 +50,7 @@ class ErgoScript(val $myEnv:ErgoScriptEnv) {
 
   def $compile(ergoScript:String):ErgoTree = {
     import sigmastate.lang.Terms._
-    compiler.compile($myEnv.$getEnv, ergoScript).asSigmaProp //compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
+    $compiler.compile($myEnv.$getEnv, ergoScript).asSigmaProp //compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
   }
 
 }
