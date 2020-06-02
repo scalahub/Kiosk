@@ -3,10 +3,9 @@ package org.sh.kiosk.ergo.box
 import org.ergoplatform.Pay2SAddress
 import org.sh.easyweb.Text
 import org.sh.kiosk.ergo
-import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
 import org.sh.kiosk.ergo.script.ErgoScript
 import org.sh.kiosk.ergo.script.ErgoScript.$ergoAddressEncoder
-import org.sh.kiosk.ergo.{Box, Registers, Tokens}
+import org.sh.kiosk.ergo.{Box, Tokens}
 import org.sh.utils.json.JSONUtil.JsonFormatted
 
 class ErgoBox($ergoScript:ErgoScript) {

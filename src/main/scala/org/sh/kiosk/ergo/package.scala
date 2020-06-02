@@ -17,7 +17,7 @@ package object ergo {
     val value:T
     lazy val hex = serialize.encodeHex
 
-    def typeName = value.getClass.getCanonicalName
+    val typeName:String
     override def toString = value.toString
   }
 
@@ -25,24 +25,31 @@ package object ergo {
     override val value: Coll[Byte] = sigmastate.eval.Colls.fromArray(arrayBytes)
     override val serialize: Array[Byte] = ValueSerializer.serialize(ByteArrayConstant(value))
     override def toString: String = arrayBytes.encodeHex
+    override val typeName: String = "Coll[Byte]"
   }
 
   case class KioskInt(value:Int) extends KioskType[Int] {
     override val serialize: Array[Byte] = ValueSerializer.serialize(value)
+    override val typeName: String = "Int"
   }
   case class KioskLong(value:Long) extends KioskType[Long] {
     override val serialize: Array[Byte] = ValueSerializer.serialize(value)
+    override val typeName: String = "Long"
   }
   case class KioskBigInt(bigInt:BigInt) extends KioskType[sigma.BigInt] {
     override val value: sigma.BigInt = SigmaDsl.BigInt(bigInt.bigInteger)
     override val serialize: Array[Byte] = ValueSerializer.serialize(value)
+    override val typeName: String = "BigInt"
+    override def toString: String = bigInt.toString(10)
   }
   case class KioskGroupElement(value:GroupElement) extends KioskType[GroupElement] {
     override val serialize: Array[Byte] = ValueSerializer.serialize(value)
     override def toString: String = value.getEncoded.toArray.encodeHex
+    override val typeName: String = "GroupElement"
   }
   case class KioskErgoTree(value:ErgoTree) extends KioskType[ErgoTree] {
     override val serialize: Array[Byte] = DefaultSerializer.serializeErgoTree(value)
+    override val typeName: String = "ErgoTree"
   }
 
   type Registers = Array[KioskType[_]]
