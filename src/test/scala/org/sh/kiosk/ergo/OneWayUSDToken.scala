@@ -1,10 +1,9 @@
 package org.sh.kiosk.ergo
 
-import org.ergoplatform.{Pay2SAddress, Pay2SHAddress}
-import org.sh.kiosk.ergo.ErgoMix.$ergoScript
-import org.sh.kiosk.ergo.util.ErgoScriptUtil._
+import org.ergoplatform.Pay2SAddress
 import org.sh.cryptonode.util.BytesUtil._
-
+import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
+import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
 import scorex.crypto.hash.Blake2b256
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 
@@ -25,12 +24,12 @@ Bob only sells those tokens via the token box whose code is given in the contrac
    */
   val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // To use the correct id in real world
 
-  val env = new Env
+  val env = new ErgoScriptEnv
   env.setCollByte("rateTokenID", rateOracleTokenID)
 
   // lender
-  val bobPrivateKey = getRandomBigInt
-  val bob = hexToGroupElement(ECC.gExp(bobPrivateKey))
+  val bobPrivateKey = ECC.randBigInt
+  val bob = ScalaErgoConverters.hexToGroupElement(ECC.gX(bobPrivateKey))
 
   env.setGroupElement("bob", bob)
 
@@ -72,13 +71,13 @@ Bob only sells those tokens via the token box whose code is given in the contrac
   val serializedScript = {
     env.$getEnv.map{
       case (keyword, value) =>
-        keyword + " = " + serialize(value).encodeHex
+        keyword + " = " + ScalaErgoConverters.serialize(value).encodeHex
     }.toArray ++ Array(
-      ergoCompiler.$matchScript(DefaultSerializer.serializeErgoTree(ergoTree), env.$getEnv.keys.toArray).grouped(120).mkString("\n")
+      ergoCompiler.$myEnv.matchScript(ScalaErgoConverters.ergoTreeToHex(ergoTree), env.$getEnv.keys.toArray).grouped(120).mkString("\n")
     )
   }
 
-  import ergoCompiler.$ergoAddressEncoder
+  import ErgoScript.ergoAddressEncoder
 
   println("Bobs address: "+Pay2SAddress(ergoTree))
 }

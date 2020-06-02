@@ -1,16 +1,15 @@
 package org.sh.kiosk.ergo
 
 import org.ergoplatform.Pay2SAddress
-import org.sh.kiosk.ergo.util.ErgoScriptUtil.{getRandomBigInt, hexToGroupElement, serialize}
-import scorex.crypto.hash.Blake2b256
-import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
+import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
+import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
 
 object Auction extends App {
-  val env = new Env
+  val env = new ErgoScriptEnv
 
   // seller
-  val alicePrivateKey = getRandomBigInt
-  val alice = hexToGroupElement(ECC.gExp(alicePrivateKey))
+  val alicePrivateKey = ECC.randBigInt
+  val alice = ScalaErgoConverters.hexToGroupElement(ECC.gX(alicePrivateKey))
 
   env.setGroupElement("alice", alice)
 
@@ -50,7 +49,7 @@ object Auction extends App {
 
   val ergoTree = ergoScript.$compile(source)
 
-  import ergoScript.$ergoAddressEncoder
+  import ErgoScript.ergoAddressEncoder
 
   println("Auction address: "+Pay2SAddress(ergoTree))
 

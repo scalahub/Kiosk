@@ -7,6 +7,7 @@ import org.bouncycastle.util.BigIntegers
 import org.sh.cryptonode.ecc.{ECCPrvKey, ECCPubKey, Point}
 import sigmastate.basics.SecP256K1
 import org.sh.cryptonode.ecc.Util._
+import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
 
 object TestECMath extends App {
   val g_ergo = SecP256K1.generator
@@ -25,10 +26,10 @@ object TestECMath extends App {
 
   assert(a_ergo.getXCoord.toBigInteger == a_cryptoNode.x.bigInteger)
   assert(a_ergo.getYCoord.toBigInteger == a_cryptoNode.y.bigInteger)
-  val env = new Env
+  val env = new ErgoScriptEnv
   val ergoScript = new ErgoScript(env)
   val b_cryptoNode = new ECCPrvKey(randNum, true).eccPubKey.hex
-  val b_ergo = ECC.gExp(randNum)
+  val b_ergo = ECC.gX(randNum)
 
   assert(b_cryptoNode == b_ergo)
   val randNums = (1 to 1000).map {i =>
@@ -55,5 +56,4 @@ object TestECMath extends App {
       assert(d_ergo.getXCoord.toBigInteger == d_cryptoNode.x.bigInteger)
       assert(d_ergo.getYCoord.toBigInteger == d_cryptoNode.y.bigInteger)
   }
-  println("ECMath tests passed")
 }
