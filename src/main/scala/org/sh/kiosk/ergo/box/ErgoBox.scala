@@ -3,20 +3,21 @@ package org.sh.kiosk.ergo.box
 import java.util
 
 import org.ergoplatform.Pay2SAddress
-import org.ergoplatform.appkit.{ErgoToken, ErgoValue, InputBox, OutBox, OutBoxBuilder}
 import org.ergoplatform.appkit.impl.ErgoTreeContract
+import org.ergoplatform.appkit.{ErgoToken, InputBox, OutBox, OutBoxBuilder}
 import org.sh.easyweb.Text
 import org.sh.kiosk.ergo
 import org.sh.kiosk.ergo.appkit.Client
 import org.sh.kiosk.ergo.script.ErgoScript
 import org.sh.kiosk.ergo.script.ErgoScript.$ergoAddressEncoder
-import org.sh.kiosk.ergo.{Box, KioskType, Token, Tokens}
+import org.sh.kiosk.ergo._
 import org.sh.utils.json.JSONUtil.JsonFormatted
+import special.sigma.GroupElement
 
 // ToDo: Add context variable to each box created
 class ErgoBox($ergoScript:ErgoScript) {
   var $boxes:Map[String, Box] = Map() // boxName -> Box
-
+  var $dhts:Map[String, DhtData] = Map() // dhtDataName -> DhtData
   def getAll: Array[JsonFormatted] = {
     $boxes.map{
       case (name, box) =>
@@ -90,7 +91,22 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     }
   }
 
-  def createTx(inputBoxIds:Array[String], outputBoxNames:Array[String], fee:Long, changeAddress:String, proveDlogSecrets:Array[String], broadcast:Boolean) = {
+  def dhtDataAdd(name:String, g:GroupElement, h:GroupElement, u:GroupElement, v:GroupElement, x:BigInt) = {
+    $dhts += (name -> DhtData(g, h, u, v, x))
+  }
+
+  def dhtDataClear = {
+    $dhts = Map()
+  }
+
+  def dhtDataGet = {
+    $dhts.map{
+      case (name, dht) => s"""{"name":"$name","g","${dht.g.hex},"h","${dht.h.hex},"u","${dht.u.hex},"v","${dht.v.hex}"}"""
+    }
+  }
+
+  def createTx(inputBoxIds:Array[String], outputBoxNames:Array[String], fee:Long, changeAddress:String, proveDlogSecrets:Array[String], proveDhtDataNames:Array[String], broadcast:Boolean) = {
+    val dhtData: Array[DhtData] = proveDhtDataNames.map($dhts(_))
     val boxesToCreate: Array[Box] = outputBoxNames.map(outputBoxName => $boxes(outputBoxName))
     Client.usingClient{ctx =>
       val inputBoxes: Array[InputBox] = ctx.getBoxesById(inputBoxIds: _*)
@@ -112,8 +128,13 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
 
       val dlogProver = proveDlogSecrets.foldLeft(ctx.newProverBuilder()){
         case (oldProverBuilder, newDlogSecret) => oldProverBuilder.withDLogSecret(BigInt(newDlogSecret).bigInteger)
-      }.build()
-      val signedTx = dlogProver.sign(txToSign)
+      }
+
+      val dhtProver = dhtData.foldLeft(dlogProver){
+        case (oldProverBuilder, dht) => oldProverBuilder.withDHTData(dht.g, dht.h, dht.u, dht.v, dht.x.bigInteger)
+      }
+
+      val signedTx = dhtProver.build().sign(txToSign)
       if (broadcast) ctx.sendTransaction(signedTx)
       signedTx.toJson(false)
     }

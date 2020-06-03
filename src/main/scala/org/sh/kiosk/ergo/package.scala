@@ -60,9 +60,12 @@ package object ergo {
     override val typeName: String = "ErgoTree"
     override def getErgoValue = ???
   }
+  implicit def groupElementToKioskGroupElement(g:GroupElement) = KioskGroupElement(g)
 
   def getAddressFromErgoTree(ergoTree: ErgoTree) = ErgoScript.$ergoAddressEncoder.fromProposition(ergoTree).get
   def getAddressFromString(string: String) = ErgoScript.$ergoAddressEncoder.fromString(string).get
+
+  case class DhtData(g:GroupElement, h:GroupElement, u:GroupElement, v:GroupElement, x:BigInt)
 
   type ID = String
   type Amount = Long
