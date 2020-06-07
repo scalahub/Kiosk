@@ -4,6 +4,7 @@ import org.sh.kiosk.ergo.box.ErgoBox
 import org.sh.kiosk.ergo.encoding.{EasyWebEncoder, ScalaErgoConverters}
 import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
 import org.sh.cryptonode.util.StringUtil._
+import org.sh.kiosk.ergo.explorer.Reader
 
 object KioskWeb extends App {
   object Env extends ErgoScriptEnv
@@ -18,7 +19,8 @@ object KioskWeb extends App {
     Env,
     Script,
     ECC,
-    Box
+    Box,
+    Reader
   )
   EasyWebEncoder
   new org.sh.easyweb.AutoWeb(objects, "KioskDemo")

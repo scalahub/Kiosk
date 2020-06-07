@@ -11,6 +11,7 @@ import org.sh.kiosk.ergo.appkit.Client
 import org.sh.kiosk.ergo.script.ErgoScript
 import org.sh.kiosk.ergo.script.ErgoScript.$ergoAddressEncoder
 import org.sh.kiosk.ergo._
+import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import special.sigma.GroupElement
 
@@ -113,7 +114,7 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
       val txB = ctx.newTxBuilder
       val outputBoxes: Array[OutBox] = boxesToCreate.map{ b =>
         val outBoxBuilder: OutBoxBuilder = txB.outBoxBuilder().value(b.value).contract(
-          new ErgoTreeContract(ergo.getAddressFromString(b.address).script)
+          new ErgoTreeContract(ScalaErgoConverters.getAddressFromString(b.address).script)
         )
         val outBoxBuilderWithTokens: OutBoxBuilder = addTokens(outBoxBuilder)(b.tokens)
         val outBox: OutBox = addRegisters(outBoxBuilderWithTokens)(b.registers).build
@@ -124,7 +125,7 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
       val txToSign = ctx.newTxBuilder().boxesToSpend(inputs)
         .outputs(outputBoxes: _*)
         .fee(fee)
-        .sendChangeTo(ergo.getAddressFromString(changeAddress)).build()
+        .sendChangeTo(ScalaErgoConverters.getAddressFromString(changeAddress)).build()
 
       val dlogProver = proveDlogSecrets.foldLeft(ctx.newProverBuilder()){
         case (oldProverBuilder, newDlogSecret) => oldProverBuilder.withDLogSecret(BigInt(newDlogSecret).bigInteger)
@@ -139,4 +140,5 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
       signedTx.toJson(false)
     }
   }
+
 }

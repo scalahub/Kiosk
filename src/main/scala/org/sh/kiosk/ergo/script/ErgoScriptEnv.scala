@@ -1,8 +1,8 @@
 package org.sh.kiosk.ergo.script
 
+import org.sh.cryptonode.util.BytesUtil._
 import org.sh.kiosk.ergo._
 import special.sigma.GroupElement
-
 
 class ErgoScriptEnv {
 
@@ -40,9 +40,10 @@ class ErgoScriptEnv {
 
   def deleteAll = $envMap = Map()
 
-  def getAll: Array[String] = $envMap.toArray.map{
+  def getAll(serialize:Boolean): Array[String] = $envMap.toArray.map{
     case (key, kioskType) =>
-      s"""{"name":"$key", "value":"${kioskType.toString}", "type":"${kioskType.typeName}"}"""
+      val string = if (serialize) kioskType.serialize.encodeHex else kioskType.toString
+      s"""{"name":"$key", "value":"${string}", "type":"${kioskType.typeName}"}"""
   }
 
   def $getEnv: Map[String, Any] = {

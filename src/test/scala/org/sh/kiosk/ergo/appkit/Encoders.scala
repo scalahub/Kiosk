@@ -132,7 +132,7 @@ object Encoders extends App {
 
     val appkitAddress = addressEncoder.fromProposition(appkitScript).get.toString
     assert(kioskAddress == appkitAddress)
-    println(s"Test passed: both scripts evaluated to ${appkitAddress}")
+    println(s"Test passed: both addresses evaluated to ${appkitAddress}")
   }
 
 }
