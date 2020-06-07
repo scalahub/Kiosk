@@ -38,5 +38,6 @@ object ECC {
     gExpX(base, x)
   }
 
+  def hexToBigInt(hex:String) = BigInt(hex, 16)
 }
 

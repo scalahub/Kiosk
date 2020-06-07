@@ -38,6 +38,12 @@ class ErgoScriptEnv {
     $envMap += name -> KioskCollByte(bytes)
   }
 
+  def setString(name:String, string:String) = {
+    val $name$ = "string"
+    val $string$ = "Nothing backed USD token"
+    $envMap += name -> KioskCollByte(string.getBytes("UTF-8"))
+  }
+
   def deleteAll = $envMap = Map()
 
   def getAll(serialize:Boolean): Array[String] = $envMap.toArray.map{

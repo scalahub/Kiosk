@@ -25,7 +25,7 @@ class ErgoScript(val $myEnv:ErgoScriptEnv) {
   a == x
 }"""
 
-    val ergoTree = compile(ergoScript)
+    val ergoTree = $compile(ergoScript)
     val scriptBytes = DefaultSerializer.serializeErgoTree(ergoTree)
     scorex.crypto.hash.Blake2b256(scriptBytes).toArray
   }
@@ -36,10 +36,10 @@ class ErgoScript(val $myEnv:ErgoScriptEnv) {
   b > 1234.toBigInt &&
   a == x
 }"""
-    Pay2SAddress(compile(ergoScript)).toString
+    Pay2SAddress($compile(ergoScript)).toString
   }
 
-  def compile(ergoScript:Text):ErgoTree = {
+  def $compile(ergoScript:Text):ErgoTree = {
     val $ergoScript$:String = """{
   val x = blake2b256(c)
   b > 1234.toBigInt &&

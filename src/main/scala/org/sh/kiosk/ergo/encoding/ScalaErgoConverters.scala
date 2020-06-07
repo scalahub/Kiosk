@@ -3,6 +3,7 @@ package org.sh.kiosk.ergo.encoding
 import java.math.BigInteger
 
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Point
+import org.ergoplatform.ErgoAddress
 import org.sh.cryptonode.ecc.ECCPubKey
 import org.sh.cryptonode.util.StringUtil._
 import org.sh.kiosk.ergo._
