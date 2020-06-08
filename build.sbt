@@ -30,7 +30,7 @@ lazy val root = (project in file(".")).dependsOn(
   EasyWeb, CryptoNode, appkit
 ).settings(
   updateOptions := updateOptions.value.withLatestSnapshots(false),
-  mainClass in (Compile, run) := Some("org.sh.kiosk.ergo.Admin"),
+  mainClass in (Compile, run) := Some("org.sh.kiosk.ergo.easyweb.KioskWeb"),
   assemblyMergeStrategy in assembly := {
     case PathList("reference.conf") => MergeStrategy.concat
     case PathList("META-INF", xs @ _*) => MergeStrategy.discard

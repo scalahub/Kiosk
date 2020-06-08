@@ -34,6 +34,8 @@ object ScalaErgoConverters {
 
   def getAddressFromErgoTree(ergoTree: ErgoTree) = ErgoScript.$ergoAddressEncoder.fromProposition(ergoTree).get
 
+  def getStringFromAddress(ergoAddress: ErgoAddress):String = ErgoScript.$ergoAddressEncoder.toString(ergoAddress)
+
   def getAddressFromString(string: String) = ErgoScript.$ergoAddressEncoder.fromString(string).get
 
   def deserialize(hex:String):KioskType[_] = {

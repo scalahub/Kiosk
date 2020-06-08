@@ -2,16 +2,14 @@ package org.sh.kiosk.ergo.box
 
 import java.util
 
-import org.ergoplatform.Pay2SAddress
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{ErgoToken, InputBox, OutBox, OutBoxBuilder}
 import org.sh.easyweb.Text
 import org.sh.kiosk.ergo
-import org.sh.kiosk.ergo.appkit.Client
-import org.sh.kiosk.ergo.script.ErgoScript
-import org.sh.kiosk.ergo.script.ErgoScript.$ergoAddressEncoder
 import org.sh.kiosk.ergo._
-import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
+import org.sh.kiosk.ergo.appkit.Client
+import org.sh.kiosk.ergo.encoding.ScalaErgoConverters._
+import org.sh.kiosk.ergo.script.ErgoScript
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.Values.ErgoTree
 import special.sigma.GroupElement
@@ -57,6 +55,18 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     $create(boxName, ergoTree, registerKeys, tokenIDs, tokenAmts, value)
   }
 
+  def create(boxName:String, address:String, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
+    val $INFO$ =
+      """
+1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these array to empty (i.e., [])
+2. registerKeys must refer to keys of ErgoEnv. Registers will be populated with the corresponding values starting with R4
+
+As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
+Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]"""
+    val ergoTree = getAddressFromString(address).script
+    $create(boxName, ergoTree, registerKeys, tokenIDs, tokenAmts, value)
+  }
+
   def $create(boxName:String, ergoTree:ErgoTree, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
     if ($boxes.contains(boxName)) throw new Exception(s"Name $boxName already exists. Use a different name")
     require(tokenIDs.size == tokenAmts.size, s"Number of tokenIDs (${tokenIDs.size}) does not match number of amounts (${tokenAmts.size})")
@@ -66,22 +76,10 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
       value
     }
     val tokens:Tokens = tokenIDs zip tokenAmts
-    val address = Pay2SAddress(ergoTree).toString
+    val address = getStringFromAddress(getAddressFromErgoTree(ergoTree))
     val box = Box(address, value, registers, tokens)
     $boxes += (boxName -> Box(address, value, registers, tokens))
     box
-  }
-
-  def create(boxName:String, address:String, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
-    val $INFO$ =
-      """
-1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these array to empty (i.e., [])
-2. registerKeys must refer to keys of ErgoEnv. Registers will be populated with the corresponding values starting with R4
-
-As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
-Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]"""
-    val ergoTree = ScalaErgoConverters.getAddressFromString(address).script
-    $create(boxName, ergoTree, registerKeys, tokenIDs, tokenAmts, value)
   }
 
   def delete(boxName:String) = {
@@ -128,12 +126,12 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     Client.usingClient{ctx =>
       val inputBoxes: Array[InputBox] = ctx.getBoxesById(inputBoxIds: _*)
       val txB = ctx.newTxBuilder
-      val outputBoxes: Array[OutBox] = boxesToCreate.map{ b =>
-        val outBoxBuilder: OutBoxBuilder = txB.outBoxBuilder().value(b.value).contract(
-          new ErgoTreeContract(ScalaErgoConverters.getAddressFromString(b.address).script)
+      val outputBoxes: Array[OutBox] = boxesToCreate.map{ box =>
+        val outBoxBuilder: OutBoxBuilder = txB.outBoxBuilder().value(box.value).contract(
+          new ErgoTreeContract(getAddressFromString(box.address).script)
         )
-        val outBoxBuilderWithTokens: OutBoxBuilder = addTokens(outBoxBuilder)(b.tokens)
-        val outBox: OutBox = addRegisters(outBoxBuilderWithTokens)(b.registers).build
+        val outBoxBuilderWithTokens: OutBoxBuilder = addTokens(outBoxBuilder)(box.tokens)
+        val outBox: OutBox = addRegisters(outBoxBuilderWithTokens)(box.registers).build
         outBox
       }
       val inputs = new util.ArrayList[InputBox]()
@@ -141,7 +139,7 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
       val txToSign = ctx.newTxBuilder().boxesToSpend(inputs)
         .outputs(outputBoxes: _*)
         .fee(fee)
-        .sendChangeTo(ScalaErgoConverters.getAddressFromString(changeAddress)).build()
+        .sendChangeTo(getAddressFromString(changeAddress)).build()
 
       val dlogProver = proveDlogSecrets.foldLeft(ctx.newProverBuilder()){
         case (oldProverBuilder, newDlogSecret) => oldProverBuilder.withDLogSecret(BigInt(newDlogSecret).bigInteger)
