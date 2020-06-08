@@ -1,7 +1,7 @@
 package org.sh.kiosk.ergo.appkit
 
 import org.ergoplatform.appkit._
-import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress}
+import org.ergoplatform.{ErgoAddress, ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.cryptonode.util.StringUtil._
 import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
@@ -135,4 +135,56 @@ object Encoders extends App {
     println(s"Test passed: both addresses evaluated to ${appkitAddress}")
   }
 
+  // below tests some address encoding techniques. Addresses have some quirks; for example fANwcUDKxKD3btGmknic2kE7mEzLR2CFTYzEKPh5iyPMUMwfwjuxsJP and 9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw contain the same ErgoTree
+  {
+    import ErgoScript._
+    val address: String = "9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw"
+    val ergoAddress: ErgoAddress = ScalaErgoConverters.getAddressFromString(address)
+
+    assert(ergoAddress.toString == address)
+
+    val script: Values.ErgoTree = ergoAddress.script
+    val scriptHex: String = script.bytes.encodeHex
+
+    val p2sAddress: Pay2SAddress = Pay2SAddress(script)
+    val p2sAddressScript: Values.ErgoTree = p2sAddress.script
+    val p2sAddressScriptBytes: Array[Byte] = p2sAddress.scriptBytes
+
+    assert(scriptHex == p2sAddressScript.bytes.encodeHex)
+    assert(scriptHex == p2sAddressScriptBytes.encodeHex)
+
+    val p2sAddressString: String = ScalaErgoConverters.getStringFromAddress(p2sAddress)
+    val p2sAddressToErgoAddress: ErgoAddress = ScalaErgoConverters.getAddressFromString(p2sAddressString)
+    val p2SAddressStringToScript: Values.ErgoTree = p2sAddressToErgoAddress.script
+
+    assert(scriptHex == p2SAddressStringToScript.bytes.encodeHex)
+
+    assert(p2sAddressString == "fANwcUDKxKD3btGmknic2kE7mEzLR2CFTYzEKPh5iyPMUMwfwjuxsJP") // ToDo: check why this address is encoded differently from the original
+
+    assert(
+      ScalaErgoConverters.getStringFromAddress(
+        ScalaErgoConverters.getAddressFromString(p2sAddressString)
+      ) == p2sAddressString
+    )
+  }
+  {
+    import org.ergoplatform.ErgoAddressEncoder
+    import org.apache.commons.codec.binary.Hex
+    implicit val addressEncoder = new ErgoAddressEncoder(ErgoAddressEncoder.MainnetNetworkPrefix)
+    val address1 = addressEncoder.fromString("fANwcUDKxKD3btGmknic2kE7mEzLR2CFTYzEKPh5iyPMUMwfwjuxsJP").get
+    val address2 = addressEncoder.fromString("9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw").get
+    val hex1 = Hex.encodeHexString(address1.script.bytes)
+    val hex2 = Hex.encodeHexString(address2.script.bytes)
+    assert(hex1 == hex2)
+    assert(hex1 == "0008cd03836fd1f810cbfa6aa9516530709ae6e591bccb9523e9b65c49c09586319d10de")
+    assert(Pay2SAddress(address2.script).toString() == "fANwcUDKxKD3btGmknic2kE7mEzLR2CFTYzEKPh5iyPMUMwfwjuxsJP")
+    assert(addressEncoder.fromProposition(address1.script).get.toString == "9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw")
+
+    val ergoTree = ScalaErgoConverters.getAddressFromString("9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw").script
+    val address3 = Pay2SAddress(ergoTree).toString
+    val address4 = ScalaErgoConverters.getAddressFromErgoTree(ergoTree).toString
+    assert(address3 == "fANwcUDKxKD3btGmknic2kE7mEzLR2CFTYzEKPh5iyPMUMwfwjuxsJP")
+    assert(address4 == "9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw")
+    assert(addressEncoder.toString(ScalaErgoConverters.getAddressFromString("9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw")) == "9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw")
+  }
 }
