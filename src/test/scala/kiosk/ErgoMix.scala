@@ -1,6 +1,6 @@
 package kiosk
 
-import kiosk.script.{ErgoScript, ErgoScriptEnv}
+import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.{Pay2SAddress, Pay2SHAddress}
 import org.sh.cryptonode.util.BytesUtil._
 import scorex.crypto.hash.Blake2b256
@@ -44,8 +44,8 @@ object ErgoMix {
       |  } && SELF.id == INPUTS(0).id
       |}""".stripMargin
 
-  val $env = new ErgoScriptEnv
-  val $ergoScript = new ErgoScript($env) {}
+  val $env = new KioskScriptEnv
+  val $ergoScript = new KioskScriptCreator($env) {}
   // any variable/method starting with $ will not appear in front-end.
   // so any variable to be hidden from front-end is prefixed with $
 
@@ -84,7 +84,7 @@ object ErgoMix {
     )
   }
 
-  import ErgoScript._
+  import KioskScriptCreator._
 
   def getHalfMixBoxAddresses = {
     $getHalfMixBoxAddresses($halfMixScriptSource, $fullMixScriptSource, Map(

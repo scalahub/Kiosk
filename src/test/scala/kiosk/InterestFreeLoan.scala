@@ -1,7 +1,7 @@
 package kiosk
 
 import kiosk.encoding.ScalaErgoConverters
-import kiosk.script.{ErgoScript, ErgoScriptEnv}
+import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.Pay2SAddress
 import scorex.crypto.hash.Blake2b256
 
@@ -29,7 +29,7 @@ object InterestFreeLoan extends App {
     val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // gives rate in nanoErgs per usdCent
     val usdTokenID:Array[Byte] = Blake2b256("USD").toArray // bob's one-way USD token
 
-    val env = new ErgoScriptEnv
+    val env = new KioskScriptEnv
     env.setCollByte("rateOracleTokenID", rateOracleTokenID)
     env.setCollByte("usdTokenID", usdTokenID)
 
@@ -53,7 +53,7 @@ object InterestFreeLoan extends App {
     env.setInt("emi", 1000) // equal monthly installment in USD cents
 
 
-    val ergoScript = new ErgoScript(env) {}
+    val ergoScript = new KioskScriptCreator(env) {}
 
     val src =
       """{
@@ -125,7 +125,7 @@ object InterestFreeLoan extends App {
 
     val ergoTree = ergoScript.$compile(src)
 
-    import ErgoScript.$ergoAddressEncoder
+    import KioskScriptCreator.$ergoAddressEncoder
 
     println(Pay2SAddress(ergoTree))
   }

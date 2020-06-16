@@ -15,6 +15,12 @@ org.sh.reflect.CodeGenUtil$:CodeGenUtil.scala:69
 org.sh.easyweb.HTMLConstants$:HTMLConstants.scala:27
 org.sh.easyweb.HTMLClientCodeGenerator:HTMLClientCodeGenerator.scala:115
 org.sh.easyweb.HTMLClientCodeGenerator:HTMLClientCodeGenerator.scala:78
+org.sh.easyweb.HTMLClientCodeGenerator:HTMLClientCodeGenerator.scala:47
+org.sh.easyweb.AutoWebSession:AutoWebSession.scala:48
+kiosk.KioskWeb$:KioskWeb.scala:29
+kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:20
+scala.Function0:Function0.scala:39
+scala.Function0:Function0.scala:39
 -->
 
 <html>
@@ -507,11 +513,11 @@ function uploadFileAndGetID(fileid, uploadresultid) {
     <h1 id='top'>Classes (5)</h1>
         <a href="#kiosk.Box">kiosk.Box</a> (<a href="#kiosk.Box.Methods">6</a>)<br>
 <a href="#kiosk.ECC">kiosk.ECC</a> (<a href="#kiosk.ECC.Methods">3</a>)<br>
-<a href="#kiosk.Env">kiosk.Env</a> (<a href="#kiosk.Env.Methods">9</a>)<br>
+<a href="#kiosk.Env">kiosk.Env</a> (<a href="#kiosk.Env.Methods">10</a>)<br>
 <a href="#kiosk.Reader">kiosk.Reader</a> (<a href="#kiosk.Reader.Methods">1</a>)<br>
 <a href="#kiosk.Script">kiosk.Script</a> (<a href="#kiosk.Script.Methods">2</a>)
     <br>
-      Total methods found: 21
+      Total methods found: 22
     <br><hr>Kiosk
     <br>
     <hr>
@@ -828,13 +834,13 @@ function uploadFileAndGetID(fileid, uploadresultid) {
 </form>
 <a href="#top">top</a> <a href="#kiosk.ECC">parent</a>
 <hr>
-<h3 id='kiosk.Env'>kiosk.Env (9)</h3><table border="1" style="width:100%" id="kiosk.Env.Methods">
+<h3 id='kiosk.Env'>kiosk.Env (10)</h3><table border="1" style="width:100%" id="kiosk.Env.Methods">
       <tr>
         <th>Displayed Name</th>
         <th>Original Name</th>
         <th>Parameters</th>
         <th>Return Type</th>
-      </tr><tr><td><a href="#kiosk.Env.deleteAll">deleteAll</a></td><td>deleteAll</td><td></td><td>void</td></tr><tr><td><a href="#kiosk.Env.getAll">getAll</a></td><td>getAll</td><td>(serialize:boolean)</td><td>String[]</td></tr><tr><td><a href="#kiosk.Env.setBigInt">setBigInt</a></td><td>setBigInt</td><td>(name:String, bigInt:scala.math.BigInt)</td><td>void</td></tr><tr><td><a href="#kiosk.Env.setCollByte">setCollByte</a></td><td>setCollByte</td><td>(name:String, bytes:byte[])</td><td>void</td></tr><tr><td><a href="#kiosk.Env.setCollGroupElement">setCollGroupElement</a></td><td>setCollGroupElement</td><td>(name:String, coll:String[])</td><td>String[]</td></tr><tr><td><a href="#kiosk.Env.setGroupElement">setGroupElement</a></td><td>setGroupElement</td><td>(name:String, groupElement:special.sigma.GroupElement)</td><td>special.sigma.GroupElement</td></tr><tr><td><a href="#kiosk.Env.setInt">setInt</a></td><td>setInt</td><td>(name:String, int:int)</td><td>void</td></tr><tr><td><a href="#kiosk.Env.setLong">setLong</a></td><td>setLong</td><td>(name:String, long:long)</td><td>void</td></tr><tr><td><a href="#kiosk.Env.setString">setString</a></td><td>setString</td><td>(name:String, string:String)</td><td>void</td></tr>
+      </tr><tr><td><a href="#kiosk.Env.deleteAll">deleteAll</a></td><td>deleteAll</td><td></td><td>void</td></tr><tr><td><a href="#kiosk.Env.envEnvMap">envEnvMap</a></td><td>envEnvMap</td><td></td><td>scala.collection.mutable.Map</td></tr><tr><td><a href="#kiosk.Env.getAll">getAll</a></td><td>getAll</td><td>(serialize:boolean)</td><td>String[]</td></tr><tr><td><a href="#kiosk.Env.setBigInt">setBigInt</a></td><td>setBigInt</td><td>(name:String, bigInt:scala.math.BigInt)</td><td>scala.collection.mutable.Map</td></tr><tr><td><a href="#kiosk.Env.setCollByte">setCollByte</a></td><td>setCollByte</td><td>(name:String, bytes:byte[])</td><td>scala.collection.mutable.Map</td></tr><tr><td><a href="#kiosk.Env.setCollGroupElement">setCollGroupElement</a></td><td>setCollGroupElement</td><td>(name:String, coll:String[])</td><td>String[]</td></tr><tr><td><a href="#kiosk.Env.setGroupElement">setGroupElement</a></td><td>setGroupElement</td><td>(name:String, groupElement:special.sigma.GroupElement)</td><td>special.sigma.GroupElement</td></tr><tr><td><a href="#kiosk.Env.setInt">setInt</a></td><td>setInt</td><td>(name:String, int:int)</td><td>scala.collection.mutable.Map</td></tr><tr><td><a href="#kiosk.Env.setLong">setLong</a></td><td>setLong</td><td>(name:String, long:long)</td><td>scala.collection.mutable.Map</td></tr><tr><td><a href="#kiosk.Env.setString">setString</a></td><td>setString</td><td>(name:String, string:String)</td><td>scala.collection.mutable.Map</td></tr>
     </table>
 <br>
 
@@ -847,6 +853,19 @@ function uploadFileAndGetID(fileid, uploadresultid) {
    </label>
  
    <div id="kiosk.Env_deleteAll_Ans" class="alphaNum"></div>
+</form>
+<a href="#top">top</a> <a href="#kiosk.Env">parent</a>
+
+
+<form id="kiosk.Env.envEnvMap" class="elegant-aero">
+
+ <h1><small>kiosk.Env.envEnvMap</small></h1>
+   <label>
+     <span></span>
+     <input value="submit" type="button" onclick='JavaScript:xmlhttpPostSend("fC41TN50H6n37wax","envEnvMap","kiosk.Env.envEnvMap",[],"kiosk.Env_envEnvMap_Ans")'>
+   </label>
+ 
+   <div id="kiosk.Env_envEnvMap_Ans" class="alphaNum"></div>
 </form>
 <a href="#top">top</a> <a href="#kiosk.Env">parent</a>
 

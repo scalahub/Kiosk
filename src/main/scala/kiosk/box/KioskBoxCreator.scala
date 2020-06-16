@@ -5,18 +5,41 @@ import java.util
 import kiosk.appkit.Client
 import kiosk.encoding.ScalaErgoConverters._
 import kiosk.ergo._
-import kiosk.script.ErgoScript
+import kiosk.script.KioskScriptCreator
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{ErgoToken, InputBox, OutBox, OutBoxBuilder}
 import org.sh.easyweb.Text
+import org.sh.reflect.DataStructures.EasyMirrorSession
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.Values.ErgoTree
 import special.sigma.GroupElement
+import scala.collection.mutable.{Map => MMap}
 
 // ToDo: Add context variable to each box created
-class ErgoBox($ergoScript:ErgoScript) {
-  var $boxes:Map[String, KioskBox] = Map() // boxName -> Box
-  var $dhts:Map[String, DhtData] = Map() // dhtDataName -> DhtData
+object KioskBoxCreator{
+  private val sessionSecretBoxMap:MMap[String, (MMap[String, KioskBox], MMap[String, DhtData])] = MMap()
+
+  private def boxMap(sessionSecret:Option[String]):(MMap[String, KioskBox], MMap[String, DhtData]) = {
+    sessionSecret match {
+      case None => (MMap(), MMap())
+      case Some(secret) =>
+        sessionSecretBoxMap.get(secret) match {
+          case Some(map) => map
+          case _ => sessionSecretBoxMap += secret -> (MMap(), MMap())
+            sessionSecretBoxMap(secret)
+        }
+    }
+  }
+}
+
+
+class KioskBoxCreator($ergoScript:KioskScriptCreator) extends EasyMirrorSession {
+  import KioskBoxCreator._
+
+  val $boxesDhts = boxMap($ergoScript.$myEnv.$sessionSecret)
+  val $boxes = $boxesDhts._1
+  val $dhts = $boxesDhts._2
+
   def getAll = {
     $boxes.map{
       case (name, box) =>
@@ -89,7 +112,7 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     $boxes -= boxName
   }
 
-  def deleteAll = {$boxes = Map()}
+  def deleteAll = {$boxes.clear()}
 
   private def addTokens(outBoxBuilder: OutBoxBuilder)(tokens:Seq[Token]) = {
     if (tokens.isEmpty) outBoxBuilder else {
@@ -113,7 +136,7 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
   }
 
   def $dhtDataClear = {
-    $dhts = Map()
+    $dhts.clear()
   }
 
   def $dhtDataGet = {
@@ -156,5 +179,7 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
       signedTx.toJson(false)
     }
   }
+
+  override def $setSession(sessionSecret: Option[String]): KioskBoxCreator = new KioskBoxCreator($ergoScript.$setSession(sessionSecret))
 
 }

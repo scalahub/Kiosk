@@ -2,7 +2,7 @@ package kiosk.appkit
 
 import kiosk.ECC
 import kiosk.encoding.ScalaErgoConverters
-import kiosk.script.{ErgoScript, ErgoScriptEnv}
+import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.appkit._
 import org.ergoplatform.{ErgoAddress, ErgoAddressEncoder, Pay2SAddress}
 import org.sh.cryptonode.util.BytesUtil._
@@ -26,7 +26,7 @@ object Encoders extends App {
                           |}""".stripMargin
 
     // first compute using Kiosk
-    val ergoScript = new ErgoScript(new ErgoScriptEnv)
+    val ergoScript = new KioskScriptCreator(new KioskScriptEnv)
     val kioskScript = ergoScript.$compile(fullMixScript).bytes.encodeHex
 
     // then compute using appkit
@@ -50,10 +50,10 @@ object Encoders extends App {
     val x = BigInt("1120347812374928374923042340293450928435285028435028435")
 
     // first compute using Kiosk
-    val env: ErgoScriptEnv = new ErgoScriptEnv
+    val env: KioskScriptEnv = new KioskScriptEnv
     val gX: String = ECC.gX(x)
     env.setGroupElement("gX", ScalaErgoConverters.stringToGroupElement(gX))
-    val ergoScript: ErgoScript = new ErgoScript(env)
+    val ergoScript: KioskScriptCreator = new KioskScriptCreator(env)
     val kioskScript: String = ergoScript.$compile(fullMixScript).bytes.encodeHex
 
     // then compute using appkit
@@ -81,14 +81,14 @@ object Encoders extends App {
     val bigInt = BigInt("230948092384598209582958205802850298529085")
 
     // first compute using Kiosk
-    val env: ErgoScriptEnv = new ErgoScriptEnv
+    val env: KioskScriptEnv = new KioskScriptEnv
     val gX: String = ECC.gX(x)
     env.setGroupElement("gX", ScalaErgoConverters.stringToGroupElement(gX))
     env.setCollByte("hash", hash)
     env.setBigInt("bigInt", bigInt)
     env.setLong("long", long)
     env.setInt("int", int)
-    val ergoScript: ErgoScript = new ErgoScript(env)
+    val ergoScript: KioskScriptCreator = new KioskScriptCreator(env)
     val kioskScript: String = ergoScript.$compile(fullMixScript).bytes.encodeHex
 
     // then compute using appkit
@@ -120,9 +120,9 @@ object Encoders extends App {
 
     implicit val addressEncoder = new ErgoAddressEncoder(ctx.getNetworkType.networkPrefix)
     // first compute using Kiosk
-    val env: ErgoScriptEnv = new ErgoScriptEnv
+    val env: KioskScriptEnv = new KioskScriptEnv
     env.setCollByte("hash", hash)
-    val ergoScript: ErgoScript = new ErgoScript(env)
+    val ergoScript: KioskScriptCreator = new KioskScriptCreator(env)
     val kioskScript: Values.ErgoTree = ergoScript.$compile(fullMixScript)
     val kioskAddress = Pay2SAddress(kioskScript).toString
 
@@ -140,7 +140,7 @@ object Encoders extends App {
 
   // below tests some address encoding techniques. Addresses have some quirks; for example fANwcUDKxKD3btGmknic2kE7mEzLR2CFTYzEKPh5iyPMUMwfwjuxsJP and 9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw contain the same ErgoTree
   def test5 = {
-    import ErgoScript._
+    import KioskScriptCreator._
     val address: String = "9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw"
     val ergoAddress: ErgoAddress = ScalaErgoConverters.getAddressFromString(address)
 

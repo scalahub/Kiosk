@@ -3,7 +3,7 @@ package kiosk
 import java.math.BigInteger
 import java.security.SecureRandom
 
-import kiosk.script.{ErgoScript, ErgoScriptEnv}
+import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.bouncycastle.util.BigIntegers
 import org.sh.cryptonode.ecc.{ECCPrvKey, ECCPubKey, Point}
 import sigmastate.basics.SecP256K1
@@ -26,8 +26,8 @@ object TestECMath extends App {
 
   assert(a_ergo.getXCoord.toBigInteger == a_cryptoNode.x.bigInteger)
   assert(a_ergo.getYCoord.toBigInteger == a_cryptoNode.y.bigInteger)
-  val env = new ErgoScriptEnv
-  val ergoScript = new ErgoScript(env)
+  val env = new KioskScriptEnv
+  val ergoScript = new KioskScriptCreator(env)
   val b_cryptoNode = new ECCPrvKey(randNum, true).eccPubKey.hex
   val b_ergo = ECC.gX(randNum)
 

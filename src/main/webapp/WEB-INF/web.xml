@@ -7,14 +7,20 @@ Otherwise your changes may be lost the next time this file is generated.
   
 Instead edit the file that generated this code. Refer below for details
 
-Class that generated this code: org.sh.easyweb.AutoWeb
+Class that generated this code: org.sh.easyweb.AutoWebSession
 
 Stacktrace of the call is given below:
 
 org.sh.reflect.CodeGenUtil$:CodeGenUtil.scala:69
-org.sh.easyweb.AutoWeb:AutoWeb.scala:95
+org.sh.easyweb.AutoWebSession:AutoWebSession.scala:84
 kiosk.KioskWeb$:KioskWeb.scala:29
 kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:20
+scala.Function0:Function0.scala:39
+scala.Function0:Function0.scala:39
+scala.runtime.AbstractFunction0:AbstractFunction0.scala:17
+scala.App:App.scala:80
+scala.collection.immutable.List:List.scala:392
+scala.App:App.scala:80
 
 -->
 <web-app
@@ -32,8 +38,12 @@ kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:20
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet>
+        <servlet-name>ShowHtmlServlet</servlet-name>
+        <servlet-class>easyweb.ShowHtmlServlet</servlet-class>
+    </servlet>
+    <servlet>
         <servlet-name>QueryServlet</servlet-name>
-        <servlet-class>org.sh.easyweb.server.WebQueryResponder</servlet-class>
+        <servlet-class>org.sh.easyweb.server.WebQuerySessionResponder</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>UploadServlet</servlet-name>
@@ -52,11 +62,15 @@ kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:20
         <url-pattern>/upload</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
+        <servlet-name>ShowHtmlServlet</servlet-name>
+        <url-pattern>/session/*</url-pattern>
+        <url-pattern>/session</url-pattern>
+        <url-pattern></url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
         <servlet-name>DownloadServlet</servlet-name>
         <url-pattern>/download</url-pattern>
     </servlet-mapping>
 
-    <welcome-file-list>
-        <welcome-file>AutoGen.html</welcome-file>
-    </welcome-file-list>
 </web-app>

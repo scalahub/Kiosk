@@ -1,11 +1,11 @@
 package kiosk
 
 import kiosk.encoding.ScalaErgoConverters
-import kiosk.script.{ErgoScript, ErgoScriptEnv}
+import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.Pay2SAddress
 
 object Auction extends App {
-  val env = new ErgoScriptEnv
+  val env = new KioskScriptEnv
 
   // seller
   val alicePrivateKey = ECC.$randBigInt
@@ -13,7 +13,7 @@ object Auction extends App {
 
   env.setGroupElement("alice", alice)
 
-  val ergoScript = new ErgoScript(env) {}
+  val ergoScript = new KioskScriptCreator(env) {}
 
   val source =
     """{
@@ -49,7 +49,7 @@ object Auction extends App {
 
   val ergoTree = ergoScript.$compile(source)
 
-  import ErgoScript.$ergoAddressEncoder
+  import KioskScriptCreator.$ergoAddressEncoder
 
   println("Auction address: "+Pay2SAddress(ergoTree))
 

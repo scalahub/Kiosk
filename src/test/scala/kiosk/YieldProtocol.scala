@@ -1,7 +1,7 @@
 package kiosk
 
 import kiosk.encoding.ScalaErgoConverters
-import kiosk.script.{ErgoScript, ErgoScriptEnv}
+import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import scorex.crypto.hash.Blake2b256
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 
@@ -93,11 +93,11 @@ object YieldProtocol extends App {
   val alicePrivateKey = ECC.$randBigInt
   val alice = ScalaErgoConverters.stringToGroupElement(ECC.gX(alicePrivateKey))
 
-  val env = new ErgoScriptEnv
+  val env = new KioskScriptEnv
   env.setCollByte("rateTokenID", rateOracleTokenID)
   env.setGroupElement("alice", alice)
 
-  val compiler1 = new ErgoScript(env)
+  val compiler1 = new KioskScriptCreator(env)
   val liquidatedBoxErgoTree = compiler1.$compile(liquidatedBoxSrc)
 
   val liquidatedBoxScriptBytes = DefaultSerializer.serializeErgoTree(liquidatedBoxErgoTree)
@@ -115,7 +115,7 @@ object YieldProtocol extends App {
   env.setInt("endHeight", endHeight)
   env.setLong("withdrawDeadline", withdrawDeadline)
 
-  val compiler2 = new ErgoScript(env) {}
+  val compiler2 = new KioskScriptCreator(env) {}
   compiler2.$compile(bondBoxSource)
   println("done")
 }

@@ -2,7 +2,7 @@ package kiosk
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo.KioskErgoTree
-import kiosk.script.{ErgoScript, ErgoScriptEnv}
+import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.Pay2SAddress
 import org.sh.cryptonode.util.BytesUtil._
 import scorex.crypto.hash.Blake2b256
@@ -25,7 +25,7 @@ Bob only sells those tokens via the token box whose code is given in the contrac
    */
   val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // To use the correct id in real world
 
-  val env = new ErgoScriptEnv
+  val env = new KioskScriptEnv
   env.setCollByte("rateTokenID", rateOracleTokenID)
 
   // lender
@@ -65,7 +65,7 @@ Bob only sells those tokens via the token box whose code is given in the contrac
       |  tokenDiff <= usdCDiff && validRateBox && validNewSelf && validBobBox
       |}""".stripMargin
 
-  val ergoCompiler = new ErgoScript(env) {}
+  val ergoCompiler = new KioskScriptCreator(env) {}
 
   val ergoTree = ergoCompiler.$compile(source)
 
@@ -78,7 +78,7 @@ Bob only sells those tokens via the token box whose code is given in the contrac
     )
   }
 
-  import ErgoScript.$ergoAddressEncoder
+  import KioskScriptCreator.$ergoAddressEncoder
 
   println("Bobs address: "+Pay2SAddress(ergoTree))
 }

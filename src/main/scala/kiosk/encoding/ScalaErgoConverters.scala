@@ -3,7 +3,7 @@ package kiosk.encoding
 import java.math.BigInteger
 
 import kiosk.ergo._
-import kiosk.script.ErgoScript
+import kiosk.script.KioskScriptCreator
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Point
 import org.ergoplatform.ErgoAddress
 import org.sh.cryptonode.ecc.ECCPubKey
@@ -30,11 +30,11 @@ object ScalaErgoConverters {
 
   def ergoTreeToString(tree:ErgoTree): String = KioskErgoTree(tree).hex
 
-  def getAddressFromErgoTree(ergoTree: ErgoTree) = ErgoScript.$ergoAddressEncoder.fromProposition(ergoTree).get
+  def getAddressFromErgoTree(ergoTree: ErgoTree) = KioskScriptCreator.$ergoAddressEncoder.fromProposition(ergoTree).get
 
-  def getStringFromAddress(ergoAddress: ErgoAddress):String = ErgoScript.$ergoAddressEncoder.toString(ergoAddress)
+  def getStringFromAddress(ergoAddress: ErgoAddress):String = KioskScriptCreator.$ergoAddressEncoder.toString(ergoAddress)
 
-  def getAddressFromString(string: String) = ErgoScript.$ergoAddressEncoder.fromString(string).get
+  def getAddressFromString(string: String) = KioskScriptCreator.$ergoAddressEncoder.fromString(string).get
 
   def deserialize(hex:String):KioskType[_] = {
     val bytes = hex.decodeHex

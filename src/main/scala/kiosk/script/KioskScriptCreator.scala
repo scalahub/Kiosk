@@ -3,21 +3,23 @@ package kiosk.script
 import org.ergoplatform.ErgoAddressEncoder.MainnetNetworkPrefix
 import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress}
 import org.sh.easyweb.Text
+import org.sh.reflect.DataStructures.EasyMirrorSession
 import sigmastate.Values.ErgoTree
 import sigmastate.eval.CompiletimeIRContext
 import sigmastate.lang.SigmaCompiler
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 
 // Any variable/method starting with $ will not appear in EasyWeb front-end.
-object ErgoScript {
+object KioskScriptCreator {
   val $networkPrefix = MainnetNetworkPrefix
   val $compiler = SigmaCompiler($networkPrefix)
   implicit val $irContext = new CompiletimeIRContext
   implicit val $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder($networkPrefix)
 }
 
-class ErgoScript(val $myEnv:ErgoScriptEnv) {
-  import ErgoScript._
+class KioskScriptCreator(val $myEnv:KioskScriptEnv) extends EasyMirrorSession {
+
+  import KioskScriptCreator._
   def getScriptHash(ergoScript:Text):Array[Byte] = {
     val $ergoScript$:String = """{
   val x = blake2b256(c)
@@ -50,8 +52,9 @@ class ErgoScript(val $myEnv:ErgoScriptEnv) {
 
   def $compile(ergoScript:String):ErgoTree = {
     import sigmastate.lang.Terms._
-    $compiler.compile($myEnv.$getEnv, ergoScript).asSigmaProp //compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
+    $compiler.compile($myEnv.$getEnv.toMap, ergoScript).asSigmaProp // compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
   }
 
+  override def $setSession(sessionSecret: Option[String]): KioskScriptCreator = new KioskScriptCreator($myEnv.$setSession(sessionSecret))
 }
 
