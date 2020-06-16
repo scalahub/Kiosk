@@ -1,4 +1,22 @@
 
+<!--
+
+======== auto-generated code ========
+WARNING !!! Do not edit! 
+Otherwise your changes may be lost the next time this file is generated.
+  
+Instead edit the file that generated this code. Refer below for details
+
+Class that generated this code: org.sh.easyweb.AutoWeb
+
+Stacktrace of the call is given below:
+
+org.sh.reflect.CodeGenUtil$:CodeGenUtil.scala:69
+org.sh.easyweb.AutoWeb:AutoWeb.scala:95
+kiosk.KioskWeb$:KioskWeb.scala:29
+kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:20
+
+-->
 <web-app
         xmlns="http://java.sun.com/xml/ns/javaee"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

@@ -17,13 +17,13 @@ import special.sigma.GroupElement
 class ErgoBox($ergoScript:ErgoScript) {
   var $boxes:Map[String, KioskBox] = Map() // boxName -> Box
   var $dhts:Map[String, DhtData] = Map() // dhtDataName -> DhtData
-  def getAll: Array[JsonFormatted] = {
+  def getAll = {
     $boxes.map{
       case (name, box) =>
         new JsonFormatted {
           override val keys: Array[String] = Array("name") ++ box.keys
           override val vals: Array[Any] = Array(name) ++ box.vals
-        }
+        }.toString
     }.toArray
   }
 
