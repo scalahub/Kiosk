@@ -26,6 +26,6 @@ object KioskWeb extends App {
     Reader
   )
   EasyWebEncoder
-  new org.sh.easyweb.AutoWeb(objects, "Kiosk")
+  new org.sh.easyweb.AutoWeb(objects, "Kiosk").generateWebXml
 }
 

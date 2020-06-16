@@ -39,3 +39,4 @@ lazy val root = (project in file(".")).dependsOn(
   }
 )
 
+enablePlugins(JettyPlugin)
