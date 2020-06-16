@@ -1,7 +1,8 @@
-package org.sh.kiosk.ergo.script
+package kiosk.script
 
+import kiosk.encoding.ScalaErgoConverters
+import kiosk.ergo._
 import org.sh.cryptonode.util.BytesUtil._
-import org.sh.kiosk.ergo._
 import special.sigma.GroupElement
 
 class ErgoScriptEnv {
@@ -17,21 +18,33 @@ class ErgoScriptEnv {
     groupElement
   }
 
+  def setCollGroupElement(name:String, coll: Array[String]) = {
+    val $INFO$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
+    val $name$ = "d"
+    val $coll$ = "[028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67,028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67,028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67]"
+    val groupElements = coll.map(ScalaErgoConverters.stringToGroupElement)
+    $envMap += name -> KioskCollGroupElement(groupElements)
+    groupElements.map(ScalaErgoConverters.groupElementToString)
+  }
+
   def setBigInt(name:String, bigInt:BigInt) = {
     val $name$ = "b"
     val $bigInt$ = "1234567890123456789012345678901234567890"
     $envMap += name -> KioskBigInt(bigInt)
   }
+
   def setLong(name:String, long:Long) = {
     val $name$ = "long"
     val $long$ = "12345678901112"
     $envMap += name -> KioskLong(long)
   }
+
   def setInt(name:String, int:Int) = {
     val $name$ = "int"
     val $int$ = "123456789"
     $envMap += name -> KioskInt(int)
   }
+
   def setCollByte(name:String, bytes:Array[Byte]) = {
     val $name$ = "c"
     val $collBytes$ = "0x1a2b3c4d5e6f"

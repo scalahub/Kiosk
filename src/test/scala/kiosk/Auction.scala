@@ -1,8 +1,8 @@
-package org.sh.kiosk.ergo
+package kiosk
 
+import kiosk.encoding.ScalaErgoConverters
+import kiosk.script.{ErgoScript, ErgoScriptEnv}
 import org.ergoplatform.Pay2SAddress
-import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
-import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
 
 object Auction extends App {
   val env = new ErgoScriptEnv

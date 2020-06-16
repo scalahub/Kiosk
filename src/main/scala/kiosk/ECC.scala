@@ -1,4 +1,4 @@
-package org.sh.kiosk.ergo.script
+package kiosk
 
 import java.security.SecureRandom
 
@@ -40,4 +40,3 @@ object ECC {
 
   def hexToBigInt(hex:String) = BigInt(hex, 16)
 }
-

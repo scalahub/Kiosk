@@ -1,4 +1,4 @@
-package org.sh.kiosk.ergo.appkit
+package kiosk.appkit
 
 import org.ergoplatform.appkit.{BlockchainContext, ErgoClient, NetworkType, RestApiErgoClient}
 

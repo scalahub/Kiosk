@@ -1,6 +1,6 @@
-package org.sh.kiosk.ergo.encoding
+package kiosk.encoding
 
-import org.sh.kiosk.ergo.encoding.ScalaErgoConverters.{ergoTreeToString, groupElementToString, stringToErgoTree, stringToGroupElement}
+import kiosk.encoding.ScalaErgoConverters._
 import org.sh.reflect.DefaultTypeHandler
 import sigmastate.Values.ErgoTree
 import special.sigma.GroupElement

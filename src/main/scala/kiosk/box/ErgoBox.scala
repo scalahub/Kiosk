@@ -1,22 +1,21 @@
-package org.sh.kiosk.ergo.box
+package kiosk.box
 
 import java.util
 
+import kiosk.appkit.Client
+import kiosk.encoding.ScalaErgoConverters._
+import kiosk.ergo._
+import kiosk.script.ErgoScript
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{ErgoToken, InputBox, OutBox, OutBoxBuilder}
 import org.sh.easyweb.Text
-import org.sh.kiosk.ergo
-import org.sh.kiosk.ergo._
-import org.sh.kiosk.ergo.appkit.Client
-import org.sh.kiosk.ergo.encoding.ScalaErgoConverters._
-import org.sh.kiosk.ergo.script.ErgoScript
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.Values.ErgoTree
 import special.sigma.GroupElement
 
 // ToDo: Add context variable to each box created
 class ErgoBox($ergoScript:ErgoScript) {
-  var $boxes:Map[String, Box] = Map() // boxName -> Box
+  var $boxes:Map[String, KioskBox] = Map() // boxName -> Box
   var $dhts:Map[String, DhtData] = Map() // dhtDataName -> DhtData
   def getAll: Array[JsonFormatted] = {
     $boxes.map{
@@ -45,10 +44,13 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
   //   c = 0x1a2b3c4d5e6f
   //   b = any BigInt greater than 1234
   val x = blake2b256(c)
-  b > 1234.toBigInt &&
-  a == x
+  sigmaProp(
+     b > 1234.toBigInt
+     &&
+     a == x
+  )
 }"""
-    val $registerKeys$ = "[a,b,c]"
+    val $registerKeys$ = "[a,b,c,d,g]"
     val $tokenIDs$ = "[]"
     val $tokenAmts$ = "[]"
     val ergoTree = $ergoScript.$compile(script)
@@ -72,13 +74,13 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     require(tokenIDs.size == tokenAmts.size, s"Number of tokenIDs (${tokenIDs.size}) does not match number of amounts (${tokenAmts.size})")
     val availableKeys = $ergoScript.$myEnv.$envMap.keys.foldLeft("")(_ + " "+ _)
     val registers = registerKeys.map{key =>
-      val value: ergo.KioskType[_] = $ergoScript.$myEnv.$envMap.get(key).getOrElse(throw new Exception(s"Key $key not found in environment. Available keys [$availableKeys]"))
+      val value: KioskType[_] = $ergoScript.$myEnv.$envMap.get(key).getOrElse(throw new Exception(s"Key $key not found in environment. Available keys [$availableKeys]"))
       value
     }
     val tokens:Tokens = tokenIDs zip tokenAmts
     val address = getStringFromAddress(getAddressFromErgoTree(ergoTree))
-    val box = Box(address, value, registers, tokens)
-    $boxes += (boxName -> Box(address, value, registers, tokens))
+    val box = KioskBox(address, value, registers, tokens)
+    $boxes += (boxName -> KioskBox(address, value, registers, tokens))
     box
   }
 
@@ -122,7 +124,7 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
 
   def createTx(inputBoxIds:Array[String], outputBoxNames:Array[String], fee:Long, changeAddress:String, proveDlogSecrets:Array[String], proveDhtDataNames:Array[String], broadcast:Boolean) = {
     val dhtData: Array[DhtData] = proveDhtDataNames.map($dhts(_))
-    val boxesToCreate: Array[Box] = outputBoxNames.map(outputBoxName => $boxes(outputBoxName))
+    val boxesToCreate: Array[KioskBox] = outputBoxNames.map(outputBoxName => $boxes(outputBoxName))
     Client.usingClient{ctx =>
       val inputBoxes: Array[InputBox] = ctx.getBoxesById(inputBoxIds: _*)
       val txB = ctx.newTxBuilder

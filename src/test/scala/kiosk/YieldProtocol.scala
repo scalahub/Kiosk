@@ -1,7 +1,7 @@
-package org.sh.kiosk.ergo
+package kiosk
 
-import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
-import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
+import kiosk.encoding.ScalaErgoConverters
+import kiosk.script.{ErgoScript, ErgoScriptEnv}
 import scorex.crypto.hash.Blake2b256
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 

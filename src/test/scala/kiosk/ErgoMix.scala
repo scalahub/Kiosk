@@ -1,8 +1,8 @@
-package org.sh.kiosk.ergo
+package kiosk
 
+import kiosk.script.{ErgoScript, ErgoScriptEnv}
 import org.ergoplatform.{Pay2SAddress, Pay2SHAddress}
 import org.sh.cryptonode.util.BytesUtil._
-import org.sh.kiosk.ergo.script.{ErgoScript, ErgoScriptEnv}
 import scorex.crypto.hash.Blake2b256
 import sigmastate.basics.SecP256K1
 import sigmastate.eval.SigmaDsl

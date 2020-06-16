@@ -1,4 +1,4 @@
-package org.sh.kiosk.ergo.script
+package kiosk.script
 
 import org.ergoplatform.ErgoAddressEncoder.MainnetNetworkPrefix
 import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress}
@@ -22,7 +22,7 @@ class ErgoScript(val $myEnv:ErgoScriptEnv) {
     val $ergoScript$:String = """{
   val x = blake2b256(c)
   b > 1234.toBigInt &&
-  a == x
+  sigmaProp(a == x)
 }"""
 
     val ergoTree = $compile(ergoScript)
@@ -34,7 +34,7 @@ class ErgoScript(val $myEnv:ErgoScriptEnv) {
     val $ergoScript$ = """{
   val x = blake2b256(c)
   b > 1234.toBigInt &&
-  a == x
+  sigmaProp(a == x)
 }"""
     Pay2SAddress($compile(ergoScript)).toString
   }
@@ -43,7 +43,7 @@ class ErgoScript(val $myEnv:ErgoScriptEnv) {
     val $ergoScript$:String = """{
   val x = blake2b256(c)
   b > 1234.toBigInt &&
-  a == x
+  sigmaProp(a == x)
 }"""
     $compile(ergoScript.getText)
   }

@@ -1,4 +1,4 @@
-package org.sh.kiosk.ergo.explorer
+package kiosk.explorer
 
 import java.io.InputStream
 import java.net.HttpURLConnection

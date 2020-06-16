@@ -1,18 +1,21 @@
-package org.sh.kiosk.ergo.appkit
+package kiosk.appkit
 
+import kiosk.ECC
+import kiosk.encoding.ScalaErgoConverters
+import kiosk.script.{ErgoScript, ErgoScriptEnv}
 import org.ergoplatform.appkit._
-import org.ergoplatform.{ErgoAddress, ErgoAddressEncoder, P2PKAddress, Pay2SAddress}
+import org.ergoplatform.{ErgoAddress, ErgoAddressEncoder, Pay2SAddress}
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.cryptonode.util.StringUtil._
-import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
-import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
 import sigmastate.Values
 import sigmastate.eval._
 import sigmastate.interpreter.CryptoConstants
 import special.sigma.GroupElement
 
 object Encoders extends App {
-  Client.usingClient { implicit ctx =>
+  val tests: Seq[Unit] = Seq(test1, test2, test3, test4, test5, test6)
+
+  def test1 = Client.usingClient { implicit ctx =>
     val fullMixScript = """{
                           |  val g = groupGenerator
                           |  val c1 = SELF.R4[GroupElement].get
@@ -35,7 +38,7 @@ object Encoders extends App {
     println(s"Test passed: both scripts evaluated to ${appkitScript}")
   }
 
-  Client.usingClient { implicit ctx =>
+  def test2 = Client.usingClient { implicit ctx =>
     val fullMixScript = """{
                           |  val g = groupGenerator
                           |  val c1 = SELF.R4[GroupElement].get
@@ -65,7 +68,7 @@ object Encoders extends App {
     println(s"Test passed: both scripts evaluated to ${appkitScript}")
   }
 
-  Client.usingClient { implicit ctx =>
+  def test3 = Client.usingClient { implicit ctx =>
     val fullMixScript = """{
                           |  (blake2b256(OUTPUTS(0).propositionBytes) == hash) && getVar[Int](0).get == int &&
                           |  getVar[Long](1).get == long && getVar[BigInt](2).get == bigInt && SELF.R4[GroupElement].get == gX
@@ -108,7 +111,7 @@ object Encoders extends App {
     println(s"Test passed: both scripts evaluated to ${appkitScript}")
   }
 
-  Client.usingClient { implicit ctx =>
+  def test4 = Client.usingClient { implicit ctx =>
     val fullMixScript = """{
                           |  sigmaProp(blake2b256(OUTPUTS(0).propositionBytes) == hash)
                           |}""".stripMargin
@@ -136,7 +139,7 @@ object Encoders extends App {
   }
 
   // below tests some address encoding techniques. Addresses have some quirks; for example fANwcUDKxKD3btGmknic2kE7mEzLR2CFTYzEKPh5iyPMUMwfwjuxsJP and 9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw contain the same ErgoTree
-  {
+  def test5 = {
     import ErgoScript._
     val address: String = "9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw"
     val ergoAddress: ErgoAddress = ScalaErgoConverters.getAddressFromString(address)
@@ -167,9 +170,9 @@ object Encoders extends App {
       ) == p2sAddressString
     )
   }
-  {
-    import org.ergoplatform.ErgoAddressEncoder
+  def test6 = {
     import org.apache.commons.codec.binary.Hex
+    import org.ergoplatform.ErgoAddressEncoder
     implicit val addressEncoder = new ErgoAddressEncoder(ErgoAddressEncoder.MainnetNetworkPrefix)
     val address1 = addressEncoder.fromString("fANwcUDKxKD3btGmknic2kE7mEzLR2CFTYzEKPh5iyPMUMwfwjuxsJP").get
     val address2 = addressEncoder.fromString("9hTh4u6CDXktMQb9BoRo5nTPnmFN8G5u4PUCURvoUCXmtaaDYdw").get

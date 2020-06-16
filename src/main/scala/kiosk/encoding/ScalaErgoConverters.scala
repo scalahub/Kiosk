@@ -1,23 +1,21 @@
-package org.sh.kiosk.ergo.encoding
+package kiosk.encoding
 
 import java.math.BigInteger
 
+import kiosk.ergo._
+import kiosk.script.ErgoScript
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Point
 import org.ergoplatform.ErgoAddress
 import org.sh.cryptonode.ecc.ECCPubKey
 import org.sh.cryptonode.util.StringUtil._
-import org.sh.kiosk.ergo._
-import org.sh.kiosk.ergo.script.ErgoScript
 import sigmastate.Values.{ConstantNode, ErgoTree}
-import sigmastate._
 import sigmastate.basics.SecP256K1
-import sigmastate.eval.SigmaDsl
-import sigmastate.eval.bigIntToBigInteger
+import sigmastate.eval.{SigmaDsl, bigIntToBigInteger}
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 import sigmastate.serialization.ValueSerializer
+import sigmastate._
 import special.collection.Coll
 import special.sigma.{BigInt, GroupElement}
-
 object ScalaErgoConverters {
 
   def stringToGroupElement(hex:String): GroupElement = {

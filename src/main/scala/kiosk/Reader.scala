@@ -1,7 +1,8 @@
-package org.sh.kiosk.ergo.explorer
+package kiosk
 
-import org.sh.kiosk.ergo.encoding.ScalaErgoConverters
-import org.sh.kiosk.ergo.{Box, KioskType, Token}
+import kiosk.encoding.ScalaErgoConverters
+import kiosk.ergo.{KioskBox, KioskType, Token}
+import kiosk.explorer.Curl
 
 object Reader {
 
@@ -14,7 +15,7 @@ object Reader {
     getBoxFromJson(Curl.get(boxUrl + boxId))
   }
 
-  private def getBoxFromJson(j: Json):Box = {
+  private def getBoxFromJson(j: Json):KioskBox = {
     val value = (j \\ "value").map(v => v.asNumber.get).apply(0)
     val assets: Array[Json] = (j \\ "assets").map(v => v.asArray.get).apply(0).toArray
     val tokens: Array[Token] = assets.map{ asset =>
@@ -32,7 +33,7 @@ object Reader {
 
     val regs:Array[KioskType[_]] = registers.map(ScalaErgoConverters.deserialize)
 
-    Box(address, value.toLong.get, regs, tokens)
+    KioskBox(address, value.toLong.get, regs, tokens)
   }
 
 }

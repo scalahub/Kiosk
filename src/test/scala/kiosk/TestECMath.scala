@@ -1,13 +1,13 @@
-package org.sh.kiosk.ergo
+package kiosk
 
 import java.math.BigInteger
 import java.security.SecureRandom
 
+import kiosk.script.{ErgoScript, ErgoScriptEnv}
 import org.bouncycastle.util.BigIntegers
 import org.sh.cryptonode.ecc.{ECCPrvKey, ECCPubKey, Point}
 import sigmastate.basics.SecP256K1
 import org.sh.cryptonode.ecc.Util._
-import org.sh.kiosk.ergo.script.{ECC, ErgoScript, ErgoScriptEnv}
 
 object TestECMath extends App {
   val g_ergo = SecP256K1.generator
