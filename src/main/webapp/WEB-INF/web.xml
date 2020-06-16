@@ -1,3 +1,4 @@
+
 <web-app
         xmlns="http://java.sun.com/xml/ns/javaee"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -8,7 +9,12 @@
     <description>AutoWeb application</description>
 
     <servlet>
-        <servlet-name>ProxyServlet</servlet-name>
+        <servlet-name>InitializerServlet</servlet-name>
+        <servlet-class>easyweb.Initializer</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet>
+        <servlet-name>QueryServlet</servlet-name>
         <servlet-class>org.sh.easyweb.server.WebQueryResponder</servlet-class>
     </servlet>
     <servlet>
@@ -20,7 +26,7 @@
         <servlet-class>org.sh.easyweb.server.FileDownloaderNIO</servlet-class>
     </servlet>
     <servlet-mapping>
-        <servlet-name>ProxyServlet</servlet-name>
+        <servlet-name>QueryServlet</servlet-name>
         <url-pattern>/post</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
