@@ -3,6 +3,7 @@ package kiosk.box
 import java.util
 
 import kiosk.appkit.Client
+import kiosk.encoding.ScalaErgoConverters
 import kiosk.encoding.ScalaErgoConverters._
 import kiosk.ergo._
 import kiosk.script.KioskScriptCreator
@@ -13,6 +14,7 @@ import org.sh.reflect.DataStructures.EasyMirrorSession
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.Values.ErgoTree
 import special.sigma.GroupElement
+
 import scala.collection.mutable.{Map => MMap}
 
 // ToDo: Add context variable to each box created
@@ -109,12 +111,12 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     box
   }
 
-  def delete(boxName:String) = {
+  def deleteBox(boxName:String) = {
     if (!$boxes.contains(boxName)) throw new Exception(s"Name $boxName does not exist.")
     $boxes -= boxName
   }
 
-  def deleteAll = {$boxes.clear()}
+  def deleteAllBoxes = {$boxes.clear()}
 
   private def addTokens(outBoxBuilder: OutBoxBuilder)(tokens:Seq[Token]) = {
     if (tokens.isEmpty) outBoxBuilder else {
@@ -133,17 +135,28 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     }
   }
 
-  def $dhtDataAdd(name:String, g:GroupElement, h:GroupElement, u:GroupElement, v:GroupElement, x:BigInt) = {
+  def dhtDataAdd(name:String, g:String, h:String, u:String, v:String, x:BigInt): Unit = {
+    val $name$ = "dht1"
+    val $g$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
+    val $h$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
+    val $u$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
+    val $v$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
+    val $x$ = "1"
+
+    implicit def str2GrpElem(s:String) = ScalaErgoConverters.stringToGroupElement(s)
     $dhts += (name -> DhtData(g, h, u, v, x))
   }
 
-  def $dhtDataClear = {
+  def dhtDataDeleteAll = {
     $dhts.clear()
   }
 
-  def $dhtDataGet = {
+  def dhtDataGet = {
     $dhts.map{
-      case (name, dht) => s"""{"name":"$name","g","${dht.g.hex},"h","${dht.h.hex},"u","${dht.u.hex},"v","${dht.v.hex}"}"""
+      case (name, dht) => new JsonFormatted {
+        override val keys: Array[String] = dht.keys :+ "name"
+        override val vals: Array[Any] = dht.vals :+ name
+      }
     }
   }
 

@@ -75,7 +75,10 @@ package object ergo {
 
   implicit def groupElementToKioskGroupElement(g:GroupElement) = KioskGroupElement(g)
 
-  case class DhtData(g:GroupElement, h:GroupElement, u:GroupElement, v:GroupElement, x:BigInt)
+  case class DhtData(g:GroupElement, h:GroupElement, u:GroupElement, v:GroupElement, x:BigInt) extends JsonFormatted{
+    val keys = Array("g", "h", "u", "v")
+    val vals = Array(g.hex, h.hex, u.hex, v.hex)
+  }
 
   type ID = String
   type Amount = Long
