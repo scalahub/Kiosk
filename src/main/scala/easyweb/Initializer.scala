@@ -32,7 +32,7 @@ package easyweb {
 
   class ShowHtmlServlet extends HttpServlet {
     val anyRefs = List(
-      kiosk.Env,kiosk.Script,kiosk.ECC,kiosk.Box,kiosk.Reader
+      kiosk.Env,kiosk.Script,kiosk.ECC,kiosk.Box
     )
     val htmlGen = new HTMLClientCodeGenerator(anyRefs, "Kiosk", None, false, false)
     val html = htmlGen.generateFilteredOut("", Nil)
@@ -62,7 +62,7 @@ package easyweb {
   class Initializer extends HttpServlet {
 
     val anyRefs = List(
-      kiosk.Env,kiosk.Script,kiosk.ECC,kiosk.Box,kiosk.Reader
+      kiosk.Env,kiosk.Script,kiosk.ECC,kiosk.Box
     )
     anyRefs.foreach(EasyProxy.addProcessor("", _, DefaultTypeHandler, true))
     def getReq(hReq:HReq) = {}

@@ -5,9 +5,7 @@ import java.security.SecureRandom
 import org.bouncycastle.math.ec.ECPoint
 import org.bouncycastle.math.ec.custom.sec.SecP256K1Point
 import org.sh.cryptonode.ecc.{ECCPubKey, Point}
-import org.sh.cryptonode.util.BytesUtil._
 import sigmastate.basics.SecP256K1
-import special.sigma.GroupElement
 
 object ECC {
   private def toPubKey(u:ECPoint) = {
@@ -20,6 +18,7 @@ object ECC {
   }
 
   def gX(x:BigInt): String = {
+    val $x$ = "123"
     val $INFO$ = "Computes g^x for default generator g"
     gExpX(SecP256K1.generator, x)
   }
@@ -31,12 +30,14 @@ object ECC {
     BigInt(values).mod(SecP256K1.q)
   }
 
-  def hX(h:GroupElement, x:BigInt): String = {
+  def hX(h:String, x:BigInt): String = {
     val $INFO$ = "Computes h^x for supplied generator h"
-    val point = ECCPubKey(h.getEncoded.toArray.encodeHex).point
+    val $h$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
+    val $x$ = "123"
+    val point = ECCPubKey(h).point
     val base: SecP256K1Point = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)
     gExpX(base, x)
   }
 
-  def hexToBigInt(hex:String) = BigInt(hex, 16)
+  def $hexToBigInt(hex:String) = BigInt(hex, 16)
 }

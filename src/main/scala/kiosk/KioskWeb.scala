@@ -22,8 +22,8 @@ object KioskWeb extends App {
     Env,
     Script,
     ECC,
-    Box,
-    Reader
+    // Reader,
+    Box
   )
   EasyWebEncoder
   new org.sh.easyweb.AutoWebSession(objects, "Kiosk").generateWebXml
