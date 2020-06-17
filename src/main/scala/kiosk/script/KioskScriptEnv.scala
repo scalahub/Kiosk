@@ -35,7 +35,7 @@ class KioskScriptEnv(val $sessionSecret:Option[String] = None) extends EasyMirro
     val $INFO$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
     val $name$ = "myGroupElement"
     val $groupElement$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
-    $envMap += name -> KioskGroupElement(ScalaErgoConverters.stringToGroupElement(groupElement))
+    $addIfNotExist(name, KioskGroupElement(ScalaErgoConverters.stringToGroupElement(groupElement)))
   }
 
   def setCollGroupElement(name:String, coll: Array[String]):Unit = {
@@ -43,37 +43,43 @@ class KioskScriptEnv(val $sessionSecret:Option[String] = None) extends EasyMirro
     val $name$ = "myCollGroupElement"
     val $coll$ = "[028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67,028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67,028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67]"
     val groupElements = coll.map(ScalaErgoConverters.stringToGroupElement)
-    $envMap += name -> KioskCollGroupElement(groupElements)
+    $addIfNotExist(name, KioskCollGroupElement(groupElements))
   }
 
   def setBigInt(name:String, bigInt:BigInt):Unit = {
     val $name$ = "myBigInt"
     val $bigInt$ = "1234567890123456789012345678901234567890"
-    $envMap += name -> KioskBigInt(bigInt)
+    $addIfNotExist(name, KioskBigInt(bigInt))
   }
 
   def setLong(name:String, long:Long):Unit = {
     val $name$ = "myLong"
     val $long$ = "12345678901112"
-    $envMap += name -> KioskLong(long)
+    $addIfNotExist(name, KioskLong(long))
   }
 
   def setInt(name:String, int:Int):Unit = {
     val $name$ = "myInt"
     val $int$ = "123456789"
-    $envMap += name -> KioskInt(int)
+    $addIfNotExist(name, KioskInt(int))
   }
 
   def setCollByte(name:String, bytes:Array[Byte]):Unit = {
     val $name$ = "myCollByte"
     val $bytes$ = "0x1a2b3c4d5e6f"
-    $envMap += name -> KioskCollByte(bytes)
+    $addIfNotExist(name, KioskCollByte(bytes))
+  }
+
+  def $addIfNotExist(name:String, kioskType: KioskType[_]) = {
+    $envMap.get(name).fold(
+      $envMap += name -> kioskType
+    )(_ => throw new Exception(s"Variable $name is already defined"))
   }
 
   def setString(name:String, string:String):Unit = {
     val $name$ = "myString"
     val $string$ = "Nothing backed USD token"
-    $envMap += name -> KioskCollByte(string.getBytes("UTF-8"))
+    $addIfNotExist(name,  KioskCollByte(string.getBytes("UTF-8")))
   }
 
   def deleteAll(reallyDelete:Boolean) = {

@@ -142,7 +142,8 @@ The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
     val $x$ = "1"
 
     implicit def str2GrpElem(s:String) = ScalaErgoConverters.stringToGroupElement(s)
-    $dhts += (name -> DhtData(g, h, u, v, x))
+    $dhts.get(name).fold($dhts += (name -> DhtData(g, h, u, v, x)))(_ => throw new Exception(s"DHTuple ${name} is already defined. Use a different name"))
+
   }
 
   def dhtDataDeleteAll(reallyDelete:Boolean) = {
