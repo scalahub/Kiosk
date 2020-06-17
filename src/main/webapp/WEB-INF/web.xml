@@ -13,7 +13,7 @@ Stacktrace of the call is given below:
 
 org.sh.reflect.CodeGenUtil$:CodeGenUtil.scala:69
 org.sh.easyweb.AutoWebSession:AutoWebSession.scala:84
-kiosk.KioskWeb$:KioskWeb.scala:29
+kiosk.KioskWeb$:KioskWeb.scala:43
 kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:20
 scala.Function0:Function0.scala:39
 scala.Function0:Function0.scala:39

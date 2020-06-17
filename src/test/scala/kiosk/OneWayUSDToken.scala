@@ -30,7 +30,7 @@ Bob only sells those tokens via the token box whose code is given in the contrac
 
   // lender
   val bobPrivateKey = ECC.$randBigInt
-  val bob = ECC.gX(bobPrivateKey)
+  val bob = ECC.$gX(bobPrivateKey)
 
   env.setGroupElement("bob", bob)
 

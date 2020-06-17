@@ -51,7 +51,7 @@ object Encoders extends App {
 
     // first compute using Kiosk
     val env: KioskScriptEnv = new KioskScriptEnv
-    val gX: String = ECC.gX(x)
+    val gX: String = ECC.$gX(x)
     env.setGroupElement("gX", gX)
     val ergoScript: KioskScriptCreator = new KioskScriptCreator(env)
     val kioskScript: String = ergoScript.$compile(fullMixScript).bytes.encodeHex
@@ -82,7 +82,7 @@ object Encoders extends App {
 
     // first compute using Kiosk
     val env: KioskScriptEnv = new KioskScriptEnv
-    val gX: String = ECC.gX(x)
+    val gX: String = ECC.$gX(x)
     env.setGroupElement("gX", gX)
     env.setCollByte("hash", hash)
     env.setBigInt("bigInt", bigInt)

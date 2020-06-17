@@ -9,7 +9,7 @@ object Auction extends App {
 
   // seller
   val alicePrivateKey = ECC.$randBigInt
-  val alice: String = ECC.gX(alicePrivateKey)
+  val alice: String = ECC.$gX(alicePrivateKey)
 
   env.setGroupElement("alice", alice)
 

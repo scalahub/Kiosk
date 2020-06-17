@@ -29,7 +29,7 @@ object TestECMath extends App {
   val env = new KioskScriptEnv
   val ergoScript = new KioskScriptCreator(env)
   val b_cryptoNode = new ECCPrvKey(randNum, true).eccPubKey.hex
-  val b_ergo = ECC.gX(randNum)
+  val b_ergo = ECC.$gX(randNum)
 
   assert(b_cryptoNode == b_ergo)
   val randNums = (1 to 1000).map {i =>

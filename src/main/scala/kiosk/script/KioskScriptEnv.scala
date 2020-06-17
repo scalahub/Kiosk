@@ -4,7 +4,9 @@ import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
 import org.sh.cryptonode.util.BytesUtil._
 import org.sh.reflect.DataStructures.EasyMirrorSession
+import org.sh.utils.json.JSONUtil.JsonFormatted
 import special.sigma.GroupElement
+
 import scala.collection.mutable.{Map => MMap}
 
 object KioskScriptEnv{
@@ -87,8 +89,11 @@ class KioskScriptEnv(val $sessionSecret:Option[String] = None) extends EasyMirro
 
   def getAll(serialize:Boolean): Array[String] = $envMap.toArray.map{
     case (key, kioskType) =>
-      val string = if (serialize) kioskType.serialize.encodeHex else kioskType.toString
-      s"""{"name":"$key", "value":"${string}", "type":"${kioskType.typeName}"}"""
+      val value = if (serialize) kioskType.serialize.encodeHex else kioskType.toString
+      new JsonFormatted {
+        override val keys: Array[String] = Array("name", "value", "type")
+        override val vals: Array[Any] = Array(key, value, kioskType.typeName)
+      }.toString
   }
 
   def $getEnv: MMap[String, Any] = {

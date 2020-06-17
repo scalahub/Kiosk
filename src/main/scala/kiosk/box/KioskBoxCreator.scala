@@ -156,7 +156,7 @@ The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
     }
   }
 
-  def dhtDataGet = {
+  def dhtDataGetAll = {
     $dhts.map{
       case (name, dht) => new JsonFormatted {
         override val keys: Array[String] = dht.keys :+ "name"
