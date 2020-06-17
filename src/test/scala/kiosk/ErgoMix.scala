@@ -86,7 +86,7 @@ object ErgoMix {
   }
 
   def $getRawScripts(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
-    $ergoScript.$myEnv.deleteAll
+    $ergoScript.$myEnv.deleteAll(true)
     env.foreach{
       case (name, value) => $ergoScript.$myEnv.setGroupElement(name, ScalaErgoConverters.groupElementToString(value))
     }
