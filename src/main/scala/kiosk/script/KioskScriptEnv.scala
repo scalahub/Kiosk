@@ -31,50 +31,59 @@ class KioskScriptEnv(val $sessionSecret:Option[String] = None) extends EasyMirro
 
   def setGroupElement(name:String, groupElement: String):Unit = {
     val $INFO$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
-    val $name$ = "g"
+    val $name$ = "myGroupElement"
     val $groupElement$ = "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"
     $envMap += name -> KioskGroupElement(ScalaErgoConverters.stringToGroupElement(groupElement))
   }
 
   def setCollGroupElement(name:String, coll: Array[String]):Unit = {
     val $INFO$ = "A group element is encoded as a public key of Bitcoin in hex (compressed or uncompressed)"
-    val $name$ = "d"
+    val $name$ = "myCollGroupElement"
     val $coll$ = "[028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67,028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67,028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67]"
     val groupElements = coll.map(ScalaErgoConverters.stringToGroupElement)
     $envMap += name -> KioskCollGroupElement(groupElements)
   }
 
   def setBigInt(name:String, bigInt:BigInt):Unit = {
-    val $name$ = "b"
+    val $name$ = "myBigInt"
     val $bigInt$ = "1234567890123456789012345678901234567890"
     $envMap += name -> KioskBigInt(bigInt)
   }
 
   def setLong(name:String, long:Long):Unit = {
-    val $name$ = "long"
+    val $name$ = "myLong"
     val $long$ = "12345678901112"
     $envMap += name -> KioskLong(long)
   }
 
   def setInt(name:String, int:Int):Unit = {
-    val $name$ = "int"
+    val $name$ = "myInt"
     val $int$ = "123456789"
     $envMap += name -> KioskInt(int)
   }
 
   def setCollByte(name:String, bytes:Array[Byte]):Unit = {
-    val $name$ = "c"
-    val $collBytes$ = "0x1a2b3c4d5e6f"
+    val $name$ = "myCollByte"
+    val $bytes$ = "0x1a2b3c4d5e6f"
     $envMap += name -> KioskCollByte(bytes)
   }
 
   def setString(name:String, string:String):Unit = {
-    val $name$ = "string"
+    val $name$ = "myString"
     val $string$ = "Nothing backed USD token"
     $envMap += name -> KioskCollByte(string.getBytes("UTF-8"))
   }
 
-  def deleteAll:Unit = $envMap.clear()
+  def deleteAll(reallyDelete:Boolean) = {
+    val $INFO$ = "To prevent accidental clicking, please select 'yes' from the radio button"
+    val $reallyDelete$ = "false"
+    if (reallyDelete) {
+      $envMap.clear()
+      "Deleted all environment variables"
+    } else {
+      "Please set reallyDelete to yes to delete environment variables"
+    }
+  }
 
   def getAll(serialize:Boolean): Array[String] = $envMap.toArray.map{
     case (key, kioskType) =>

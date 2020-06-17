@@ -60,38 +60,27 @@ class KioskBoxCreator($ergoScript:KioskScriptCreator) extends EasyMirrorSession 
 
 As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
 Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]"""
-    val $boxName$ = "box1"
+    val $boxName$ = "myFirstBox"
     val $value$ = "123456"
     val $script$ = """{
-  // Following values (among many others) can make this spendable
-  //   a = 0xf091616c10378d94b04ed7afb6e7e8da3ec8dd2a9be4a343f886dd520f688563
-  //   c = 0x1a2b3c4d5e6f
-  //   b = any BigInt greater than 1234
-  val x = blake2b256(c)
-  sigmaProp(
-     b > 1234.toBigInt
-     &&
-     a == x
-  )
+  sigmaProp(1 < 2)
 }"""
-    val $registerKeys$ = "[a,b,c,d,g]"
-    val $tokenIDs$ = "[]"
-    val $tokenAmts$ = "[]"
     val ergoTree = $ergoScript.$compile(script)
     $create(boxName, ergoTree, registerKeys, tokenIDs, tokenAmts, value)
   }
 
   def createBoxFromAddress(boxName:String, address:String, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
-    val $boxName$ = "box0"
+    val $boxName$ = "mySecondBox"
     val $value$ = "123456"
-    val $address$ =s"""box address"""
+    val $address$ =s"""4MQyML64GnzMxZgm"""
     val $INFO$ =
       """
 1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these array to empty (i.e., [])
 2. registerKeys must refer to keys of ErgoEnv. Registers will be populated with the corresponding values starting with R4
 
 As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
-Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]"""
+Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]
+The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
     val ergoTree = getAddressFromString(address).script
     $create(boxName, ergoTree, registerKeys, tokenIDs, tokenAmts, value)
   }
@@ -116,7 +105,16 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     $boxes -= boxName
   }
 
-  def deleteAllBoxes = {$boxes.clear()}
+  def deleteAllBoxes(reallyDelete:Boolean) = {
+    val $INFO$ = "To prevent accidental clicking, please select 'yes' from the radio button"
+    val $reallyDelete$ = "false"
+    if (reallyDelete) {
+      $boxes.clear()
+      "Deleted all boxes"
+    } else {
+      "Please set reallyDelete to yes to delete all boxes"
+    }
+  }
 
   private def addTokens(outBoxBuilder: OutBoxBuilder)(tokens:Seq[Token]) = {
     if (tokens.isEmpty) outBoxBuilder else {
@@ -147,8 +145,15 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     $dhts += (name -> DhtData(g, h, u, v, x))
   }
 
-  def dhtDataDeleteAll = {
-    $dhts.clear()
+  def dhtDataDeleteAll(reallyDelete:Boolean) = {
+    val $INFO$ = "To prevent accidental clicking, please select 'yes' from the radio button"
+    val $reallyDelete$ = "false"
+    if (reallyDelete) {
+      $dhts.clear()
+      "Deleted all DHT data"
+    } else {
+      "Please set reallyDelete to yes to delete all DHT data"
+    }
   }
 
   def dhtDataGet = {

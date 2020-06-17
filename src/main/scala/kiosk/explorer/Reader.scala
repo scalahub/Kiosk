@@ -1,8 +1,7 @@
-package kiosk
+package kiosk.explorer
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo.{KioskBox, KioskType, Token}
-import kiosk.explorer.Curl
 
 object Reader {
 
