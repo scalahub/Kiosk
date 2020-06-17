@@ -60,7 +60,7 @@ class KioskBoxCreator($ergoScript:KioskScriptCreator) extends EasyMirrorSession 
 
 As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
 Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]"""
-    val $boxName$ = "myFirstBox"
+    val $boxName$ = "mySecondBox"
     val $value$ = "123456"
     val $script$ = """{
   sigmaProp(1 < 2)
@@ -70,7 +70,7 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
   }
 
   def createBoxFromAddress(boxName:String, address:String, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
-    val $boxName$ = "mySecondBox"
+    val $boxName$ = "myFirstBox"
     val $value$ = "123456"
     val $address$ =s"""4MQyML64GnzMxZgm"""
     val $INFO$ =

@@ -22,9 +22,7 @@ class KioskScriptCreator(val $myEnv:KioskScriptEnv) extends EasyMirrorSession {
   import KioskScriptCreator._
   def getScriptHash(ergoScript:Text):Array[Byte] = {
     val $ergoScript$:String = """{
-  val x = blake2b256(c)
-  b > 1234.toBigInt &&
-  sigmaProp(a == x)
+  sigmaProp(1 < 2)
 }"""
 
     val ergoTree = $compile(ergoScript)
@@ -34,18 +32,14 @@ class KioskScriptCreator(val $myEnv:KioskScriptEnv) extends EasyMirrorSession {
 
   def getP2sAddress(ergoScript:Text) = {
     val $ergoScript$ = """{
-  val x = blake2b256(c)
-  b > 1234.toBigInt &&
-  sigmaProp(a == x)
+  sigmaProp(1 < 2)
 }"""
     Pay2SAddress($compile(ergoScript)).toString
   }
 
   def $compile(ergoScript:Text):ErgoTree = {
     val $ergoScript$:String = """{
-  val x = blake2b256(c)
-  b > 1234.toBigInt &&
-  sigmaProp(a == x)
+  sigmaProp(1 < 2)
 }"""
     $compile(ergoScript.getText)
   }
