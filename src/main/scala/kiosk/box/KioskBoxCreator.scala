@@ -42,7 +42,7 @@ class KioskBoxCreator($ergoScript:KioskScriptCreator) extends EasyMirrorSession 
   val $boxes = $boxesDhts._1
   val $dhts = $boxesDhts._2
 
-  def getAll = {
+  def getAllBoxes = {
     $boxes.map{
       case (name, box) =>
         new JsonFormatted {
