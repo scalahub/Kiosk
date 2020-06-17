@@ -16,6 +16,8 @@ import sigmastate.serialization.ValueSerializer
 import sigmastate._
 import special.collection.Coll
 import special.sigma.{BigInt, GroupElement}
+
+import scala.util.Try
 object ScalaErgoConverters {
 
   def stringToGroupElement(hex:String): GroupElement = {
@@ -34,7 +36,7 @@ object ScalaErgoConverters {
 
   def getStringFromAddress(ergoAddress: ErgoAddress):String = KioskScriptCreator.$ergoAddressEncoder.toString(ergoAddress)
 
-  def getAddressFromString(string: String) = KioskScriptCreator.$ergoAddressEncoder.fromString(string).get
+  def getAddressFromString(string: String) = Try(KioskScriptCreator.$ergoAddressEncoder.fromString(string).get).getOrElse(throw new Exception(s"Invalid address [${string}]"))
 
   def deserialize(hex:String):KioskType[_] = {
     val bytes = hex.decodeHex

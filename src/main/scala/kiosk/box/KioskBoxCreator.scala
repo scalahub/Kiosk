@@ -50,7 +50,7 @@ class KioskBoxCreator($ergoScript:KioskScriptCreator) extends EasyMirrorSession 
     }.toArray
   }
 
-  def create(boxName:String, script:Text, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
+  def createBoxFromScript(boxName:String, script:Text, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
     val $INFO$ =
       """
 1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these array to empty (i.e., [])
@@ -59,7 +59,6 @@ class KioskBoxCreator($ergoScript:KioskScriptCreator) extends EasyMirrorSession 
 As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
 Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]"""
     val $boxName$ = "box1"
-    val $useP2S$ = "false"
     val $value$ = "123456"
     val $script$ = """{
   // Following values (among many others) can make this spendable
@@ -80,7 +79,10 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     $create(boxName, ergoTree, registerKeys, tokenIDs, tokenAmts, value)
   }
 
-  def create(boxName:String, address:String, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
+  def createBoxFromAddress(boxName:String, address:String, registerKeys:Array[String], tokenIDs:Array[String], tokenAmts:Array[Long], value:Long) = {
+    val $boxName$ = "box0"
+    val $value$ = "123456"
+    val $address$ =s"""box address"""
     val $INFO$ =
       """
 1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these array to empty (i.e., [])

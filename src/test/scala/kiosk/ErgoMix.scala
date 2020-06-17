@@ -1,5 +1,6 @@
 package kiosk
 
+import kiosk.encoding.ScalaErgoConverters
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.{Pay2SAddress, Pay2SHAddress}
 import org.sh.cryptonode.util.BytesUtil._
@@ -49,7 +50,7 @@ object ErgoMix {
   // any variable/method starting with $ will not appear in front-end.
   // so any variable to be hidden from front-end is prefixed with $
 
-  val $g = SigmaDsl.GroupElement(SecP256K1.generator)
+  val $g: GroupElement = SigmaDsl.GroupElement(SecP256K1.generator)
 
   // private key
   def $x: scala.math.BigInt = BigInt(Blake2b256("correct horse battery staple".getBytes)) // secret
@@ -60,7 +61,7 @@ object ErgoMix {
   // encoded public key
   val $gX_encoded = $gX.getEncoded.toArray.encodeHex
 
-  // ergoscript source
+  // ErgoScript source
   def getSource = {
     Array(
       "halfMixScript \n"+$halfMixScriptSource,
@@ -84,30 +85,10 @@ object ErgoMix {
     )
   }
 
-  import KioskScriptCreator._
-
-  def getHalfMixBoxAddresses = {
-    $getHalfMixBoxAddresses($halfMixScriptSource, $fullMixScriptSource, Map(
-        "ggg1" -> $g,
-        "ggg1X" -> $gX
-      )
-    )
-  }
-
-  def $getHalfMixBoxAddresses(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
-    val (halfMixTree, _) = $getRawScripts(halfMixScriptSource, fullMixScriptSource, env)
-    val p2s = Pay2SAddress(halfMixTree)
-    val p2sh = Pay2SHAddress(halfMixTree)
-    Array(
-      "P2S: "+p2s,
-      "P2SH: "+p2sh
-    )
-  }
-
   def $getRawScripts(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
     $ergoScript.$myEnv.deleteAll
     env.foreach{
-      case (name, value) => $ergoScript.$myEnv.setGroupElement(name, value)
+      case (name, value) => $ergoScript.$myEnv.setGroupElement(name, ScalaErgoConverters.groupElementToString(value))
     }
     val fullMixTree = $ergoScript.$compile(fullMixScriptSource)
     val fullMixScriptBytes = DefaultSerializer.serializeErgoTree(fullMixTree)
