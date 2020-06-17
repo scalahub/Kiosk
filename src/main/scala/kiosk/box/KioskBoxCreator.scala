@@ -100,7 +100,7 @@ The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
     box
   }
 
-  def deleteBox(boxName:String) = {
+  def $deleteBox(boxName:String) = {
     if (!$boxes.contains(boxName)) throw new Exception(s"Name $boxName does not exist.")
     $boxes -= boxName
   }
