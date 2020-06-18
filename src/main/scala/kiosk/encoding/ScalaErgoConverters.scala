@@ -4,16 +4,13 @@ import java.math.BigInteger
 
 import kiosk.ergo._
 import kiosk.script.KioskScriptCreator
-import org.bouncycastle.math.ec.custom.sec.SecP256K1Point
 import org.ergoplatform.ErgoAddress
-import org.sh.cryptonode.ecc.ECCPubKey
-import org.sh.cryptonode.util.StringUtil._
 import sigmastate.Values.{ConstantNode, ErgoTree}
-import sigmastate.basics.SecP256K1
-import sigmastate.eval.{SigmaDsl, bigIntToBigInteger}
-import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
-import sigmastate.serialization.ValueSerializer
 import sigmastate._
+import sigmastate.eval.{bigIntToBigInteger, _}
+import sigmastate.interpreter.CryptoConstants.EcPointType
+import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
+import sigmastate.serialization.{GroupElementSerializer, ValueSerializer}
 import special.collection.Coll
 import special.sigma.{BigInt, GroupElement}
 
@@ -21,9 +18,8 @@ import scala.util.Try
 object ScalaErgoConverters {
 
   def stringToGroupElement(hex:String): GroupElement = {
-    val point = ECCPubKey(hex).point
-    val secp256k1Point: SecP256K1Point = SecP256K1.createPoint(point.x.bigInteger, point.y.bigInteger)
-    SigmaDsl.GroupElement(secp256k1Point)
+    val groupElement: EcPointType = GroupElementSerializer.parse(hex.decodeHex)
+    groupElement
   }
 
   def groupElementToString(groupElement: GroupElement): String = KioskGroupElement(groupElement).toString

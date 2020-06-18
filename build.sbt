@@ -9,8 +9,6 @@ scalaVersion := "2.12.10"
 
 lazy val EasyWeb = RootProject(uri("git://github.com/scalahub/EasyWeb.git"))
 
-lazy val CryptoNode = RootProject(uri("git://github.com/scalahub/CryptoNode.git"))
-
 lazy val appkit = RootProject(uri("git://github.com/scalahub/appkit-mod.git"))
 
 libraryDependencies ++= Seq(
@@ -28,7 +26,7 @@ resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repos
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
 
 lazy val root = (project in file(".")).dependsOn(
-  EasyWeb, CryptoNode, appkit
+  EasyWeb, appkit
 ).settings(
   updateOptions := updateOptions.value.withLatestSnapshots(false),
   mainClass in (Compile, run) := Some("kiosk.KioskWeb"),

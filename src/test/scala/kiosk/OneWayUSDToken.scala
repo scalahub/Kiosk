@@ -1,12 +1,9 @@
 package kiosk
 
-import kiosk.encoding.ScalaErgoConverters
-import kiosk.ergo.KioskErgoTree
+import kiosk.ergo.{KioskErgoTree, _}
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.Pay2SAddress
-import org.sh.cryptonode.util.BytesUtil._
 import scorex.crypto.hash.Blake2b256
-import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 
 object OneWayUSDToken extends App {
   /* using the description at https://www.ergoforum.org/t/tethering-a-token-to-usd-using-the-rate-oracle/118/4

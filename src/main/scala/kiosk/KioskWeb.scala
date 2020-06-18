@@ -1,9 +1,8 @@
 package kiosk
 
 import kiosk.box.KioskBoxCreator
-import kiosk.encoding.{EasyWebEncoder, ScalaErgoConverters}
+import kiosk.encoding.EasyWebEncoder
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
-import org.sh.cryptonode.util.StringUtil._
 
 object Env extends KioskScriptEnv
 object Box extends KioskBoxCreator(Script)

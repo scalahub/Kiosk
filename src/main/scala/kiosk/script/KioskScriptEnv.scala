@@ -2,10 +2,8 @@ package kiosk.script
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
-import org.sh.cryptonode.util.BytesUtil._
 import org.sh.reflect.DataStructures.EasyMirrorSession
 import org.sh.utils.json.JSONUtil.JsonFormatted
-import special.sigma.GroupElement
 
 import scala.collection.mutable.{Map => MMap}
 

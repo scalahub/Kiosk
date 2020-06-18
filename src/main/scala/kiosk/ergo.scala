@@ -1,8 +1,8 @@
 package kiosk
 
+import org.apache.commons.codec.binary.Hex
 import org.ergoplatform.appkit.{ErgoType, ErgoValue}
 import org.json.JSONObject
-import org.sh.cryptonode.util.BytesUtil._
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.SGroupElement
 import sigmastate.Values.{ByteArrayConstant, CollectionConstant, ErgoTree}
@@ -14,6 +14,18 @@ import special.sigma
 import special.sigma.GroupElement
 
 package object ergo {
+  class BetterString(string:String) {
+    def decodeHex = Hex.decodeHex(string)
+  }
+
+  implicit def ByteArrayToBetterByteArray(bytes:Array[Byte]) = new BetterByteArray(bytes)
+
+  class BetterByteArray(bytes:Seq[Byte]) {
+    def encodeHex:String = Hex.encodeHexString(bytes.toArray).toLowerCase
+  }
+
+  implicit def StringToBetterString(string:String) = new BetterString(string)
+
   sealed trait KioskType[T]{
     val serialize:Array[Byte]
     val value:T

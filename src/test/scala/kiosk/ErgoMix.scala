@@ -1,9 +1,8 @@
 package kiosk
 
 import kiosk.encoding.ScalaErgoConverters
+import kiosk.ergo._
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
-import org.ergoplatform.{Pay2SAddress, Pay2SHAddress}
-import org.sh.cryptonode.util.BytesUtil._
 import scorex.crypto.hash.Blake2b256
 import sigmastate.basics.SecP256K1
 import sigmastate.eval.SigmaDsl

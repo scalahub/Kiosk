@@ -5,9 +5,8 @@ import kiosk.encoding.ScalaErgoConverters
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.appkit._
 import org.ergoplatform.{ErgoAddress, ErgoAddressEncoder, Pay2SAddress}
-import org.sh.cryptonode.util.BytesUtil._
-import org.sh.cryptonode.util.StringUtil._
 import sigmastate.Values
+import kiosk.ergo._
 import sigmastate.eval._
 import sigmastate.interpreter.CryptoConstants
 import special.sigma.GroupElement
