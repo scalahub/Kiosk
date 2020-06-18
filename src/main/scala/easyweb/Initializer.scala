@@ -60,7 +60,7 @@ Note that environments are not saved to disk so the garbage collector may clear 
       if (isNewPatternNeeded || isHttpsNeeded) {
         hResp.sendRedirect(fullUrl(hReq, secret))
       } else {
-        hResp.getWriter.print(html.replace("ewbsokjudhk12qafbqdh", secret))
+        hResp.getWriter.print(html.replace("replaceWithActualSecret", secret))
       }
     }
     def getRedirectUrl(sessionUrl:String) = "/session"+sessionUrl
