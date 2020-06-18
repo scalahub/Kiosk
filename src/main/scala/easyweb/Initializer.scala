@@ -14,8 +14,8 @@ Stacktrace of the call is given below:
 org.sh.reflect.CodeGenUtil$:CodeGenUtil.scala:69
 org.sh.easyweb.AutoWebSession:AutoWebSession.scala:22
 org.sh.easyweb.AutoWebSession:AutoWebSession.scala:141
-kiosk.KioskWeb$:KioskWeb.scala:43
-kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:20
+kiosk.KioskWeb$:KioskWeb.scala:35
+kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:12
 scala.Function0:Function0.scala:39
 scala.Function0:Function0.scala:39
 scala.runtime.AbstractFunction0:AbstractFunction0.scala:17
@@ -60,7 +60,7 @@ Note that environments are not saved to disk so the garbage collector may clear 
       if (isNewPatternNeeded || isHttpsNeeded) {
         hResp.sendRedirect(fullUrl(hReq, secret))
       } else {
-        hResp.getWriter.print(html.replace("replaceWithActualSecret", secret))
+        hResp.getWriter.print(html.replace("ewbsokjudhk12qafbqdh", secret))
       }
     }
     def getRedirectUrl(sessionUrl:String) = "/session"+sessionUrl

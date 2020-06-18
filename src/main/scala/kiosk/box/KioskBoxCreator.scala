@@ -13,7 +13,6 @@ import org.sh.easyweb.Text
 import org.sh.reflect.DataStructures.EasyMirrorSession
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.Values.ErgoTree
-import special.sigma.GroupElement
 
 import scala.collection.mutable.{Map => MMap}
 
