@@ -70,7 +70,7 @@ object OraclePool extends App {
       |
       |  val sum = oracleBoxes.fold(0L, { (t:Long, b: Box) => t + b.R4[Long].get })
       |
-      |  val average = sum / oracleBoxes.size
+      |  val average = if (oracleBoxes.size > 0) sum / oracleBoxes.size else 0L
       |
       |  val oracleRewardOutputs = oracleBoxes.fold((1, true), { (t:(Int, Boolean), b:Box) =>
       |    (t._1 + 1, t._2 && OUTPUTS(t._1).propositionBytes == proveDlog(b.R5[GroupElement].get).propBytes && OUTPUTS(t._1).value == oracleReward)
