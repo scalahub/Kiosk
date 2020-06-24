@@ -58,12 +58,14 @@ object OraclePool extends App {
   val oracleReward = 150000000 // Nano ergs. One reward per data point to be paid to oracle
   val minNumOracles = 1 // how many min needed
   val confDelay = 4 // how many min needed
+  val minOracleBoxValue = 1000000000 // min nano ergs in oracle box
 
   val poolBoxSource =
     """
       |{
       |  val oracleBoxes = CONTEXT.dataInputs.filter{(b:Box) =>
-      |    b.creationInfo._1 >= HEIGHT - epoch
+      |    b.creationInfo._1 >= HEIGHT - epoch &&
+      |    b.tokens(0)._1 == oracleTokenId
       |  }
       |
       |  val sum = oracleBoxes.fold(0L, { (t:Long, b: Box) => t + b.R4[Long].get })
@@ -74,18 +76,27 @@ object OraclePool extends App {
       |    (t._1 + 1, t._2 && OUTPUTS(t._1).propositionBytes == proveDlog(b.R5[GroupElement].get).propBytes && OUTPUTS(t._1).value == oracleReward)
       |  })
       |
-      |  oracleBoxes.size >= minNumOracles &&
       |  OUTPUTS(0).propositionBytes == SELF.propositionBytes &&
       |  OUTPUTS(0).tokens == SELF.tokens &&
-      |  OUTPUTS(0).R4[Long].get == average &&
-      |  OUTPUTS(0).creationInfo._1 >= HEIGHT - confDelay &&
-      |  OUTPUTS(0).creationInfo._1 >= SELF.creationInfo._1 + epoch &&
-      |  OUTPUTS(0).value >= SELF.value - oracleBoxes.size * (collectorRewardPerData + oracleReward)
+      |  OUTPUTS(0).value >= minOracleBoxValue && (
+      |    ( // collection
+      |      oracleBoxes.size >= minNumOracles &&
+      |      OUTPUTS(0).R4[Long].get == average &&
+      |      OUTPUTS(0).creationInfo._1 >= HEIGHT - confDelay &&
+      |      OUTPUTS(0).creationInfo._1 >= SELF.creationInfo._1 + epoch &&
+      |      OUTPUTS(0).value >= SELF.value - oracleBoxes.size * (collectorRewardPerData + oracleReward)
+      |    ) || ( // top-up
+      |      OUTPUTS(0).creationInfo._1 == SELF.creationInfo._1 &&
+      |      OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
+      |      OUTPUTS(0).value > SELF.value
+      |    )
+      |  )
       |}
       |""".stripMargin
 
   env.setCollByte("oracleTokenId", oracleTokenId)
   env.setLong("collectorRewardPerData", collectorRewardPerData)
+  env.setLong("minOracleBoxValue", minOracleBoxValue)
   env.setLong("oracleReward", oracleReward)
   env.setInt("epoch", epoch)
   env.setInt("minNumOracles", minNumOracles)
