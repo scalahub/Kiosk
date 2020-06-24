@@ -84,7 +84,8 @@ object OraclePool extends App {
       |      OUTPUTS(0).R4[Long].get == average &&
       |      OUTPUTS(0).creationInfo._1 >= HEIGHT - confDelay &&
       |      OUTPUTS(0).creationInfo._1 >= SELF.creationInfo._1 + epoch &&
-      |      OUTPUTS(0).value >= SELF.value - oracleBoxes.size * (collectorRewardPerData + oracleReward)
+      |      OUTPUTS(0).value >= SELF.value - oracleBoxes.size * (collectorRewardPerData + oracleReward) &&
+      |      oracleRewardOutputs._2
       |    ) || ( // top-up
       |      OUTPUTS(0).creationInfo._1 == SELF.creationInfo._1 &&
       |      OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
