@@ -14,8 +14,8 @@ Stacktrace of the call is given below:
 org.sh.reflect.CodeGenUtil$:CodeGenUtil.scala:69
 org.sh.easyweb.AutoWebSession:AutoWebSession.scala:22
 org.sh.easyweb.AutoWebSession:AutoWebSession.scala:141
-kiosk.KioskWeb$:KioskWeb.scala:35
-kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:12
+kiosk.KioskWeb$:KioskWeb.scala:34
+kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:11
 scala.Function0:Function0.scala:39
 scala.Function0:Function0.scala:39
 scala.runtime.AbstractFunction0:AbstractFunction0.scala:17
