@@ -3,6 +3,8 @@ package kiosk
 import kiosk.ergo._
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 
+// use sample code from dex https://scastie.scala-lang.org/mh3h6SrESnKJwdqZjKnVkw for collection operations
+
 object OraclePool extends App {
   val env = new KioskScriptEnv()
   val scriptCreator = new KioskScriptCreator(env)
@@ -10,10 +12,12 @@ object OraclePool extends App {
   val oracleBoxSource =
     """
       |{
+      |  val groupElement = SELF.R5[GroupElement].get
+      |
       |  OUTPUTS(0).tokens == SELF.tokens &&
       |  OUTPUTS(0).propositionBytes == SELF.propositionBytes &&
-      |  OUTPUTS(0).R5[Coll[Byte]] == SELF.R5[Coll[Byte]] &&
-      |  INPUTS.filter({(b:Box) => b.propositionBytes == SELF.propositionBytes}).size == 1
+      |  OUTPUTS(0).R5[GroupElement].get == groupElement &&
+      |  INPUTS.filter({(b:Box) => b.propositionBytes == SELF.propositionBytes}).size == 1 && proveDlog(groupElement)
       |}
       |""".stripMargin
 
