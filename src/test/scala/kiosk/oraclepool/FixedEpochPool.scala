@@ -139,7 +139,7 @@ object FixedEpochPool extends App {
        |}
        |""".stripMargin
 
-  val oracleScript =
+  val dataPointScript =
     s"""
        |{
        |  // This box:
@@ -153,7 +153,7 @@ object FixedEpochPool extends App {
        |
        |  val validLiveEpochBox = liveEpochBox.tokens(0)._1 == oracleTokenId &&
        |                          liveEpochBox.propositionBytes == liveEpochScriptBytes
-       |  
+       |
        |  sigmaProp(
        |    OUTPUTS(0).R4[GroupElement].get == pubKey &&
        |    OUTPUTS(0).R5[Coll[Byte]].get == liveEpochBox.id &&
@@ -165,7 +165,7 @@ object FixedEpochPool extends App {
        |}
        |""".stripMargin
 
-  val fundingScript =
+  val poolDepositScript =
     s"""
        |{
        |  val allFundingBoxes = INPUTS.filter{(b:Box) =>
@@ -186,17 +186,17 @@ object FixedEpochPool extends App {
   val liveEpochErgoTree = scriptCreator.$compile(liveEpochScript)
   env.setCollByte("liveEpochScriptBytes", liveEpochErgoTree.bytes)
   val epochPrepErgoTree = scriptCreator.$compile(epochPrepScript)
-  val oracleErgoTree = scriptCreator.$compile(oracleScript)
+  val dataPointErgoTree = scriptCreator.$compile(dataPointScript)
   env.setCollByte("epochPrepScriptBytes", epochPrepErgoTree.bytes)
-  val fundingErgoTree = scriptCreator.$compile(fundingScript)
+  val poolDepositErgoTree = scriptCreator.$compile(poolDepositScript)
 
   println(s"Live Epoch script length       : ${liveEpochErgoTree.bytes.length}")
   println(s"Live Epoch script complexity   : ${liveEpochErgoTree.complexity}")
   println(s"Epoch prep script length       : ${epochPrepErgoTree.bytes.length}")
   println(s"Epoch prep script complexity   : ${epochPrepErgoTree.complexity}")
-  println(s"Oracle script length           : ${oracleErgoTree.bytes.length}")
-  println(s"Oracle script complexity       : ${oracleErgoTree.complexity}")
-  println(s"Funding script length          : ${fundingErgoTree.bytes.length}")
-  println(s"Funding script complexity      : ${fundingErgoTree.complexity}")
+  println(s"DataPoint script length        : ${dataPointErgoTree.bytes.length}")
+  println(s"DataPoint script complexity    : ${dataPointErgoTree.complexity}")
+  println(s"PoolDeposit script length      : ${poolDepositErgoTree.bytes.length}")
+  println(s"PoolDeposit script complexity  : ${poolDepositErgoTree.complexity}")
 
 }
