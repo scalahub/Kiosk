@@ -26,25 +26,30 @@ object FixedEpochPool extends App {
   val buffer = 4 // blocks
 
   val oracleTokenId: Array[Byte] = "dummy_oracle_token_id".getBytes()
+  val poolTokenId: Array[Byte] = "dummy_pool_token_id".getBytes()
 
   val oracleReward = 150000000 // Nano ergs. One reward per data point to be paid to oracle
   val minPoolBoxValue = 1000000000 // how much min must exist in oracle pool box
 
-  val oracle1PrvKey = ECC.$randBigInt
-  val oracle1PubKey = ECC.$gX(oracle1PrvKey)
+  val prvKey1 = ECC.$randBigInt
+  val pubKey1 = ECC.$gX(prvKey1)
 
-  val oracle2PrvKey = ECC.$randBigInt
-  val oracle2PubKey = ECC.$gX(oracle2PrvKey)
+  val prvKey2 = ECC.$randBigInt
+  val pubKey2 = ECC.$gX(prvKey2)
 
-  val oracle3PrvKey = ECC.$randBigInt
-  val oracle3PubKey = ECC.$gX(oracle3PrvKey)
+  val prvKey3 = ECC.$randBigInt
+  val pubKey3 = ECC.$gX(prvKey3)
 
-  val oracle4PrvKey = ECC.$randBigInt
-  val oracle4PubKey = ECC.$gX(oracle4PrvKey)
+  val prvKey4 = ECC.$randBigInt
+  val pubKey4 = ECC.$gX(prvKey4)
 
-  val oraclePubKeys = Array(oracle1PubKey, oracle2PubKey, oracle3PubKey, oracle4PubKey)
+  val oraclePubKeys = Array(pubKey1, pubKey2, pubKey3, pubKey4)
 
   env.setCollGroupElement("oraclePubKeys", oraclePubKeys)
+  env.setCollByte("oracleTokenId", oracleTokenId)
+  env.setCollByte("poolTokenId", poolTokenId)
+  env.setLong("minPoolBoxValue", minPoolBoxValue)
+  env.setLong("oracleReward", oracleReward)
 
   val activeEpochScript =
     s"""{ // This box:
@@ -132,17 +137,49 @@ object FixedEpochPool extends App {
        |}
        |""".stripMargin
 
+  val oracleScript =
+    s"""
+       |{
+       |  // This box:
+       |  // R4: The address of the oracle (never allowed to change after bootstrap).
+       |  // R5: The box id of the latest Live Epoch box.
+       |  // R6: The oracle's datapoint.
+       |
+       |  val pubKey = SELF.R4[GroupElement].get
+       |
+       |  OUTPUTS(0).R4[GroupElement].get == pubKey &&
+       |  OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
+       |  OUTPUTS(0).R6[Long].get > 0 &&
+       |  OUTPUTS(0).tokens == SELF.tokens &&
+       |  proveDlog(pubKey)
+       |}
+       |""".stripMargin
 
-  env.setCollByte("oracleTokenId", oracleTokenId)
-  env.setLong("minPoolBoxValue", minPoolBoxValue)
-  env.setLong("oracleReward", oracleReward)
+  val fundingScript =
+    s"""
+       |{
+       |  val allFundingBoxes = INPUTS.filter{(b:Box) =>
+       |    b.propositionBytes == SELF.propositionBytes
+       |  }
+       |
+       |  val totalFunds = allFundingBoxes.fold(0L, { (t:Long, b: Box) => t + b.value })
+       |
+       |  INPUTS(0).propositionBytes == prepEpochScriptBytes &&
+       |  OUTPUTS(0).propositionBytes == prepEpochScriptBytes &&
+       |  OUTPUTS(0).value >= INPUTS(0).value + totalFunds &&
+       |  OUTPUTS(0).tokens(0)._1 == poolTokenId
+       |}
+       |""".stripMargin
 
   val activeEpochErgoTree = scriptCreator.$compile(activeEpochScript)
-  println("Active Epoch script: "+activeEpochErgoTree.bytes.encodeHex)
-
   env.setCollByte("activeEpochScriptBytes", activeEpochErgoTree.bytes)
-
   val prepEpochErgoTree = scriptCreator.$compile(prepEpochScript)
+  val oracleErgoTree = scriptCreator.$compile(oracleScript)
+  env.setCollByte("prepEpochScriptBytes", prepEpochErgoTree.bytes)
+  val fundingErgoTree = scriptCreator.$compile(fundingScript)
+  println("Active Epoch script: "+activeEpochErgoTree.bytes.encodeHex)
   println("Prep Epoch script: "+prepEpochErgoTree.bytes.encodeHex)
+  println("Oracle script: "+oracleErgoTree.bytes.encodeHex)
+  println("Funding script: "+fundingErgoTree.bytes.encodeHex)
 
 }
