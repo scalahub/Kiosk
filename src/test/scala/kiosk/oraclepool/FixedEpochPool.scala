@@ -150,6 +150,7 @@ object FixedEpochPool extends App {
        |  OUTPUTS(0).R4[GroupElement].get == pubKey &&
        |  OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
        |  OUTPUTS(0).R6[Long].get > 0 &&
+       |  OUTPUTS(0).propositionBytes == SELF.propositionBytes &&
        |  OUTPUTS(0).tokens == SELF.tokens &&
        |  proveDlog(pubKey)
        |}
