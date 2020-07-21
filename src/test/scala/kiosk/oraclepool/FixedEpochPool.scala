@@ -51,7 +51,7 @@ object FixedEpochPool extends App {
   env.setLong("minPoolBoxValue", minPoolBoxValue)
   env.setLong("oracleReward", oracleReward)
 
-  val activeEpochScript =
+  val liveEpochScript =
     s"""{ // This box:
        |  // R4: The latest finalized datapoint (from the previous epoch)
        |  // R5: Block height that the current epoch will finish on
@@ -81,10 +81,10 @@ object FixedEpochPool extends App {
        |               OUTPUTS(t._1).value >= $oracleReward)
        |  })
        |
-       |  val prepEpochScriptBytes = SELF.R6[Coll[Byte]].get
+       |  val epochPrepScriptBytes = SELF.R6[Coll[Byte]].get
        |
        |  sigmaProp(
-       |    OUTPUTS(0).propositionBytes == prepEpochScriptBytes &&
+       |    OUTPUTS(0).propositionBytes == epochPrepScriptBytes &&
        |    oracleBoxes.size > 0 &&
        |    OUTPUTS(0).tokens == SELF.tokens &&
        |    OUTPUTS(0).R4[Long].get == average &&
@@ -97,7 +97,7 @@ object FixedEpochPool extends App {
        |}
        |""".stripMargin
 
-  val prepEpochScript =
+  val epochPrepScript =
     s"""
        |{
        |  // This box:
@@ -112,15 +112,15 @@ object FixedEpochPool extends App {
        |  val maxNewEpochHeight = HEIGHT + $epochPeriod + $buffer
        |  val minNewEpochHeight = HEIGHT + $epochPeriod
        |
-       |  val isActiveEpochOutput =  OUTPUTS(0).R6[Coll[Byte]].get == SELF.propositionBytes &&
-       |                             OUTPUTS(0).propositionBytes == activeEpochScriptBytes
+       |  val isliveEpochOutput =  OUTPUTS(0).R6[Coll[Byte]].get == SELF.propositionBytes &&
+       |                             OUTPUTS(0).propositionBytes == liveEpochScriptBytes
        |  sigmaProp( // start next epoch
        |    epochNotOver && canStartEpoch && enoughFunds &&
        |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
        |    OUTPUTS(0).tokens == SELF.tokens &&
        |    OUTPUTS(0).value >= SELF.value &&
-       |    isActiveEpochOutput
+       |    isliveEpochOutput
        |  ) || sigmaProp( // create new epoch
        |    epochOver && enoughFunds &&
        |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
@@ -128,7 +128,7 @@ object FixedEpochPool extends App {
        |    OUTPUTS(0).R5[Int].get <= maxNewEpochHeight &&
        |    OUTPUTS(0).tokens == SELF.tokens &&
        |    OUTPUTS(0).value >= SELF.value &&
-       |    isActiveEpochOutput
+       |    isliveEpochOutput
        |  ) || sigmaProp( // collect funds
        |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
@@ -149,12 +149,18 @@ object FixedEpochPool extends App {
        |
        |  val pubKey = SELF.R4[GroupElement].get
        |
+       |  val liveEpochBox = CONTEXT.dataInputs(0)
+       |
+       |  val validLiveEpochBox = liveEpochBox.tokens(0)._1 == oracleTokenId &&
+       |                          liveEpochBox.propositionBytes == liveEpochScriptBytes
+       |  
        |  sigmaProp(
        |    OUTPUTS(0).R4[GroupElement].get == pubKey &&
-       |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
+       |    OUTPUTS(0).R5[Coll[Byte]].get == liveEpochBox.id &&
        |    OUTPUTS(0).R6[Long].get > 0 &&
        |    OUTPUTS(0).propositionBytes == SELF.propositionBytes &&
-       |    OUTPUTS(0).tokens == SELF.tokens
+       |    OUTPUTS(0).tokens == SELF.tokens &&
+       |    validLiveEpochBox
        |  ) && proveDlog(pubKey)
        |}
        |""".stripMargin
@@ -169,25 +175,25 @@ object FixedEpochPool extends App {
        |  val totalFunds = allFundingBoxes.fold(0L, { (t:Long, b: Box) => t + b.value })
        |
        |  sigmaProp(
-       |    INPUTS(0).propositionBytes == prepEpochScriptBytes &&
-       |    OUTPUTS(0).propositionBytes == prepEpochScriptBytes &&
+       |    INPUTS(0).propositionBytes == epochPrepScriptBytes &&
+       |    OUTPUTS(0).propositionBytes == epochPrepScriptBytes &&
        |    OUTPUTS(0).value >= INPUTS(0).value + totalFunds &&
        |    OUTPUTS(0).tokens(0)._1 == poolTokenId
        |  )
        |}
        |""".stripMargin
 
-  val activeEpochErgoTree = scriptCreator.$compile(activeEpochScript)
-  env.setCollByte("activeEpochScriptBytes", activeEpochErgoTree.bytes)
-  val prepEpochErgoTree = scriptCreator.$compile(prepEpochScript)
+  val liveEpochErgoTree = scriptCreator.$compile(liveEpochScript)
+  env.setCollByte("liveEpochScriptBytes", liveEpochErgoTree.bytes)
+  val epochPrepErgoTree = scriptCreator.$compile(epochPrepScript)
   val oracleErgoTree = scriptCreator.$compile(oracleScript)
-  env.setCollByte("prepEpochScriptBytes", prepEpochErgoTree.bytes)
+  env.setCollByte("epochPrepScriptBytes", epochPrepErgoTree.bytes)
   val fundingErgoTree = scriptCreator.$compile(fundingScript)
 
-  println(s"Active Epoch script length     : ${activeEpochErgoTree.bytes.length}")
-  println(s"Active Epoch script complexity : ${activeEpochErgoTree.complexity}")
-  println(s"Prep Epoch script length       : ${prepEpochErgoTree.bytes.length}")
-  println(s"Prep Epoch script complexity   : ${prepEpochErgoTree.complexity}")
+  println(s"Active Epoch script length     : ${liveEpochErgoTree.bytes.length}")
+  println(s"Active Epoch script complexity : ${liveEpochErgoTree.complexity}")
+  println(s"Prep Epoch script length       : ${epochPrepErgoTree.bytes.length}")
+  println(s"Prep Epoch script complexity   : ${epochPrepErgoTree.complexity}")
   println(s"Oracle script length           : ${oracleErgoTree.bytes.length}")
   println(s"Oracle script complexity       : ${oracleErgoTree.complexity}")
   println(s"Funding script length          : ${fundingErgoTree.bytes.length}")
