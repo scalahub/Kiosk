@@ -83,15 +83,17 @@ object FixedEpochPool extends App {
        |
        |  val prepEpochScriptBytes = SELF.R6[Coll[Byte]].get
        |
-       |  OUTPUTS(0).propositionBytes == prepEpochScriptBytes &&
-       |  oracleBoxes.size > 0 && anyOracle &&
-       |  OUTPUTS(0).tokens == SELF.tokens &&
-       |  OUTPUTS(0).R4[Long].get == average &&
-       |  OUTPUTS(0).R5[Int].get == SELF.R5[Int].get + $epochPeriod &&
-       |  OUTPUTS(0).value >= $minPoolBoxValue &&
-       |  OUTPUTS(0).R4[Long].get == average &&
-       |  OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * oracleReward &&
-       |  oracleRewardOutputs._2
+       |  sigmaProp(
+       |    OUTPUTS(0).propositionBytes == prepEpochScriptBytes &&
+       |    oracleBoxes.size > 0 &&
+       |    OUTPUTS(0).tokens == SELF.tokens &&
+       |    OUTPUTS(0).R4[Long].get == average &&
+       |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get + $epochPeriod &&
+       |    OUTPUTS(0).value >= $minPoolBoxValue &&
+       |    OUTPUTS(0).R4[Long].get == average &&
+       |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * oracleReward &&
+       |    oracleRewardOutputs._2 && anyOracle
+       |  )
        |}
        |""".stripMargin
 
@@ -112,14 +114,14 @@ object FixedEpochPool extends App {
        |
        |  val isActiveEpochOutput =  OUTPUTS(0).R6[Coll[Byte]].get == SELF.propositionBytes &&
        |                             OUTPUTS(0).propositionBytes == activeEpochScriptBytes
-       |  ( // start next epoch
+       |  sigmaProp( // start next epoch
        |    epochNotOver && canStartEpoch && enoughFunds &&
        |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
        |    OUTPUTS(0).tokens == SELF.tokens &&
        |    OUTPUTS(0).value >= SELF.value &&
        |    isActiveEpochOutput
-       |  ) || ( // create new epoch
+       |  ) || sigmaProp( // create new epoch
        |    epochOver && enoughFunds &&
        |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
        |    OUTPUTS(0).R5[Int].get >= minNewEpochHeight &&
@@ -127,7 +129,7 @@ object FixedEpochPool extends App {
        |    OUTPUTS(0).tokens == SELF.tokens &&
        |    OUTPUTS(0).value >= SELF.value &&
        |    isActiveEpochOutput
-       |  ) || ( // collect funds
+       |  ) || sigmaProp( // collect funds
        |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
        |    OUTPUTS(0).propositionBytes == SELF.propositionBytes &&
@@ -147,12 +149,13 @@ object FixedEpochPool extends App {
        |
        |  val pubKey = SELF.R4[GroupElement].get
        |
-       |  OUTPUTS(0).R4[GroupElement].get == pubKey &&
-       |  OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
-       |  OUTPUTS(0).R6[Long].get > 0 &&
-       |  OUTPUTS(0).propositionBytes == SELF.propositionBytes &&
-       |  OUTPUTS(0).tokens == SELF.tokens &&
-       |  proveDlog(pubKey)
+       |  sigmaProp(
+       |    OUTPUTS(0).R4[GroupElement].get == pubKey &&
+       |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
+       |    OUTPUTS(0).R6[Long].get > 0 &&
+       |    OUTPUTS(0).propositionBytes == SELF.propositionBytes &&
+       |    OUTPUTS(0).tokens == SELF.tokens
+       |  ) && proveDlog(pubKey)
        |}
        |""".stripMargin
 
@@ -165,10 +168,12 @@ object FixedEpochPool extends App {
        |
        |  val totalFunds = allFundingBoxes.fold(0L, { (t:Long, b: Box) => t + b.value })
        |
-       |  INPUTS(0).propositionBytes == prepEpochScriptBytes &&
-       |  OUTPUTS(0).propositionBytes == prepEpochScriptBytes &&
-       |  OUTPUTS(0).value >= INPUTS(0).value + totalFunds &&
-       |  OUTPUTS(0).tokens(0)._1 == poolTokenId
+       |  sigmaProp(
+       |    INPUTS(0).propositionBytes == prepEpochScriptBytes &&
+       |    OUTPUTS(0).propositionBytes == prepEpochScriptBytes &&
+       |    OUTPUTS(0).value >= INPUTS(0).value + totalFunds &&
+       |    OUTPUTS(0).tokens(0)._1 == poolTokenId
+       |  )
        |}
        |""".stripMargin
 
@@ -178,9 +183,14 @@ object FixedEpochPool extends App {
   val oracleErgoTree = scriptCreator.$compile(oracleScript)
   env.setCollByte("prepEpochScriptBytes", prepEpochErgoTree.bytes)
   val fundingErgoTree = scriptCreator.$compile(fundingScript)
-  println("Active Epoch script: "+activeEpochErgoTree.bytes.encodeHex)
-  println("Prep Epoch script: "+prepEpochErgoTree.bytes.encodeHex)
-  println("Oracle script: "+oracleErgoTree.bytes.encodeHex)
-  println("Funding script: "+fundingErgoTree.bytes.encodeHex)
+
+  println(s"Active Epoch script length     : ${activeEpochErgoTree.bytes.length}")
+  println(s"Active Epoch script complexity : ${activeEpochErgoTree.complexity}")
+  println(s"Prep Epoch script length       : ${prepEpochErgoTree.bytes.length}")
+  println(s"Prep Epoch script complexity   : ${prepEpochErgoTree.complexity}")
+  println(s"Oracle script length           : ${oracleErgoTree.bytes.length}")
+  println(s"Oracle script complexity       : ${oracleErgoTree.complexity}")
+  println(s"Funding script length          : ${fundingErgoTree.bytes.length}")
+  println(s"Funding script complexity      : ${fundingErgoTree.complexity}")
 
 }
