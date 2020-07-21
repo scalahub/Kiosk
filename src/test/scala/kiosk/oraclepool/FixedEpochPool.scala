@@ -9,7 +9,7 @@ object FixedEpochPool extends App {
   val scriptCreator = new KioskScriptCreator(env)
 
   /*
-        <--------------epochPeriod-----------><---------prepPeriod-------->
+        <--------------livePeriod------------><---------prepPeriod-------->
  ... ------------------------------------------------------------------------------
         ^                                     ^                           ^
         |                                     |                           |
