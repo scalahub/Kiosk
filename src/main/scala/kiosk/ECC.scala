@@ -3,9 +3,11 @@ package kiosk
 import java.security.SecureRandom
 
 import kiosk.encoding.ScalaErgoConverters
+import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import sigmastate.basics.SecP256K1
 import sigmastate.eval._
 import special.sigma.GroupElement
+import ergo._
 
 object ECC {
   def $gX(x:BigInt): String = {
@@ -36,4 +38,22 @@ To set the default generator as base, use h = 0279be667ef9dcbbac55a06295ce870b07
   }
 
   def $hexToBigInt(hex:String) = BigInt(hex, 16)
+
+  def addressToGroupElement(address:String) = {
+    /*
+      encoding is as follows:
+
+      group element
+      ErgoTree serialized:      0008cd0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+      group element:                  0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+      group element serialized:     070279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+
+      address:                     9fSgJ7BmUxBQJ454prQDQ7fQMBkXPLaAmDnimgTtjym6FYPHjAV
+     */
+    val ergoTree = ScalaErgoConverters.getAddressFromString(address).script.bytes.encodeHex
+    if (ergoTree.size != 72) throw new Exception("Not a proveDlog address1")
+    if (ergoTree.take(6) != "0008cd") throw new Exception("Not a proveDlog address2")
+    ergoTree.drop(6)
+  }
 }
+
