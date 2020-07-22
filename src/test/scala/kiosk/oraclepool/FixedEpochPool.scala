@@ -1,10 +1,8 @@
 package kiosk.oraclepool
 
-import kiosk.ECC
-import kiosk.ergo._
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 
-object FixedEpochPool extends App {
+abstract class FixedEpochPool extends App {
   val env = new KioskScriptEnv()
   val scriptCreator = new KioskScriptCreator(env)
 
@@ -20,30 +18,19 @@ object FixedEpochPool extends App {
    */
 
   // constants
-  val livePeriod = 50 // blocks
-  val prepPeriod = 10 // blocks
-  val epochPeriod = livePeriod + prepPeriod
-  val buffer = 4 // blocks
+  val livePeriod:Int // blocks
+  val prepPeriod:Int // blocks
+  lazy val epochPeriod = livePeriod + prepPeriod
+  val buffer:Int // blocks
 
-  val oracleTokenId: Array[Byte] = "dummy_oracle_token_id".getBytes()
-  val poolTokenId: Array[Byte] = "dummy_pool_token_id".getBytes()
+  val oracleTokenId: Array[Byte]
+  val poolTokenId: Array[Byte]
 
-  val oracleReward = 150000000 // Nano ergs. One reward per data point to be paid to oracle
-  val minPoolBoxValue = 1000000000 // how much min must exist in oracle pool box
+  val oracleReward:Long // Nano ergs. One reward per data point to be paid to oracle
+  val minPoolBoxValue:Long // how much min must exist in oracle pool box
 
-  val prvKey1 = ECC.$randBigInt
-  val pubKey1 = ECC.$gX(prvKey1)
-
-  val prvKey2 = ECC.$randBigInt
-  val pubKey2 = ECC.$gX(prvKey2)
-
-  val prvKey3 = ECC.$randBigInt
-  val pubKey3 = ECC.$gX(prvKey3)
-
-  val prvKey4 = ECC.$randBigInt
-  val pubKey4 = ECC.$gX(prvKey4)
-
-  val oraclePubKeys = Array(pubKey1, pubKey2, pubKey3, pubKey4)
+  type GroupElementHex = String
+  val oraclePubKeys: Array[GroupElementHex]
 
   env.setCollGroupElement("oraclePubKeys", oraclePubKeys)
   env.setCollByte("oracleTokenId", oracleTokenId)
