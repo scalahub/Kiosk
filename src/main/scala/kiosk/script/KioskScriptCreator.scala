@@ -26,9 +26,17 @@ class KioskScriptCreator(val $myEnv:KioskScriptEnv) extends EasyMirrorSession {
   sigmaProp(1 < 2)
 }"""
 
+    scorex.crypto.hash.Blake2b256(getErgoTree(ergoScript)).toArray
+  }
+
+  def getErgoTree(ergoScript:Text):Array[Byte] = {
+    val $INFO$ = "Outputs the blake2b256 hash of the ErgoTree corresponding to ergoScript"
+    val $ergoScript$:String = """{
+  sigmaProp(1 < 2)
+}"""
+
     val ergoTree = $compile(ergoScript)
-    val scriptBytes = DefaultSerializer.serializeErgoTree(ergoTree)
-    scorex.crypto.hash.Blake2b256(scriptBytes).toArray
+    DefaultSerializer.serializeErgoTree(ergoTree)
   }
 
   def $getP2SAddress(ergoScript:Text) = {
