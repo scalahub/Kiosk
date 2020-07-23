@@ -1,6 +1,9 @@
 package kiosk.oraclepool
 
+import kiosk.encoding.ScalaErgoConverters
+import kiosk.ergo.KioskErgoTree
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
+import kiosk.ergo._
 
 abstract class FixedEpochPool extends App {
   val env = new KioskScriptEnv()
@@ -78,7 +81,7 @@ abstract class FixedEpochPool extends App {
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get + $epochPeriod &&
        |    OUTPUTS(0).value >= $minPoolBoxValue &&
        |    OUTPUTS(0).R4[Long].get == average &&
-       |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * oracleReward &&
+       |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * $oracleReward &&
        |    oracleRewardOutputs._2 && anyOracle
        |  )
        |}
@@ -100,7 +103,7 @@ abstract class FixedEpochPool extends App {
        |  val minNewEpochHeight = HEIGHT + $epochPeriod
        |
        |  val isliveEpochOutput =  OUTPUTS(0).R6[Coll[Byte]].get == SELF.propositionBytes &&
-       |                             OUTPUTS(0).propositionBytes == liveEpochScriptBytes
+       |                           OUTPUTS(0).propositionBytes == liveEpochScriptBytes
        |  sigmaProp( // start next epoch
        |    epochNotOver && canStartEpoch && enoughFunds &&
        |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
@@ -185,5 +188,12 @@ abstract class FixedEpochPool extends App {
   println(s"DataPoint script complexity    : ${dataPointErgoTree.complexity}")
   println(s"PoolDeposit script length      : ${poolDepositErgoTree.bytes.length}")
   println(s"PoolDeposit script complexity  : ${poolDepositErgoTree.complexity}")
+
+  println("liveEpochAddress: "+ScalaErgoConverters.getAddressFromErgoTree(liveEpochErgoTree))
+  println("epochPrepAddress: "+ScalaErgoConverters.getAddressFromErgoTree(epochPrepErgoTree))
+  println("dataPointAddress: "+ScalaErgoConverters.getAddressFromErgoTree(dataPointErgoTree))
+  println("poolDepositAddress: "+ScalaErgoConverters.getAddressFromErgoTree(poolDepositErgoTree))
+
+  println("EpochPrepErgoTree: (for R6) "+KioskErgoTree(epochPrepErgoTree).serialize.encodeHex)
 
 }
