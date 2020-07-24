@@ -10,7 +10,7 @@ object FixedEpochPoolDemo extends FixedEpochPool {
   override lazy val buffer = 2 // blocks
 
   override lazy val oracleTokenId: Array[Byte] = "12caaacb51c89646fac9a3786eb98d0113bd57d68223ccc11754a4f67281daed".decodeHex
-  override lazy val poolTokenId: Array[Byte] = "923de7992230d2b28f011723d55616efa979af661458282516e50de0377109f3".decodeHex
+  override lazy val poolTokenId: Array[Byte] = "961c8d498431664f4fb8a660b9a62618f092e34ef07370ba1a2fb7c278c5f57d".decodeHex
 
     override lazy val oracleReward = 2000000 // Nano ergs. One reward per data point to be paid to oracle
   lazy val addresses = Seq(

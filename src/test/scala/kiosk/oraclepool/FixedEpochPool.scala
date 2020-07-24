@@ -141,7 +141,7 @@ abstract class FixedEpochPool extends App {
        |
        |  val liveEpochBox = CONTEXT.dataInputs(0)
        |
-       |  val validLiveEpochBox = liveEpochBox.tokens(0)._1 == oracleTokenId &&
+       |  val validLiveEpochBox = liveEpochBox.tokens(0)._1 == poolTokenId &&
        |                          liveEpochBox.propositionBytes == liveEpochScriptBytes
        |
        |  sigmaProp(
