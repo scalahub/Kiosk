@@ -17,7 +17,10 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.4.+",
   "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.1.0",
   "com.lihaoyi" %% "fastparse" % "1.0.0",
-  "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
+
+  "com.squareup.okhttp3" % "mockwebserver" % "3.14.9" % Test,
+  "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.14.+" % Test
 )
 
 resolvers ++= Seq("Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",

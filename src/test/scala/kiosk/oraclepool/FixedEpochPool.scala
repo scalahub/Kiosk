@@ -5,7 +5,7 @@ import kiosk.ergo.KioskErgoTree
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import kiosk.ergo._
 
-abstract class FixedEpochPool extends App {
+abstract class FixedEpochPool {
   val env = new KioskScriptEnv()
   val scriptCreator = new KioskScriptCreator(env)
 
@@ -21,16 +21,16 @@ abstract class FixedEpochPool extends App {
    */
 
   // constants
-  val livePeriod:Int // blocks
-  val prepPeriod:Int // blocks
+  val livePeriod: Int // blocks
+  val prepPeriod: Int // blocks
   lazy val epochPeriod = livePeriod + prepPeriod
-  val buffer:Int // blocks
+  val buffer: Int // blocks
 
   val oracleTokenId: Array[Byte]
   val poolTokenId: Array[Byte]
 
-  val oracleReward:Long // Nano ergs. One reward per data point to be paid to oracle
-  val minPoolBoxValue:Long // how much min must exist in oracle pool box
+  val oracleReward: Long // Nano ergs. One reward per data point to be paid to oracle
+  val minPoolBoxValue: Long // how much min must exist in oracle pool box
 
   type GroupElementHex = String
   val oraclePubKeys: Array[GroupElementHex]
@@ -112,7 +112,8 @@ abstract class FixedEpochPool extends App {
        |    OUTPUTS(0).value >= SELF.value &&
        |    isliveEpochOutput
        |  ) || sigmaProp( // create new epoch
-       |    epochOver && enoughFunds &&
+       |    epochOver && 
+       |    enoughFunds &&
        |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
        |    OUTPUTS(0).R5[Int].get >= minNewEpochHeight &&
        |    OUTPUTS(0).R5[Int].get <= maxNewEpochHeight &&
@@ -173,6 +174,8 @@ abstract class FixedEpochPool extends App {
        |}
        |""".stripMargin
 
+  import ScalaErgoConverters._
+
   val liveEpochErgoTree = scriptCreator.$compile(liveEpochScript)
   env.setCollByte("liveEpochScriptBytes", liveEpochErgoTree.bytes)
   val epochPrepErgoTree = scriptCreator.$compile(epochPrepScript)
@@ -180,20 +183,8 @@ abstract class FixedEpochPool extends App {
   env.setCollByte("epochPrepScriptBytes", epochPrepErgoTree.bytes)
   val poolDepositErgoTree = scriptCreator.$compile(poolDepositScript)
 
-  println(s"Live Epoch script length       : ${liveEpochErgoTree.bytes.length}")
-  println(s"Live Epoch script complexity   : ${liveEpochErgoTree.complexity}")
-  println(s"Epoch prep script length       : ${epochPrepErgoTree.bytes.length}")
-  println(s"Epoch prep script complexity   : ${epochPrepErgoTree.complexity}")
-  println(s"DataPoint script length        : ${dataPointErgoTree.bytes.length}")
-  println(s"DataPoint script complexity    : ${dataPointErgoTree.complexity}")
-  println(s"PoolDeposit script length      : ${poolDepositErgoTree.bytes.length}")
-  println(s"PoolDeposit script complexity  : ${poolDepositErgoTree.complexity}")
-
-  println("liveEpochAddress: "+ScalaErgoConverters.getAddressFromErgoTree(liveEpochErgoTree))
-  println("epochPrepAddress: "+ScalaErgoConverters.getAddressFromErgoTree(epochPrepErgoTree))
-  println("dataPointAddress: "+ScalaErgoConverters.getAddressFromErgoTree(dataPointErgoTree))
-  println("poolDepositAddress: "+ScalaErgoConverters.getAddressFromErgoTree(poolDepositErgoTree))
-
-  println("EpochPrepErgoTree: (for R6) "+KioskErgoTree(epochPrepErgoTree).serialize.encodeHex)
-
+  val liveEpochAddress = getStringFromAddress(getAddressFromErgoTree(liveEpochErgoTree))
+  val epochPrepAddress = getStringFromAddress(getAddressFromErgoTree(epochPrepErgoTree))
+  val dataPointAddress = getStringFromAddress(getAddressFromErgoTree(dataPointErgoTree))
+  val poolDepositAddress = getStringFromAddress(getAddressFromErgoTree(poolDepositErgoTree))
 }
