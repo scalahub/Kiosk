@@ -3,11 +3,11 @@ package kiosk.oraclepool
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.{Box, ECC}
 import kiosk.ergo._
-import org.ergoplatform.appkit.{AppkitTesting, BlockchainContext, ConstantsBuilder, HttpClientTesting, InputBox, SignedTransaction}
+import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, HttpClientTesting, InputBox, SignedTransaction}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with AppkitTesting with HttpClientTesting {
+class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
 
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
 
