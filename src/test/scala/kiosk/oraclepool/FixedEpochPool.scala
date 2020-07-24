@@ -97,7 +97,7 @@ abstract class FixedEpochPool {
        |  val canStartEpoch = HEIGHT > SELF.R5[Int].get - $livePeriod + $prepPeriod
        |  val epochNotOver = HEIGHT < SELF.R5[Int].get
        |  val epochOver = HEIGHT >= SELF.R5[Int].get
-       |  val enoughFunds = SELF.value >= (${oraclePubKeys.length} + 1) * $oracleReward + $minPoolBoxValue
+       |  val enoughFunds = SELF.value >= $minPoolBoxValue
        |
        |  val maxNewEpochHeight = HEIGHT + $epochPeriod + $buffer
        |  val minNewEpochHeight = HEIGHT + $epochPeriod
