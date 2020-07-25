@@ -2,8 +2,9 @@ package kiosk.oraclepool
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
+import scorex.crypto.hash.Blake2b256
 
-trait FixedEpochPool {
+trait FixedEpochPoolV2 {
   val env = new KioskScriptEnv()
   val scriptCreator = new KioskScriptCreator(env)
 
@@ -51,7 +52,7 @@ trait FixedEpochPool {
        |    b.tokens(0)._1 == oracleTokenId
        |  }
        |
-       |  val proveDlogs = oracleBoxes.map{(b:Box) => proveDlog(b.R4[GroupElement].get)}
+       |  val pubKey = oracleBoxes.map{(b:Box) => proveDlog(b.R4[GroupElement].get)}(0)
        |
        |  val sum = oracleBoxes.fold(0L, { (t:Long, b: Box) => t + b.R6[Long].get })
        |
@@ -63,10 +64,10 @@ trait FixedEpochPool {
        |               OUTPUTS(t._1).value >= $oracleReward)
        |  })
        |
-       |  val epochPrepScriptBytes = SELF.R6[Coll[Byte]].get
+       |  val epochPrepScriptHash = SELF.R6[Coll[Byte]].get
        |
        |  sigmaProp(
-       |    OUTPUTS(0).propositionBytes == epochPrepScriptBytes &&
+       |    blake2b256(OUTPUTS(0).propositionBytes) == epochPrepScriptHash &&
        |    oracleBoxes.size > 0 &&
        |    OUTPUTS(0).tokens == SELF.tokens &&
        |    OUTPUTS(0).R4[Long].get == average &&
@@ -74,8 +75,8 @@ trait FixedEpochPool {
        |    OUTPUTS(0).value >= $minPoolBoxValue &&
        |    OUTPUTS(0).R4[Long].get == average &&
        |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * $oracleReward &&
-       |    oracleRewardOutputs._2 && proveDlogs(0)
-       |  )
+       |    oracleRewardOutputs._2
+       |  ) && pubKey
        |}
        |""".stripMargin
 
@@ -94,8 +95,8 @@ trait FixedEpochPool {
        |  val maxNewEpochHeight = HEIGHT + $epochPeriod + $buffer
        |  val minNewEpochHeight = HEIGHT + $epochPeriod
        |
-       |  val isliveEpochOutput =  OUTPUTS(0).R6[Coll[Byte]].get == SELF.propositionBytes &&
-       |                           OUTPUTS(0).propositionBytes == liveEpochScriptBytes
+       |  val isliveEpochOutput =  OUTPUTS(0).R6[Coll[Byte]].get == blake2b256(SELF.propositionBytes) &&
+       |                           blake2b256(OUTPUTS(0).propositionBytes) == liveEpochScriptHash
        |  sigmaProp( // start next epoch
        |    epochNotOver && canStartEpoch && enoughFunds &&
        |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
@@ -135,7 +136,7 @@ trait FixedEpochPool {
        |  val liveEpochBox = CONTEXT.dataInputs(0)
        |
        |  val validLiveEpochBox = liveEpochBox.tokens(0)._1 == poolTokenId &&
-       |                          liveEpochBox.propositionBytes == liveEpochScriptBytes
+       |                          blake2b256(liveEpochBox.propositionBytes) == liveEpochScriptHash
        |
        |  sigmaProp(
        |    OUTPUTS(0).R4[GroupElement].get == pubKey &&
@@ -158,8 +159,8 @@ trait FixedEpochPool {
        |  val totalFunds = allFundingBoxes.fold(0L, { (t:Long, b: Box) => t + b.value })
        |
        |  sigmaProp(
-       |    INPUTS(0).propositionBytes == epochPrepScriptBytes &&
-       |    OUTPUTS(0).propositionBytes == epochPrepScriptBytes &&
+       |    blake2b256(INPUTS(0).propositionBytes) == epochPrepScriptHash &&
+       |    OUTPUTS(0).propositionBytes == INPUTS(0).propositionBytes &&
        |    OUTPUTS(0).value >= INPUTS(0).value + totalFunds &&
        |    OUTPUTS(0).tokens(0)._1 == poolTokenId
        |  )
@@ -169,10 +170,10 @@ trait FixedEpochPool {
   import ScalaErgoConverters._
 
   val liveEpochErgoTree = scriptCreator.$compile(liveEpochScript)
-  env.setCollByte("liveEpochScriptBytes", liveEpochErgoTree.bytes)
+  env.setCollByte("liveEpochScriptHash", Blake2b256(liveEpochErgoTree.bytes))
   val epochPrepErgoTree = scriptCreator.$compile(epochPrepScript)
   val dataPointErgoTree = scriptCreator.$compile(dataPointScript)
-  env.setCollByte("epochPrepScriptBytes", epochPrepErgoTree.bytes)
+  env.setCollByte("epochPrepScriptHash", Blake2b256(epochPrepErgoTree.bytes))
   val poolDepositErgoTree = scriptCreator.$compile(poolDepositScript)
 
   val liveEpochAddress = getStringFromAddress(getAddressFromErgoTree(liveEpochErgoTree))

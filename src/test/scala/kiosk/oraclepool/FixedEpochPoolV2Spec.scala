@@ -6,15 +6,16 @@ import kiosk.{Box, ECC}
 import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, HttpClientTesting, InputBox, SignedTransaction}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import scorex.crypto.hash.Blake2b256
 
-class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
+class FixedEpochPoolV2Spec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
 
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
 
   property("One complete epoch") {
 
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val pool = new FixedEpochPool {
+      val pool = new FixedEpochPoolV2 {
         val minBoxValue = 2000000
         override lazy val livePeriod = 4 // blocks
         override lazy val prepPeriod = 4 // blocks
@@ -68,7 +69,7 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       // create new epoch
       val r4liveEpoch = r4epochPrep
       val r5liveEpoch = KioskInt(ctx.getHeight + pool.epochPeriod + pool.buffer) // end height of epoch
-      val r6liveEpoch = KioskCollByte(pool.epochPrepErgoTree.bytes)
+      val r6liveEpoch = KioskCollByte(Blake2b256(pool.epochPrepErgoTree.bytes))
 
       val liveEpochBoxToCreate = KioskBox(
         pool.liveEpochAddress,

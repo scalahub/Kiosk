@@ -23,8 +23,6 @@ class FixedEpochPoolDemo extends PropSpec with FixedEpochPool with Matchers {
 
   override lazy val minPoolBoxValue = oracleReward * (addresses.size + 1) + minBoxValue // how much min must exist in oracle pool box
 
-  override lazy val oraclePubKeys = addresses.map(ECC.addressToGroupElement)
-
   property("Display Addresses") {
     println("minPoolBoxValue " + minPoolBoxValue)
     println(s"Live Epoch script length       : ${liveEpochErgoTree.bytes.length}")
