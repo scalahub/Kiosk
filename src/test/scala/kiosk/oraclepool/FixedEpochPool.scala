@@ -1,11 +1,9 @@
 package kiosk.oraclepool
 
 import kiosk.encoding.ScalaErgoConverters
-import kiosk.ergo.KioskErgoTree
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
-import kiosk.ergo._
 
-abstract class FixedEpochPool {
+trait FixedEpochPool {
   val env = new KioskScriptEnv()
   val scriptCreator = new KioskScriptCreator(env)
 
@@ -59,8 +57,6 @@ abstract class FixedEpochPool {
        |
        |  val proveDlogs = oraclePubKeys.map{(grp:GroupElement) => proveDlog(grp)}
        |
-       |  val anyOracle = anyOf(proveDlogs)
-       |
        |  val sum = oracleBoxes.fold(0L, { (t:Long, b: Box) => t + b.R6[Long].get })
        |
        |  val average = sum / oracleBoxes.size // do we need to check for division by zero here?
@@ -82,7 +78,7 @@ abstract class FixedEpochPool {
        |    OUTPUTS(0).value >= $minPoolBoxValue &&
        |    OUTPUTS(0).R4[Long].get == average &&
        |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * $oracleReward &&
-       |    oracleRewardOutputs._2 && anyOracle
+       |    oracleRewardOutputs._2 && proveDlogs(0)
        |  )
        |}
        |""".stripMargin

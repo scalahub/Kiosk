@@ -7,6 +7,7 @@ import kiosk.encoding.ScalaErgoConverters
 import kiosk.encoding.ScalaErgoConverters._
 import kiosk.ergo._
 import kiosk.script.KioskScriptCreator
+import org.ergoplatform.DataInput
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{BlockchainContext, ErgoToken, InputBox, OutBox, OutBoxBuilder, SignedTransaction}
 import org.sh.easyweb.Text
@@ -192,8 +193,14 @@ The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
     }
   }
 
-  def $createTx(inputBoxes: Array[InputBox], boxesToCreate: Array[KioskBox], fee: Long, changeAddress: String, proveDlogSecrets: Array[String], dhtData: Array[DhtData], broadcast: Boolean)(
-      implicit ctx: BlockchainContext): SignedTransaction = {
+  def $createTx(inputBoxes: Array[InputBox],
+                dataInputs: Array[InputBox],
+                boxesToCreate: Array[KioskBox],
+                fee: Long,
+                changeAddress: String,
+                proveDlogSecrets: Array[String],
+                dhtData: Array[DhtData],
+                broadcast: Boolean)(implicit ctx: BlockchainContext): SignedTransaction = {
     val txB = ctx.newTxBuilder
     val outputBoxes: Array[OutBox] = boxesToCreate.map { box =>
       val outBoxBuilder: OutBoxBuilder = txB
@@ -209,10 +216,17 @@ The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
       outBox
     }
     val inputs = new util.ArrayList[InputBox]()
+
     inputBoxes.foreach(inputs.add)
+
+    val dataInputBoxes = new util.ArrayList[InputBox]()
+
+    dataInputs.foreach(dataInputBoxes.add)
+
     val txToSign = ctx
       .newTxBuilder()
       .boxesToSpend(inputs)
+      .withDataInputs(dataInputBoxes)
       .outputs(outputBoxes: _*)
       .fee(fee)
       .sendChangeTo(getAddressFromString(changeAddress))
@@ -239,13 +253,20 @@ The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
     signedTx
   }
 
-  def createTx(inputBoxIds: Array[String], outputBoxNames: Array[String], fee: Long, changeAddress: String, proveDlogSecrets: Array[String], proveDhtDataNames: Array[String], broadcast: Boolean) = {
+  def createTx(inputBoxIds: Array[String],
+               dataInputBoxIds: Array[String],
+               outputBoxNames: Array[String],
+               fee: Long,
+               changeAddress: String,
+               proveDlogSecrets: Array[String],
+               proveDhtDataNames: Array[String],
+               broadcast: Boolean) = {
     val dhtData: Array[DhtData] = proveDhtDataNames.map($dhts(_))
-    val boxesToCreate: Array[KioskBox] =
-      outputBoxNames.map(outputBoxName => $boxes(outputBoxName))
+    val boxesToCreate: Array[KioskBox] = outputBoxNames.map(outputBoxName => $boxes(outputBoxName))
     Client.usingClient { implicit ctx =>
       val inputBoxes: Array[InputBox] = ctx.getBoxesById(inputBoxIds: _*)
-      $createTx(inputBoxes, boxesToCreate, fee, changeAddress, proveDlogSecrets, dhtData, broadcast).toJson(false)
+      val dataInputBoxes: Array[InputBox] = ctx.getBoxesById(dataInputBoxIds: _*)
+      $createTx(inputBoxes, dataInputBoxes, boxesToCreate, fee, changeAddress, proveDlogSecrets, dhtData, broadcast).toJson(false)
     }
   }
 
