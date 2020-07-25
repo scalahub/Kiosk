@@ -25,7 +25,7 @@ class FixedEpochPoolDemo extends PropSpec with FixedEpochPool with Matchers {
 
   override lazy val oraclePubKeys = addresses.map(ECC.addressToGroupElement)
 
-  property("Addresses check") {
+  property("Display Addresses") {
     println("minPoolBoxValue " + minPoolBoxValue)
     println(s"Live Epoch script length       : ${liveEpochErgoTree.bytes.length}")
     println(s"Live Epoch script complexity   : ${liveEpochErgoTree.complexity}")
