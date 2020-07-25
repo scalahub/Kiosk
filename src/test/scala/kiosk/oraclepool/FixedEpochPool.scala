@@ -55,7 +55,7 @@ trait FixedEpochPool {
        |    b.tokens(0)._1 == oracleTokenId
        |  }
        |
-       |  val proveDlogs = oraclePubKeys.map{(grp:GroupElement) => proveDlog(grp)}
+       |  val proveDlogs = oracleBoxes.map{(b:Box) => proveDlog(b.R4[GroupElement].get)}
        |
        |  val sum = oracleBoxes.fold(0L, { (t:Long, b: Box) => t + b.R6[Long].get })
        |
