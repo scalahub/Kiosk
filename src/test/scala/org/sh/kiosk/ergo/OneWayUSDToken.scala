@@ -1,5 +1,6 @@
-package kiosk
+package org.sh.kiosk.ergo
 
+import kiosk.ECC
 import kiosk.ergo.{KioskErgoTree, _}
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.Pay2SAddress

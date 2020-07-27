@@ -1,6 +1,6 @@
-package kiosk
+package org.sh.kiosk.ergo
 
-import kiosk.encoding.ScalaErgoConverters
+import kiosk.ECC
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import org.ergoplatform.Pay2SAddress
 

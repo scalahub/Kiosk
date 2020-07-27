@@ -1,10 +1,11 @@
-package kiosk
+package org.sh.kiosk.ergo
 
 import kiosk.ergo._
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 
-// use sample code from dex https://scastie.scala-lang.org/mh3h6SrESnKJwdqZjKnVkw for collection operations
-
+/*
+This is variant of the OraclePool using dynamic (or variable) epoch times. The difference is that contracts are much more simpler but we lose the ability to do stake slashing
+ */
 object OraclePool extends App {
   val env = new KioskScriptEnv()
   val scriptCreator = new KioskScriptCreator(env)

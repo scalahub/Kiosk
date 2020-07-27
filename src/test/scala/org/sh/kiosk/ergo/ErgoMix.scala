@@ -1,4 +1,4 @@
-package kiosk
+package org.sh.kiosk.ergo
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
