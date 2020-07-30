@@ -3,6 +3,7 @@ package kiosk.oraclepool
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
 import kiosk.{Box, ECC}
+import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, HttpClientTesting, InputBox, SignedTransaction}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -49,6 +50,22 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       val poolToken = (pool.poolToken, 1L)
       val oracleToken = (pool.oracleToken, 1L)
 
+      // dummy custom input box for funding various transactions
+      val customInputBox = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId, 0)
+
+      // create funding boxes
+      val fundingBox1ToCreate = KioskBox(pool.poolDepositAddress, value = 2000000000, registers = Array(), tokens = Array())
+      val createNewFundingBox1Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(fundingBox1ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val fundingBox1 = createNewFundingBox1Tx.getOutputsToSpend.get(0)
+
+      val fundingBox2ToCreate = KioskBox(pool.poolDepositAddress, value = 2000000000, registers = Array(), tokens = Array())
+      val createNewFundingBox2Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(fundingBox2ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val fundingBox2 = createNewFundingBox2Tx.getOutputsToSpend.get(0)
+
+      val fundingBox3ToCreate = KioskBox(pool.poolDepositAddress, value = 2000000000, registers = Array(), tokens = Array())
+      val createNewFundingBox3Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(fundingBox3ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val fundingBox3 = createNewFundingBox3Tx.getOutputsToSpend.get(0)
+
       // bootstrap pool (create EpochPrep box)
       val r4epochPrep = KioskLong(1) // dummy data point
       val r5epochPrep = KioskInt(20000) // end height of epoch
@@ -59,8 +76,6 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         registers = Array(r4epochPrep, r5epochPrep),
         tokens = Array(poolToken)
       )
-
-      val customInputBox = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId, 0)
 
       val poolBootStrapTx: SignedTransaction = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(epochPrepBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val epochPrepBox: InputBox = poolBootStrapTx.getOutputsToSpend.get(0)
@@ -130,18 +145,20 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey)
       )
 
-      // collect one dataPoints
+      // collect two dataPoints
       val dataPointInfo2 = Array(
         (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey),
         (oracleBox2ToSpend, r4oracle2, r6dataPoint2, pool.addresses(2), pool.oracle2PrivateKey),
       )
 
+      // collect three dataPoints
       val dataPointInfo3 = Array(
         (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),
         (oracleBox2ToSpend, r4oracle2, r6dataPoint2, pool.addresses(2), pool.oracle2PrivateKey),
         (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey)
       )
 
+      // co
       val dataPointInfoAll = Array(
         (oracleBox0ToSpend, r4oracle0, r6dataPoint0, pool.addresses(0), pool.oracle0PrivateKey),
         (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),

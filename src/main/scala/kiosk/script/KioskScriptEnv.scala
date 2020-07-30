@@ -44,6 +44,11 @@ class KioskScriptEnv(val $sessionSecret:Option[String] = None) extends EasyMirro
     $addIfNotExist(name, KioskCollGroupElement(groupElements))
   }
 
+  def decodeValue(hex:String) = {
+    val kioskType = ScalaErgoConverters.deserialize(hex)
+    s"${kioskType.typeName}: ${kioskType.toString}"
+  }
+
   def setBigInt(name:String, bigInt:BigInt):Unit = {
     val $name$ = "myBigInt"
     val $bigInt$ = "1234567890123456789012345678901234567890"
