@@ -94,31 +94,35 @@ trait FixedEpochPool {
        |  val maxNewEpochHeight = HEIGHT + $epochPeriod + $buffer
        |  val minNewEpochHeight = HEIGHT + $epochPeriod
        |
-       |  val isliveEpochOutput =  OUTPUTS(0).R6[Coll[Byte]].get == SELF.propositionBytes &&
-       |                           OUTPUTS(0).propositionBytes == liveEpochScriptBytes
-       |  sigmaProp( // start next epoch
-       |    epochNotOver && canStartEpoch && enoughFunds &&
-       |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
-       |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
-       |    OUTPUTS(0).tokens == SELF.tokens &&
-       |    OUTPUTS(0).value >= SELF.value &&
-       |    isliveEpochOutput
-       |  ) || sigmaProp( // create new epoch
-       |    epochOver && 
-       |    enoughFunds &&
-       |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
-       |    OUTPUTS(0).R5[Int].get >= minNewEpochHeight &&
-       |    OUTPUTS(0).R5[Int].get <= maxNewEpochHeight &&
-       |    OUTPUTS(0).tokens == SELF.tokens &&
-       |    OUTPUTS(0).value >= SELF.value &&
-       |    isliveEpochOutput
-       |  ) || sigmaProp( // collect funds
-       |    OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
-       |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
-       |    OUTPUTS(0).propositionBytes == SELF.propositionBytes &&
-       |    OUTPUTS(0).tokens == SELF.tokens &&
-       |    OUTPUTS(0).value > SELF.value
-       |  )
+       |  if (OUTPUTS(0).R6[Coll[Byte]].isDefined) {
+       |    val isliveEpochOutput =  OUTPUTS(0).R6[Coll[Byte]].get == SELF.propositionBytes &&
+       |                             OUTPUTS(0).propositionBytes == liveEpochScriptBytes
+       |    sigmaProp( // start next epoch
+       |      epochNotOver && canStartEpoch && enoughFunds &&
+       |      OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
+       |      OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
+       |      OUTPUTS(0).tokens == SELF.tokens &&
+       |      OUTPUTS(0).value >= SELF.value &&
+       |      isliveEpochOutput
+       |    ) || sigmaProp( // create new epoch
+       |      epochOver &&
+       |      enoughFunds &&
+       |      OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
+       |      OUTPUTS(0).R5[Int].get >= minNewEpochHeight &&
+       |      OUTPUTS(0).R5[Int].get <= maxNewEpochHeight &&
+       |      OUTPUTS(0).tokens == SELF.tokens &&
+       |      OUTPUTS(0).value >= SELF.value &&
+       |      isliveEpochOutput
+       |    )
+       |  } else {
+       |    sigmaProp( // collect funds
+       |      OUTPUTS(0).R4[Long].get == SELF.R4[Long].get &&
+       |      OUTPUTS(0).R5[Int].get == SELF.R5[Int].get &&
+       |      OUTPUTS(0).propositionBytes == SELF.propositionBytes &&
+       |      OUTPUTS(0).tokens == SELF.tokens &&
+       |      OUTPUTS(0).value > SELF.value
+       |    )
+       |  }
        |}
        |""".stripMargin
 

@@ -144,7 +144,7 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey)
       )
 
-      // co
+      // collect all dataPoints
       val dataPointInfoAll = Array(
         (oracleBox0ToSpend, r4oracle0, r6dataPoint0, pool.addresses(0), pool.oracle0PrivateKey),
         (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),
