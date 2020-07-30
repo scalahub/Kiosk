@@ -64,7 +64,6 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
       val r5epochPrep = KioskInt(20000) // end height of epoch
 
       // collect funds
-      // first try without putting dummy value in R6
 
       // define box to create
       val epochPrepBoxToCreate = KioskBox(
