@@ -86,7 +86,7 @@ trait FixedEpochPoolV2 {
        |  // R4: The finalized data point from collection
        |  // R5: Height the epoch will end
        |
-       |  val canStartEpoch = HEIGHT > SELF.R5[Int].get - $livePeriod + $prepPeriod
+       |  val canStartEpoch = HEIGHT > SELF.R5[Int].get - $livePeriod
        |  val epochNotOver = HEIGHT < SELF.R5[Int].get
        |  val epochOver = HEIGHT >= SELF.R5[Int].get
        |  val enoughFunds = SELF.value >= $minPoolBoxValue
