@@ -3,7 +3,7 @@ package kiosk.oraclepool.v2
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
 import kiosk.{Box, ECC}
-import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, HttpClientTesting, InputBox, SignedTransaction}
+import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, HttpClientTesting, InputBox, SignedTransaction}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scorex.crypto.hash.Blake2b256
@@ -61,7 +61,9 @@ class FixedEpochPoolV2Spec extends PropSpec with Matchers with ScalaCheckDrivenP
         tokens = Array(poolToken)
       )
 
-      val customInputBox = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId, 0)
+      val dummyPoolToken = new ErgoToken(pool.poolToken, 10000)
+      val dummyOracleToken = new ErgoToken(pool.oracleToken, 10000)
+      val customInputBox = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).tokens(dummyOracleToken, dummyPoolToken).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId, 0)
 
       val poolBootStrapTx: SignedTransaction = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(epochPrepBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val epochPrepBox: InputBox = poolBootStrapTx.getOutputsToSpend.get(0)

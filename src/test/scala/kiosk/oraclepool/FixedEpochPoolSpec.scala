@@ -3,7 +3,7 @@ package kiosk.oraclepool
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
 import kiosk.{Box, ECC}
-import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, HttpClientTesting, InputBox, SignedTransaction}
+import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, HttpClientTesting, InputBox, SignedTransaction}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
@@ -49,8 +49,10 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       val poolToken = (pool.poolToken, 1L)
       val oracleToken = (pool.oracleToken, 1L)
 
+      val dummyPoolToken = new ErgoToken(pool.poolToken, 10000)
+      val dummyOracleToken = new ErgoToken(pool.oracleToken, 10000)
       // dummy custom input box for funding various transactions
-      val customInputBox = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId, 0)
+      val customInputBox = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).tokens(dummyOracleToken, dummyPoolToken).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId, 0)
 
       // bootstrap pool (create EpochPrep box)
       val r4epochPrep = KioskLong(1) // dummy data point

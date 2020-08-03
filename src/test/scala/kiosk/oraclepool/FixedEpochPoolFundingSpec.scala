@@ -39,25 +39,18 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
       val fee = 1500000
 
       val changeAddress = "9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"
-      val dummyTxId = "f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809"
+      val dummyTxId0 = "f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b810"
+      val dummyTxId1 = "f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809"
       val dummyScript = "{sigmaProp(1 < 2)}"
       val poolToken = (pool.poolToken, 1L)
 
       // dummy custom input box for funding various transactions
-      val customInputBox = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId, 0)
+      val customInputBox1 = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId1, 0)
 
       // create funding boxes
       val fundingBox1ToCreate = KioskBox(pool.poolDepositAddress, value = 2000000000, registers = Array(), tokens = Array())
-      val createNewFundingBox1Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(fundingBox1ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val createNewFundingBox1Tx = Box.$createTx(Array(customInputBox1), Array[InputBox](), Array(fundingBox1ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val fundingBox1 = createNewFundingBox1Tx.getOutputsToSpend.get(0)
-
-      val fundingBox2ToCreate = KioskBox(pool.poolDepositAddress, value = 2000000000, registers = Array(), tokens = Array())
-      val createNewFundingBox2Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(fundingBox2ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
-      val fundingBox2 = createNewFundingBox2Tx.getOutputsToSpend.get(0)
-
-      val fundingBox3ToCreate = KioskBox(pool.poolDepositAddress, value = 2000000000, registers = Array(), tokens = Array())
-      val createNewFundingBox3Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(fundingBox3ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
-      val fundingBox3 = createNewFundingBox3Tx.getOutputsToSpend.get(0)
 
       // bootstrap pool (create EpochPrep box)
       val r4epochPrep = KioskLong(1) // dummy data point
@@ -65,22 +58,22 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
 
       // collect funds
 
-      // define box to create
-      val epochPrepBoxToCreate = KioskBox(
-        pool.epochPrepAddress,
-        value = 3000000000000L,
-        registers = Array(r4epochPrep, r5epochPrep),
-        tokens = Array(poolToken)
-      )
-
       // define box to spend
       val dummyEpochPrepBox = ctx.newTxBuilder().outBoxBuilder.value(2000000000L).tokens(new ErgoToken(poolToken._1, poolToken._2)).registers(
         r4epochPrep.getErgoValue,
         r5epochPrep.getErgoValue
-      ).contract(new ErgoTreeContract(pool.epochPrepErgoTree)).build().convertToInputWith(dummyTxId, 0)
+      ).contract(new ErgoTreeContract(pool.epochPrepErgoTree)).build().convertToInputWith(dummyTxId0, 0)
+
+      // define box to create
+      val epochPrepBoxToCreate = KioskBox(
+        pool.epochPrepAddress,
+        value = dummyEpochPrepBox.getValue + fundingBox1.getValue,
+        registers = Array(r4epochPrep, r5epochPrep),
+        tokens = Array(poolToken)
+      )
 
       noException shouldBe thrownBy{
-        Box.$createTx(Array(dummyEpochPrepBox, fundingBox1, fundingBox2, fundingBox3), Array[InputBox](), Array(epochPrepBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+        Box.$createTx(Array(dummyEpochPrepBox, fundingBox1, customInputBox1), Array[InputBox](), Array(epochPrepBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       }
 
     }
