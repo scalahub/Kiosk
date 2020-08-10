@@ -71,7 +71,6 @@ trait FixedEpochPool {
        |    OUTPUTS(0).tokens == SELF.tokens &&
        |    OUTPUTS(0).R4[Long].get == average &&
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get + $epochPeriod &&
-       |    OUTPUTS(0).value >= $minPoolBoxValue &&
        |    OUTPUTS(0).R4[Long].get == average &&
        |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * $oracleReward &&
        |    oracleRewardOutputs._2 && proveDlogs(0)
