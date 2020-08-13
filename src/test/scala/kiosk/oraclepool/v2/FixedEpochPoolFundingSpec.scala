@@ -7,14 +7,14 @@ import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, 
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class FixedEpochPoolV2FundingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
+class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
 
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
 
   property("Fund collection") {
 
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val pool = new FixedEpochPoolV2 {
+      val pool = new FixedEpochPool {
         val minBoxValue = 2000000
         override lazy val livePeriod = 4 // blocks
         override lazy val prepPeriod = 4 // blocks

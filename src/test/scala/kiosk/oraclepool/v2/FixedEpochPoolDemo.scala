@@ -4,7 +4,7 @@ import kiosk.ergo._
 import org.scalatest.{Matchers, PropSpec}
 import scorex.crypto.hash.Blake2b256
 
-class FixedEpochPoolV2Demo extends PropSpec with FixedEpochPoolV2 with Matchers {
+class FixedEpochPoolDemo extends PropSpec with FixedEpochPool with Matchers {
   val minBoxValue = 2000000
   override lazy val livePeriod = 5 // blocks
   override lazy val prepPeriod = 5 // blocks
@@ -38,14 +38,18 @@ class FixedEpochPoolV2Demo extends PropSpec with FixedEpochPoolV2 with Matchers 
     println("epochPrepAddress: " + epochPrepAddress)
     println("dataPointAddress: " + dataPointAddress)
     println("poolDepositAddress: " + poolDepositAddress)
-    println("EpochPrepScriptHash: (for R6) " + Blake2b256(KioskErgoTree(epochPrepErgoTree).serialize).encodeHex)
+    println("EpochPrepScriptHash: (for R6 of LiveEpoch box) " + Blake2b256(epochPrepErgoTree.bytes).encodeHex)
+    println("LiveEpochScriptHash: (for hardwiring in Datapoint box) " + Blake2b256(liveEpochErgoTree.bytes).encodeHex)
     println("Min box value: "+minPoolBoxValue)
+
+    Blake2b256(KioskErgoTree(epochPrepErgoTree).serialize).encodeHex shouldEqual Blake2b256(epochPrepErgoTree.bytes).encodeHex
 
     liveEpochAddress shouldEqual "3vThpSDoLo58CtKKFLBQMmtcD5e5pJeFNNyPKnDRC4zKzhgySeTUkU71fk9mcFgHe23k1b4QuERNdcignnexcULMEenifBffiNeCdiTkgaUiGtH5D9rrsj698mRLDhANmybx8c6NunwUMoKuLsRoEYtYi8rRjuKfbNDN1HfVsgFKSyKMSnwJXa5KAuABSz5dYUgURf6M3i2bxsKKYTe4uQFEoVcbBwvfW4UxXaKqQYGB8xGLASMfHtcs9R5CBFkHyUSXh2sFy17pfdQ5emx8CgE5ZXRqx7YBYzk9jSyGqp2myT5XvBAS2uSeahNKWYKzh1XTqDc3YGLvBPHJ98bksaaSnNX4SwAhia2mXY4iCKsYf6F7p5QPNjYBXqLyzkDFxSzgQJmMg1Ybh3fx6Sg8esE9w5L7KCGEuydPkBE"
     epochPrepAddress shouldEqual "Gxd4hMRT6J1SA6D3tfvyij49J2DCQkeZfxNVEpoZidZtS9YYsi8Jg5u3JBZQHxdmrLpVgTsnLnSbt377BRJAWFUfkdcmC1pMPFNUYBWuYaccbMxP5kV3WkGU7oxsWJauKfiGkFZPN1W1RmWVmpFbdKaCizjnMqC7TLsQ53JfBzWo5CsYj2Vn3YYbJFZiXbfVXWKjvkUHatcGxL47QnBffcKfFJun7t1tFgxowLonpFpq7SFAz4YRE6TdZarmWDjDER13pSUupfaKCZmUe3aCRhgAsdp4RHuW8n1RywcYcSjGNPVFzsGjD8GQdUrs85Xv4gobuH49S4WZFgkcoQAx3jx3GqhY9kQWwdn7Ni7v2XcKMwFFCvvzrPAKtUHLZYU4VN4RjvoFLRYJ5H"
     dataPointAddress shouldEqual "jL2aaqw6XU61SZznxeykLpREPzSmZv8bwbjEsJD6DMfXQLgBc12wMmPpVD81JnLxfxkT6s5nvYgbB62vkH8ChHeuVKtCPDMLTZ3gFMTa11YXXGBKvkezBENzpDBh8HsLHhnTTbMzv2sViDQpSWVNEF6G3Z9Fn2Ce6TNc5iHFZr7jGCBLtfRLKMb9RRUc9voWz9yEWpgADEkoQnDyMn5wc6xLoJsSYLfXHo2t8pyvwXfn2NotR3xFRDHU7wHXe"
     poolDepositAddress shouldEqual "zLSQDVBaFJVVPWsvzN8begiciWsjdiFyJn9NwnLbJxMrGehDXPJnEuWm2x8gQtCutoK7crMSP9sKQBPyaPVRQXpiSr7ZoKrz4arYiJXKX1MDAfJFm9tjkY379ZiskLYHC3mmf4CQxATbY9P3mTjYw3f3Hkoxnu4yxvMCVBtRTuuRK1qh4E6aGpG8cJcpJ5qBtEsx7SrJoMZP34exMNxD1dPoaDFbuKHnoXAZmDLHnLqG3HgdPy"
     Blake2b256(epochPrepErgoTree.bytes).encodeHex shouldEqual "5ea046c8753cbf8bb0acdbd67dd8a5d905df89d67060624282ad757fa3cb670c"
+    Blake2b256(liveEpochErgoTree.bytes).encodeHex shouldEqual "955fd2c22393aa0f5db841dd8a3ad44ebb7de970419f5a0a58441ebe6b809fb2"
     minPoolBoxValue shouldEqual 10000000
   }
 }

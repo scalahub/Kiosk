@@ -8,14 +8,14 @@ import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scorex.crypto.hash.Blake2b256
 
-class FixedEpochPoolV2Spec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
+class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
 
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
 
   property("One complete epoch") {
 
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val pool = new FixedEpochPoolV2 {
+      val pool = new FixedEpochPool {
         val minBoxValue = 2000000
         override lazy val livePeriod = 4 // blocks
         override lazy val prepPeriod = 4 // blocks

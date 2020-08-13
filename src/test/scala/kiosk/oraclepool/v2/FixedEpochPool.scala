@@ -4,7 +4,7 @@ import kiosk.encoding.ScalaErgoConverters
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import scorex.crypto.hash.Blake2b256
 
-trait FixedEpochPoolV2 {
+trait FixedEpochPool {
   val env = new KioskScriptEnv()
   val scriptCreator = new KioskScriptCreator(env)
 
