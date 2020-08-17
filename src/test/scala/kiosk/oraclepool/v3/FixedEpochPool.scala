@@ -3,6 +3,7 @@ package kiosk.oraclepool.v3
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import scorex.crypto.hash.Blake2b256
+import sigmastate.Values
 
 trait FixedEpochPool {
   val env = new KioskScriptEnv()
@@ -20,17 +21,17 @@ trait FixedEpochPool {
    */
 
   // constants
-  val livePeriod: Int // blocks
-  val prepPeriod: Int // blocks
-  lazy val epochPeriod = livePeriod + prepPeriod
-  val buffer: Int // blocks
-  val errorMargin: Int // percent 0 to 100
+  def livePeriod: Int // blocks
+  def prepPeriod: Int // blocks
+  val epochPeriod: Int = livePeriod + prepPeriod
+  def buffer: Int // blocks
+  def errorMargin: Int // percent 0 to 100
 
-  val oracleTokenId: Array[Byte]
-  val poolTokenId: Array[Byte]
+  def oracleTokenId: Array[Byte]
+  def poolTokenId: Array[Byte]
 
-  val oracleReward: Long // Nano ergs. One reward per data point to be paid to oracle
-  val minPoolBoxValue: Long // how much min must exist in oracle pool box
+  def oracleReward: Long // Nano ergs. One reward per data point to be paid to oracle
+  def minPoolBoxValue: Long // how much min must exist in oracle pool box
 
   env.setCollByte("oracleTokenId", oracleTokenId)
   env.setCollByte("poolTokenId", poolTokenId)
@@ -40,7 +41,7 @@ trait FixedEpochPool {
   require(errorMargin > 0)
   require(errorMargin < 100)
 
-  val liveEpochScript =
+  val liveEpochScript: String =
     s"""{ // This box:
        |  // R4: The latest finalized datapoint (from the previous epoch)
        |  // R5: Block height that the current epoch will finish on
@@ -89,7 +90,7 @@ trait FixedEpochPool {
        |}
        |""".stripMargin
 
-  val epochPrepScript =
+  val epochPrepScript: String =
     s"""
        |{
        |  // This box:
@@ -136,7 +137,7 @@ trait FixedEpochPool {
        |}
        |""".stripMargin
 
-  val dataPointScript =
+  val dataPointScript: String =
     s"""
        |{
        |  // This box:
@@ -162,7 +163,7 @@ trait FixedEpochPool {
        |}
        |""".stripMargin
 
-  val poolDepositScript =
+  val poolDepositScript: String =
     s"""
        |{
        |  val allFundingBoxes = INPUTS.filter{(b:Box) =>
@@ -182,15 +183,15 @@ trait FixedEpochPool {
 
   import ScalaErgoConverters._
 
-  val liveEpochErgoTree = scriptCreator.$compile(liveEpochScript)
+  val liveEpochErgoTree: Values.ErgoTree = scriptCreator.$compile(liveEpochScript)
   env.setCollByte("liveEpochScriptHash", Blake2b256(liveEpochErgoTree.bytes))
-  val epochPrepErgoTree = scriptCreator.$compile(epochPrepScript)
-  val dataPointErgoTree = scriptCreator.$compile(dataPointScript)
+  val epochPrepErgoTree: Values.ErgoTree = scriptCreator.$compile(epochPrepScript)
+  val dataPointErgoTree: Values.ErgoTree = scriptCreator.$compile(dataPointScript)
   env.setCollByte("epochPrepScriptHash", Blake2b256(epochPrepErgoTree.bytes))
-  val poolDepositErgoTree = scriptCreator.$compile(poolDepositScript)
+  val poolDepositErgoTree: Values.ErgoTree = scriptCreator.$compile(poolDepositScript)
 
-  val liveEpochAddress = getStringFromAddress(getAddressFromErgoTree(liveEpochErgoTree))
-  val epochPrepAddress = getStringFromAddress(getAddressFromErgoTree(epochPrepErgoTree))
-  val dataPointAddress = getStringFromAddress(getAddressFromErgoTree(dataPointErgoTree))
-  val poolDepositAddress = getStringFromAddress(getAddressFromErgoTree(poolDepositErgoTree))
+  val liveEpochAddress: String = getStringFromAddress(getAddressFromErgoTree(liveEpochErgoTree))
+  val epochPrepAddress: String = getStringFromAddress(getAddressFromErgoTree(epochPrepErgoTree))
+  val dataPointAddress: String = getStringFromAddress(getAddressFromErgoTree(dataPointErgoTree))
+  val poolDepositAddress: String = getStringFromAddress(getAddressFromErgoTree(poolDepositErgoTree))
 }
