@@ -5,7 +5,7 @@ import org.scalatest.{Matchers, PropSpec}
 import scorex.crypto.hash.Blake2b256
 
 class FixedEpochPoolDemo extends PropSpec with FixedEpochPool with Matchers {
-  lazy val minBoxValue = 2000000
+  lazy val minBoxValue = 2000000 // min value to remain AFTER paying rewards. For min value to keep BEFORE rewards, see minPoolBoxValue
   override def livePeriod = 20 // blocks
   override def prepPeriod = 10 // blocks
   override def buffer = 4 // blocks
@@ -17,7 +17,7 @@ class FixedEpochPoolDemo extends PropSpec with FixedEpochPool with Matchers {
   override def oracleReward = 2000000 // Nano ergs. One reward per data point to be paid to oracle
   lazy val maxNumOracles = 20
 
-  override def minPoolBoxValue: Amount = oracleReward * (maxNumOracles + 1) + minBoxValue // how much min must exist in oracle pool box
+  override def minPoolBoxValue: Amount = oracleReward * (maxNumOracles + 1) + minBoxValue // min value allowed in live epoch box
 
   property("Display Addresses") {
     println("minPoolBoxValue " + minPoolBoxValue)
