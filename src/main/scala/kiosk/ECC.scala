@@ -8,6 +8,7 @@ import sigmastate.basics.SecP256K1
 import sigmastate.eval._
 import special.sigma.GroupElement
 import ergo._
+import scorex.util.encode.Base58
 
 object ECC {
   def $gX(x:BigInt): String = {
@@ -25,12 +26,17 @@ object ECC {
     BigInt(values).mod(SecP256K1.q)
   }
 
+  def hexToDecimal(hex:String) = BigInt(hex, 16).toString(10)
+
+  def hexToBase58(hex:String) = Base58.encode(hex.decodeHex)
+
   def hX(h:String, x:BigInt): String = {
     val $INFO$ =
       """Computes h^x for base h.
 To set the default generator as base, use h = 0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"""
     val $h$ = "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-    val $x$ = "123"
+    val $x$ = "0a1b"
+    val $isHex$ = "true"
 
     val h1: GroupElement = ScalaErgoConverters.stringToGroupElement(h)
     val hX: GroupElement = h1.exp(x.bigInteger)

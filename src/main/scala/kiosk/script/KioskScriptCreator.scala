@@ -13,7 +13,6 @@ import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 object KioskScriptCreator {
   val $networkPrefix = MainnetNetworkPrefix
   val $compiler = SigmaCompiler($networkPrefix)
-  implicit val $irContext = new CompiletimeIRContext
   implicit val $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder($networkPrefix)
 }
 
@@ -55,6 +54,7 @@ class KioskScriptCreator(val $myEnv:KioskScriptEnv) extends EasyMirrorSession {
 
   def $compile(ergoScript:String):ErgoTree = {
     import sigmastate.lang.Terms._
+    implicit val irContext = new CompiletimeIRContext
     $compiler.compile($myEnv.$getEnv.toMap, ergoScript).asSigmaProp // compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
   }
 
