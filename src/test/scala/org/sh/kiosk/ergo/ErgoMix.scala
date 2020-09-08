@@ -10,8 +10,11 @@ import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 import special.sigma.GroupElement
 
 object ErgoMix {
-  // any variable/method starting with $ will not appear in front-end.
-  // so any variable to be hidden from front-end is prefixed with $
+  // Note: Some of the variables below are prefixed with $ which seems unusual, and it is.
+  // However, note that in Scala, $ is a perfectly legal character for this usage, so there is nothing special about the code. 
+  // The reason for this peculiar syntax has to do with the EasyWeb library, which is a wrapper over Scala-reflect for
+  // auto-generating a web-frontend. Any variable/method starting with $ will not be shown in that frontend.
+  // so anything we want to hide from there is prefixed with $
 
   val $fullMixScriptSource =
     """{
@@ -46,8 +49,6 @@ object ErgoMix {
 
   val $env = new KioskScriptEnv
   val $ergoScript = new KioskScriptCreator($env) {}
-  // any variable/method starting with $ will not appear in front-end.
-  // so any variable to be hidden from front-end is prefixed with $
 
   val $g: GroupElement = SigmaDsl.GroupElement(SecP256K1.generator)
 
