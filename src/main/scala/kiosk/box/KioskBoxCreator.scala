@@ -58,9 +58,9 @@ class KioskBoxCreator($ergoScript: KioskScriptCreator) extends EasyMirrorSession
     val $INFO$ =
       """
 1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these array to empty (i.e., [])
-2. registerKeys must refer to keys of ErgoEnv. Registers will be populated with the corresponding values starting with R4
+2. registerKeys must refer to keys of Env. Registers will be populated with the corresponding values starting with R4
 
-As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
+As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in Env using setInt and setCollByte
 Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]"""
     val $boxName$ = "mySecondBox"
     val $value$ = "123456"
@@ -78,9 +78,9 @@ Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set 
     val $INFO$ =
       """
 1. Number of elements in the arrays tokenIDs and tokenAmts must be same. If you don't want to use tokens, set these array to empty (i.e., [])
-2. registerKeys must refer to keys of ErgoEnv. Registers will be populated with the corresponding values starting with R4
+2. registerKeys must refer to keys of Env. Registers will be populated with the corresponding values starting with R4
 
-As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in ErgoEnv using setInt and setCollByte
+As an example, to set R4 to Int 1 and R5 to Coll[Byte] 0x1234567890abcdef, first set these values in Env using setInt and setCollByte
 Let the keys for the Int and Coll[Byte] be, say, a and b respectively. Then set registerKeys value as [a,b]
 The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
     val ergoTree = getAddressFromString(address).script

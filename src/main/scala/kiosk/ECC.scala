@@ -3,12 +3,11 @@ package kiosk
 import java.security.SecureRandom
 
 import kiosk.encoding.ScalaErgoConverters
-import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
+import kiosk.ergo._
+import scorex.util.encode.Base58
 import sigmastate.basics.SecP256K1
 import sigmastate.eval._
 import special.sigma.GroupElement
-import ergo._
-import scorex.util.encode.Base58
 
 object ECC {
   def $gX(x:BigInt): String = {
@@ -26,7 +25,7 @@ object ECC {
     BigInt(values).mod(SecP256K1.q)
   }
 
-  def hexToDecimal(hex:String) = BigInt(hex, 16).toString(10)
+  def hexToDecimal(hex:String) = BigInt(hex, 16)
 
   def hexToBase58(hex:String) = Base58.encode(hex.decodeHex)
 
@@ -35,7 +34,7 @@ object ECC {
       """Computes h^x for base h.
 To set the default generator as base, use h = 0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"""
     val $h$ = "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
-    val $x$ = "0a1b"
+    val $x$ = "123"
     val $isHex$ = "true"
 
     val h1: GroupElement = ScalaErgoConverters.stringToGroupElement(h)

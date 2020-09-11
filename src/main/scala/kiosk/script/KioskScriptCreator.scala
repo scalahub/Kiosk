@@ -38,7 +38,7 @@ class KioskScriptCreator(val $myEnv:KioskScriptEnv) extends EasyMirrorSession {
     DefaultSerializer.serializeErgoTree(ergoTree)
   }
 
-  def $getP2SAddress(ergoScript:Text) = {
+  def getP2SAddress(ergoScript:Text) = {
     val $ergoScript$ = """{
   sigmaProp(1 < 2)
 }"""
