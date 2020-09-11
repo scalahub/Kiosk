@@ -69,7 +69,7 @@ trait FixedEpochPool {
        |
        |  def getPrevOracleDataPoint(index:Int) = if (index <= 0) firstOracleDataPoint else oracleBoxes(index - 1).R6[Long].get
        |
-       |  val oracleRewardOutputs = oracleBoxes.fold((1, true), {
+       |  val rewardAndDeviationCheck = oracleBoxes.fold((1, true), {
        |      (t:(Int, Boolean), b:Box) =>
        |         val currOracleDataPoint = b.R6[Long].get
        |         val prevOracleDataPoint = getPrevOracleDataPoint(t._1 - 1)
@@ -93,7 +93,7 @@ trait FixedEpochPool {
        |    OUTPUTS(0).R4[Long].get == average &&
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get + $epochPeriod &&
        |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * $oracleReward &&
-       |    oracleRewardOutputs._2
+       |    rewardAndDeviationCheck._2
        |  ) && pubKey
        |}
        |""".stripMargin
