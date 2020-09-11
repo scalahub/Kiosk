@@ -73,13 +73,14 @@ trait FixedEpochPool {
        |      (t:(Int, Boolean), b:Box) =>
        |         val currOracleDataPoint = b.R6[Long].get
        |         val prevOracleDataPoint = getPrevOracleDataPoint(t._1 - 1)
-       |         val delta = prevOracleDataPoint / 100 * $maxDeviation
+       |         val delta = prevOracleDataPoint * $maxDeviation / 100
        |
        |         (t._1 + 1, t._2 &&
        |                    OUTPUTS(t._1).propositionBytes == proveDlog(b.R4[GroupElement].get).propBytes &&
        |                    OUTPUTS(t._1).value >= $oracleReward &&
        |                    prevOracleDataPoint >= currOracleDataPoint &&
-       |                    prevOracleDataPoint <= currOracleDataPoint + delta)
+       |                    prevOracleDataPoint <= currOracleDataPoint + delta
+       |         )
        |     }
        |  )
        |

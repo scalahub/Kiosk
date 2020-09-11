@@ -20,7 +20,7 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         override lazy val livePeriod = 4 // blocks
         override lazy val prepPeriod = 4 // blocks
         override lazy val buffer = 2 // blocks
-        override lazy val maxDeviation: Int = 10
+        override lazy val maxDeviation: Int = 50
         override lazy val minOracleBoxes: Int = 1
 
         lazy val oracleToken = "12caaacb51c89646fac9a3786eb98d0113bd57d68223ccc11754a4f67281daed"
@@ -127,8 +127,8 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       // dataPoints to commit
       val r6dataPoint0: DataPoint = KioskLong(103)
       val r6dataPoint1: DataPoint = KioskLong(100)
-      val r6dataPoint2: DataPoint = KioskLong(90)
-      val r6dataPoint3: DataPoint = KioskLong(93)
+      val r6dataPoint2: DataPoint = KioskLong(99)
+      val r6dataPoint3: DataPoint = KioskLong(95)
 
       // collect one dataPoints
       val dataPointInfo1 = Array(
@@ -137,8 +137,8 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
 
       // collect one dataPoints
       val dataPointInfo2 = Array(
-        (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey),
         (oracleBox2ToSpend, r4oracle2, r6dataPoint2, pool.addresses(2), pool.oracle2PrivateKey),
+        (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey),
       )
 
       val dataPointInfo3 = Array(
