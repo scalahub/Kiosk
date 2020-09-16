@@ -17,18 +17,19 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
     ergoClient.execute { implicit ctx: BlockchainContext =>
       val pool = new FixedEpochPool {
         val minBoxValue = 2000000
-        override lazy val livePeriod = 4 // blocks
-        override lazy val prepPeriod = 4 // blocks
-        override lazy val buffer = 2 // blocks
-        override lazy val maxDeviation: Int = 50
-        override lazy val minOracleBoxes: Int = 1
+        override def livePeriod = 4 // blocks
+        override def prepPeriod = 4 // blocks
+        override def buffer = 2 // blocks
+        override def maxDeviation: Int = 50
+        override def maxGlobalDeviation: Int = 50 // percent
+        override def minOracleBoxes: Int = 1
 
         lazy val oracleToken = "12caaacb51c89646fac9a3786eb98d0113bd57d68223ccc11754a4f67281daed"
         lazy val poolToken = "961c8d498431664f4fb8a660b9a62618f092e34ef07370ba1a2fb7c278c5f57d"
 
-        override lazy val oracleTokenId: Array[Byte] = oracleToken.decodeHex
-        override lazy val poolTokenId: Array[Byte] = poolToken.decodeHex
-        override lazy val oracleReward = 2000000 // Nano ergs. One reward per data point to be paid to oracle
+        override def oracleTokenId: Array[Byte] = oracleToken.decodeHex
+        override def poolTokenId: Array[Byte] = poolToken.decodeHex
+        override def oracleReward = 2000000 // Nano ergs. One reward per data point to be paid to oracle
         lazy val addresses = Seq(
           "9eiuh5bJtw9oWDVcfJnwTm1EHfK5949MEm5DStc2sD1TLwDSrpx", // private key is 37cc5cb5b54f98f92faef749a53b5ce4e9921890d9fb902b4456957d50791bd0
           "9f9q6Hs7vXZSQwhbrptQZLkTx15ApjbEkQwWXJqD2NpaouiigJQ", // private key is 5878ae48fe2d26aa999ed44437cffd2d4ba1543788cff48d490419aef7fc149d
@@ -41,7 +42,7 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         val oracle2PrivateKey: scala.BigInt = scala.BigInt("3ffaffa96b2fd6542914d3953d05256cd505d4beb6174a2601a4e014c3b5a78e", 16)
         val oracle3PrivateKey: scala.BigInt = scala.BigInt("148bb91ada6ad5e6b1bba02fe70ecd96095e00cbaf0f1f9294f02fedf9855ea0", 16)
 
-        override lazy val minPoolBoxValue = oracleReward * (addresses.size + 1) + minBoxValue // how much min must exist in oracle pool box
+        override def minPoolBoxValue = oracleReward * (addresses.size + 1) + minBoxValue // how much min must exist in oracle pool box
       }
 
       val fee = 1500000
