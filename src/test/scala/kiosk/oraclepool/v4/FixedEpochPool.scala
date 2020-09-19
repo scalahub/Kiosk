@@ -25,8 +25,7 @@ trait FixedEpochPool {
   def prepPeriod: Int // blocks
   val epochPeriod: Int = livePeriod + prepPeriod
   def buffer: Int // blocks
-  def maxDeviation: Int // percent 0 to 100
-  def maxGlobalDeviation: Int // percent 0 to 100 (what the first and last data point should differ max by)
+  def maxDeviation: Int // percent 0 to 100 (what the first and last data point should differ max by)
   def minOracleBoxes: Int // percent 0 to 100
 
   def oracleTokenId: Array[Byte]
@@ -39,9 +38,6 @@ trait FixedEpochPool {
   env.setCollByte("poolTokenId", poolTokenId)
   env.setLong("minPoolBoxValue", minPoolBoxValue)
   env.setLong("oracleReward", oracleReward)
-
-  require(maxDeviation > 0)
-  require(maxDeviation < 100)
 
   val liveEpochScript: String =
     s"""{ // This box:
@@ -60,7 +56,7 @@ trait FixedEpochPool {
        |    b.tokens(0)._1 == oracleTokenId
        |  }
        |
-       |  val pubKey = oracleBoxes.map{(b:Box) => proveDlog(b.R4[GroupElement].get)}(0)
+       |  val pubKey = oracleBoxes.map{(b:Box) => proveDlog(b.R4[GroupElement].get)}(OUTPUTS(1).R4[Int].get)
        |
        |  val sum = oracleBoxes.fold(0L, { (t:Long, b: Box) => t + b.R6[Long].get })
        |
@@ -74,20 +70,18 @@ trait FixedEpochPool {
        |      (t:(Int, Boolean), b:Box) =>
        |         val currOracleDataPoint = b.R6[Long].get
        |         val prevOracleDataPoint = getPrevOracleDataPoint(t._1 - 1)
-       |         val delta = prevOracleDataPoint * $maxDeviation / 100
        |
        |         (t._1 + 1, t._2 &&
        |                    OUTPUTS(t._1).propositionBytes == proveDlog(b.R4[GroupElement].get).propBytes &&
        |                    OUTPUTS(t._1).value >= $oracleReward &&
-       |                    prevOracleDataPoint >= currOracleDataPoint &&
-       |                    prevOracleDataPoint <= currOracleDataPoint + delta
+       |                    prevOracleDataPoint >= currOracleDataPoint
        |         )
        |     }
        |  )
        |
        |  val lastDataPoint = getPrevOracleDataPoint(rewardAndDeviationCheck._1 - 1)
        |  val firstDataPoint = oracleBoxes(0).R6[Long].get
-       |  val globalDelta = firstDataPoint * $maxGlobalDeviation / 100
+       |  val delta = firstDataPoint * $maxDeviation / 100
        |
        |  val epochPrepScriptHash = SELF.R6[Coll[Byte]].get
        |
@@ -99,7 +93,7 @@ trait FixedEpochPool {
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get + $epochPeriod &&
        |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * $oracleReward &&
        |    rewardAndDeviationCheck._2 &&
-       |    lastDataPoint >= firstDataPoint - globalDelta
+       |    lastDataPoint >= firstDataPoint - delta
        |  ) && pubKey
        |}
        |""".stripMargin

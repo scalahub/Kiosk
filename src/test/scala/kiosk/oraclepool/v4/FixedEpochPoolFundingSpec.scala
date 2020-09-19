@@ -19,8 +19,7 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
         override def livePeriod = 4 // blocks
         override def prepPeriod = 4 // blocks
         override def buffer = 2 // blocks
-        override def maxDeviation: Int = 10
-        override def maxGlobalDeviation: Int = 20 // percent
+        override def maxDeviation: Int = 20 // percent
         override def minOracleBoxes: Int = 1
 
         lazy val oracleToken = "12caaacb51c89646fac9a3786eb98d0113bd57d68223ccc11754a4f67281daed"

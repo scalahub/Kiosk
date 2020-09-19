@@ -20,8 +20,7 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         override def livePeriod = 4 // blocks
         override def prepPeriod = 4 // blocks
         override def buffer = 2 // blocks
-        override def maxDeviation: Int = 50
-        override def maxGlobalDeviation: Int = 50 // percent
+        override def maxDeviation: Int = 50 // percent
         override def minOracleBoxes: Int = 1
 
         lazy val oracleToken = "12caaacb51c89646fac9a3786eb98d0113bd57d68223ccc11754a4f67281daed"
@@ -126,10 +125,10 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       type PrivateKey = BigInt
 
       // dataPoints to commit
-      val r6dataPoint0: DataPoint = KioskLong(103)
-      val r6dataPoint1: DataPoint = KioskLong(100)
-      val r6dataPoint2: DataPoint = KioskLong(99)
-      val r6dataPoint3: DataPoint = KioskLong(95)
+      val r6dataPoint0: DataPoint = KioskLong(100)
+      val r6dataPoint1: DataPoint = KioskLong(103)
+      val r6dataPoint2: DataPoint = KioskLong(105)
+      val r6dataPoint3: DataPoint = KioskLong(110)
 
       // collect one dataPoints
       val dataPointInfo1 = Array(
@@ -190,6 +189,19 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       }
 
       def collect(dataPointBoxes: Array[DataPointBox], dataPoints: Array[DataPoint], addresses: Array[Address], privateKey: PrivateKey) = { //Array[(DataPointBox, KioskGroupElement, DataPoint, Address, PrivateKey)]) = {
+
+        val privateKeys: Array[Option[PrivateKey]] = addresses.zipWithIndex.map{
+          case (_, 0) => Some(privateKey)
+          case _ => None
+        }
+
+        val tuples: Array[(DataPointBox, DataPoint, Address, Option[PrivateKey])] = (dataPointBoxes zip dataPoints) zip (addresses zip privateKeys) map {
+          case ((dataPointBox, dataPoint), (address, optPrivateKey)) =>
+            (dataPointBox, dataPoint, address, optPrivateKey)
+        } sortBy (- _._2.value)
+
+        val dataPointBoxesSorted: Array[DataPointBox] = tuples.map(_._1)
+
         val epoch1PrepBoxToCreate = KioskBox(
           pool.epochPrepAddress,
           liveEpochBoxToCreate.value - (dataPoints.length + 1) * pool.oracleReward,
@@ -197,35 +209,39 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
           liveEpochBoxToCreate.tokens
         )
 
-        val rewards = addresses.map { address =>
-          KioskBox(address, pool.oracleReward, Array(), Array())
+        var myIndex = 0
+
+        val rewardBoxes: Array[KioskBox] = tuples.zipWithIndex.map {
+          case ((_, _, address, Some(_)), i) =>
+            myIndex = i
+            KioskBox(address, pool.oracleReward * 2, Array(), Array())
+          case ((_, _, address, _), _) =>
+            KioskBox(address, pool.oracleReward, Array(), Array())
         }
+        rewardBoxes(0) = rewardBoxes(0).copy(registers = Array(KioskInt(myIndex)))
 
-        rewards(0) = rewards(0).copy(value = pool.oracleReward * 2)
-
-        val createCollectTx = Box.$createTx(
+        Box.$createTx(
           Array(liveEpochBox, customInputBox),
-          dataPointBoxes,
-          Array(epoch1PrepBoxToCreate) ++ rewards ++ Array(change),
+          dataPointBoxesSorted,
+          Array(epoch1PrepBoxToCreate) ++ rewardBoxes ++ Array(change),
           fee,
           changeAddress,
           Array[String](privateKey.toString),
           Array[DhtData](),
           false
         )
-        println(createCollectTx.toJson(false))
       }
 
       def commitAndCollect(dataPointInfo: Array[(DataPointBox, KioskGroupElement, DataPoint, Address, PrivateKey)]) = {
-        val dataPointPairs = dataPointInfo.map {
+        val dataPointPairs: Array[((DataPointBox, DataPoint), (Address, PrivateKey))] = dataPointInfo.map {
           case (dataPointBox, kioskGroupElement, dataPoint, address, privateKey) =>
             val commitBox = commitDataPoint(dataPointBox, kioskGroupElement, dataPoint, privateKey)
             ((commitBox, dataPoint), (address, privateKey))
         }
 
-        val collectDataInputs = dataPointPairs.unzip._1.unzip._1
-        val dataPoints = dataPointPairs.unzip._1.unzip._2
-        val addresses = dataPointPairs.unzip._2.unzip._1
+        val collectDataInputs: Array[DataPointBox] = dataPointPairs.unzip._1.unzip._1
+        val dataPoints: Array[DataPoint] = dataPointPairs.unzip._1.unzip._2
+        val addresses: Array[Address] = dataPointPairs.unzip._2.unzip._1
         val privateKey: PrivateKey = dataPointPairs.unzip._2.unzip._2(0)
 
         collect(collectDataInputs, dataPoints, addresses, privateKey)
