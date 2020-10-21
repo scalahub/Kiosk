@@ -11,7 +11,7 @@ object Timestamp {
   val scriptCreator = new KioskScriptCreator(env)
 
   val buffer: Int = 5 // blocks
-  val minStorageRent: Long = 10000000L
+  val minStorageRent: Long = 1500000L
 
   val aliceGBytes = "0290d9bbac88042a69660b263b4afc29a2084a0ffce4665de89211846d42bb30e4".decodeHex
   env.setCollByte("aliceGBytes", aliceGBytes)
@@ -85,6 +85,6 @@ object Timestamp {
     assert(
       emissionAddress == "2z93aPPTpVrZJHkQN54V7PatEfg3Ac1zKesFxUz8TGGZwPT4Rr5q6tBwsjEjounQU4KNZVqbFAUsCNipEKZmMdx2WTqFEyUURcZCW2CrSqKJ8YNtSVDGm7eHcrbPki9VRsyGpnpEQvirpz6GKZgghcTRDwyp1XtuXoG7XWPC4bT1U53LhiM3exE2iUDgDkme2e5hx9dMyBUi9TSNLNY1oPy2MjJ5seYmGuXCTRPLqrsi")
     assert(
-      masterAddress == "2vTQnMx5uFfFfJjL6ucuprpWSUeXHAqbyPLkW46DfMgw7ENGFbGBVPHJPVXwJWg5e1DdqPv28syDEJQGQy5vss2P7njqbyUsq1yYbwZJeE69fnNsxWiJ48eUdiFofCQ2USu5SKkUrjFzKR12xNbQspCLvVZhTCLSofYvEJeCGYzhnzrX4iFoBFBxP9yncvjnvwVYYuv9LGWLqt2c6RX92jzdt1xDAYaDLJEhqNKKJipXdUyxngTbfkqMcSQHfmcVr2ftQEzKCYKxvS8CgTNgnkGiEvprK8nwhxJx")
+      masterAddress == "2vTQnMx5uFfFfJjL6ucuprpWSUeXHAqbyPLkW46DfMgw7ENGFbGBVPHJPVXwJWg5e1DdqPv28syDEJQGQy5vss2Wvh6Srrd98fSSTVfkEb5VcehCqhoGD8826imCkAfC2mDhGcTuYKcFvy4JrC8GoAbx6NZomHZAmESCL8QyQ2utraCF7TebrZGudEDehwho4AMQkq9oDkaVdyQ2NNuYQ8NwtQcBrfCZRFSGGeitPmnoCQgK8vQDxBifiQcW1avYexPYdb9CXHGT8EtKaRj5JXcqcuwwsXp5GXfG")
   }
 }
