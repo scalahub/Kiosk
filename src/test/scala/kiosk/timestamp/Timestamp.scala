@@ -5,21 +5,24 @@ import kiosk.ergo._
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import scorex.crypto.hash.Blake2b256
 
-object Main extends App {
+object Timestamp {
 
   val env = new KioskScriptEnv()
   val scriptCreator = new KioskScriptCreator(env)
 
   val buffer: Int = 5 // blocks
   val minStorageRent: Long = 10000000L
-  val fee: Long = 10000000L
 
   val aliceGBytes = "0290d9bbac88042a69660b263b4afc29a2084a0ffce4665de89211846d42bb30e4".decodeHex
   env.setCollByte("aliceGBytes", aliceGBytes)
 
+  val timestampScript = "sigmaProp(false)"
+  val timestampErgoTree = scriptCreator.$compile(timestampScript)
+
+  env.setCollByte("timestampScriptBytes", timestampErgoTree.bytes)
+
   val emissionScript =
     s"""{ 
-       |  val alice = proveDlog(decodePoint(aliceGBytes))
        |  
        |  val out = OUTPUTS(0)
        |  val box = CONTEXT.dataInputs(0)
@@ -30,25 +33,20 @@ object Main extends App {
        |  val outTokenId = out.tokens(0)._1
        |  val outTokens = out.tokens(0)._2
        |  
-       |  val validIn = SELF.id == INPUTS(0).id 
-       |  val validOut = out.propositionBytes == SELF.propositionBytes  
-       |  
-       |  val mandatory = validIn && validOut 
+       |  val validIn = SELF.id == INPUTS(0).id
+       |   
+       |  val validOut = out.propositionBytes == SELF.propositionBytes && out.value >= SELF.value
+       |     
+       |  val validTokens = outTokenId == inTokenId && inTokens == (outTokens + 1)
        |  
        |  val validTimestamp = timestampBox.R4[Coll[Byte]].get == box.id && 
        |                       timestampBox.R5[Int].get >= (HEIGHT - $buffer) && 
-       |                       timestampBox.propositionBytes == sigmaProp(false).propBytes && 
+       |                       timestampBox.propositionBytes == timestampScriptBytes && 
        |                       timestampBox.tokens(0)._1 == inTokenId
        |    
-       |  val aliceSpends = alice && mandatory && 
-       |                    out.tokens == SELF.tokens && 
-       |                    out.value >= $minStorageRent
-       |  
-       |  val emitTimestamp = mandatory && out.value >= SELF.value + $fee && 
-       |                      outTokenId == inTokenId && 
-       |                      inTokens == outTokens + 1 && validTimestamp
-       |  
-       |  aliceSpends || emitTimestamp
+       |  sigmaProp(
+       |    validIn && validOut && validTokens && validTimestamp
+       |  )
        |}
        |""".stripMargin
 
@@ -70,15 +68,23 @@ object Main extends App {
        |                 
        |  val validEmissionBox = blake2b256(emissionBox.propositionBytes) == emissionScriptHash && 
        |                         emissionBox.tokens(0)._1 == SELF.tokens(0)._1 && 
-       |                         emissionBox.tokens(0)._2 == 1000
+       |                         emissionBox.tokens(0)._2 == 1000 &&
+       |                         emissionBox.value >= $minStorageRent
        |                           
-       |  sigmaProp(validOut && validEmissionBox)
+       |  sigmaProp(validIn && validOut && validEmissionBox)
        |}
        |""".stripMargin
   val emissionAddress = getStringFromAddress(getAddressFromErgoTree(emissionErgoTree))
-  println(emissionAddress)
 
   val masterErgoTree = scriptCreator.$compile(masterScript)
   val masterAddress = getStringFromAddress(getAddressFromErgoTree(masterErgoTree))
-  println(masterAddress)
+
+  def main(args: Array[String]): Unit = {
+    println(emissionAddress)
+    println(masterAddress)
+    assert(
+      emissionAddress == "2z93aPPTpVrZJHkQN54V7PatEfg3Ac1zKesFxUz8TGGZwPT4Rr5q6tBwsjEjounQU4KNZVqbFAUsCNipEKZmMdx2WTqFEyUURcZCW2CrSqKJ8YNtSVDGm7eHcrbPki9VRsyGpnpEQvirpz6GKZgghcTRDwyp1XtuXoG7XWPC4bT1U53LhiM3exE2iUDgDkme2e5hx9dMyBUi9TSNLNY1oPy2MjJ5seYmGuXCTRPLqrsi")
+    assert(
+      masterAddress == "2vTQnMx5uFfFfJjL6ucuprpWSUeXHAqbyPLkW46DfMgw7ENGFbGBVPHJPVXwJWg5e1DdqPv28syDEJQGQy5vss2P7njqbyUsq1yYbwZJeE69fnNsxWiJ48eUdiFofCQ2USu5SKkUrjFzKR12xNbQspCLvVZhTCLSofYvEJeCGYzhnzrX4iFoBFBxP9yncvjnvwVYYuv9LGWLqt2c6RX92jzdt1xDAYaDLJEhqNKKJipXdUyxngTbfkqMcSQHfmcVr2ftQEzKCYKxvS8CgTNgnkGiEvprK8nwhxJx")
+  }
 }
