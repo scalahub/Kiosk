@@ -20,9 +20,9 @@ object Timestamp {
   val emissionScript =
     s"""{ 
        |  
-       |  val out = OUTPUTS(0)
-       |  val box = CONTEXT.dataInputs(0)
-       |  val timestampBox = OUTPUTS(1)
+       |  val out = OUTPUTS(0)  // copy of this box with balance number of tokens
+       |  val box = CONTEXT.dataInputs(0)  // the box for which we need a timestamp
+       |  val timestampBox = OUTPUTS(1)  // the timestamp (proves that "box existed in UTXO at height x")
        |  
        |  val inTokenId = SELF.tokens(0)._1
        |  val inTokens = SELF.tokens(0)._2
