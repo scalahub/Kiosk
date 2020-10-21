@@ -1,7 +1,6 @@
 package kiosk.timestamp
 
 import kiosk.encoding.ScalaErgoConverters.{getAddressFromErgoTree, getStringFromAddress}
-import kiosk.ergo._
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import scorex.crypto.hash.Blake2b256
 
@@ -12,9 +11,6 @@ object Timestamp {
 
   val buffer: Int = 5 // blocks
   val minStorageRent: Long = 1500000L
-
-  val aliceGBytes = "0290d9bbac88042a69660b263b4afc29a2084a0ffce4665de89211846d42bb30e4".decodeHex
-  env.setCollByte("aliceGBytes", aliceGBytes)
 
   val timestampScript = "sigmaProp(false)"
   val timestampErgoTree = scriptCreator.$compile(timestampScript)
