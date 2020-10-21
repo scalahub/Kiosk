@@ -1,9 +1,9 @@
-package kiosk.oraclepool
+package kiosk.oraclepool.v1
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
 import kiosk.{Box, ECC}
-import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, HttpClientTesting, InputBox, SignedTransaction}
+import org.ergoplatform.appkit._
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 

@@ -1,4 +1,4 @@
-package kiosk.oraclepool
+package kiosk.oraclepool.v1
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}

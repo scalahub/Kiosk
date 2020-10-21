@@ -35,11 +35,18 @@ object Main extends App {
        |  
        |  val mandatory = validIn && validOut 
        |  
-       |  val validTimestamp = timestampBox.R4[Coll[Byte]].get == box.id && timestampBox.R5[Int].get >= (HEIGHT - $buffer) && timestampBox.propositionBytes == sigmaProp(false).propBytes && timestampBox.tokens(0)._1 == inTokenId
+       |  val validTimestamp = timestampBox.R4[Coll[Byte]].get == box.id && 
+       |                       timestampBox.R5[Int].get >= (HEIGHT - $buffer) && 
+       |                       timestampBox.propositionBytes == sigmaProp(false).propBytes && 
+       |                       timestampBox.tokens(0)._1 == inTokenId
        |    
-       |  val aliceSpends = alice && mandatory && out.tokens == SELF.tokens && out.value >= $minStorageRent
+       |  val aliceSpends = alice && mandatory && 
+       |                    out.tokens == SELF.tokens && 
+       |                    out.value >= $minStorageRent
        |  
-       |  val emitTimestamp = mandatory && out.value >= SELF.value + $fee && outTokenId == inTokenId && inTokens == outTokens + 1 && validTimestamp
+       |  val emitTimestamp = mandatory && out.value >= SELF.value + $fee && 
+       |                      outTokenId == inTokenId && 
+       |                      inTokens == outTokens + 1 && validTimestamp
        |  
        |  aliceSpends || emitTimestamp
        |}
@@ -53,9 +60,18 @@ object Main extends App {
     s"""{
        |  val out = OUTPUTS(0)
        |  val emissionBox = OUTPUTS(1)
+       |  
        |  val validIn = SELF.id == INPUTS(0).id
-       |  val validOut = out.propositionBytes == SELF.propositionBytes && out.tokens(0)._1 == SELF.tokens(0)._1 && SELF.tokens(0)._2 == (out.tokens(0)._2 + 1000) && out.value == SELF.value
-       |  val validEmissionBox = blake2b256(emissionBox.propositionBytes) == emissionScriptHash && emissionBox.tokens(0)._1 == SELF.tokens(0)._1 && emissionBox.tokens(0)._2 == 1000  
+       |  
+       |  val validOut = out.propositionBytes == SELF.propositionBytes && 
+       |                 out.tokens(0)._1 == SELF.tokens(0)._1 && 
+       |                 SELF.tokens(0)._2 == (out.tokens(0)._2 + 1000) && 
+       |                 out.value == SELF.value
+       |                 
+       |  val validEmissionBox = blake2b256(emissionBox.propositionBytes) == emissionScriptHash && 
+       |                         emissionBox.tokens(0)._1 == SELF.tokens(0)._1 && 
+       |                         emissionBox.tokens(0)._2 == 1000
+       |                           
        |  sigmaProp(validOut && validEmissionBox)
        |}
        |""".stripMargin

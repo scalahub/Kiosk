@@ -1,4 +1,4 @@
-package kiosk.oraclepool
+package kiosk.oraclepool.v1
 
 import kiosk.ergo._
 import org.scalatest.{Matchers, PropSpec}
