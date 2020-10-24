@@ -3,6 +3,7 @@ package kiosk.timestamp
 import kiosk.encoding.ScalaErgoConverters.{getAddressFromErgoTree, getStringFromAddress}
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import scorex.crypto.hash.Blake2b256
+import kiosk.ergo._
 
 object Timestamp {
 
@@ -31,7 +32,7 @@ object Timestamp {
        |  
        |  val validIn = SELF.id == INPUTS(0).id
        |   
-       |  val validOut = out.propositionBytes == SELF.propositionBytes && out.value >= SELF.value
+       |  val validOut = out.propositionBytes == SELF.propositionBytes && out.value >= SELF.value && outTokens >= 2
        |     
        |  val validTokens = outTokenId == inTokenId && inTokens == (outTokens + 1)
        |  
@@ -78,9 +79,10 @@ object Timestamp {
   def main(args: Array[String]): Unit = {
     println(emissionAddress)
     println(masterAddress)
+    println("timestamp ErgoTree (hex) " + timestampErgoTree.bytes.encodeHex)
     assert(
-      emissionAddress == "2z93aPPTpVrZJHkQN54V7PatEfg3Ac1zKesFxUz8TGGZwPT4Rr5q6tBwsjEjounQU4KNZVqbFAUsCNipEKZmMdx2WTqFEyUURcZCW2CrSqKJ8YNtSVDGm7eHcrbPki9VRsyGpnpEQvirpz6GKZgghcTRDwyp1XtuXoG7XWPC4bT1U53LhiM3exE2iUDgDkme2e5hx9dMyBUi9TSNLNY1oPy2MjJ5seYmGuXCTRPLqrsi")
+      emissionAddress == "AbEPxRNUk5bxs7jiN2r3yoHQg56CULrN9XRdpV3UQQfxxtVvSYzpw6NhfGDjT5XqxvrmCLaWAAJ6HvG9hLzAuxMmhTQNnd4mBRynvVk5Z7JDL1aULqKYgQmEDy1SFFEQs6WsAB7h7oYRL61k8Ph5wHwBdrrywFp9CqLEBQ1VSZTHvCxQpULqPukeXNVGN7E4GHeSyYdzqiHvzunRvhr7bbnbCmszFLG1tUrwaeP5MutN1qdw7LgN1fPUu78b")
     assert(
-      masterAddress == "2vTQnMx5uFfFfJjL6ucuprpWSUeXHAqbyPLkW46DfMgw7ENGFbGBVPHJPVXwJWg5e1DdqPv28syDEJQGQy5vss2Wvh6Srrd98fSSTVfkEb5VcehCqhoGD8826imCkAfC2mDhGcTuYKcFvy4JrC8GoAbx6NZomHZAmESCL8QyQ2utraCF7TebrZGudEDehwho4AMQkq9oDkaVdyQ2NNuYQ8NwtQcBrfCZRFSGGeitPmnoCQgK8vQDxBifiQcW1avYexPYdb9CXHGT8EtKaRj5JXcqcuwwsXp5GXfG")
+      masterAddress == "2vTQnMx5uFfFfJjL6ucuprpWSUeXHBaY3o29jvt1ArkPQJ1UuMZwFWSwrBzUEFQFZsQsDGewdNWEAjWF9BFErt99qBmFHbPy3QKjw32v54Vft2tzJhib6QDneR4TGzyDGtkqEjyC3FdwPZjYAan8RuAhsSHkCnPmdtwSRtLcVQKYPPqXqNG7JZMsK1qpR7Bqj2cpGFFVttq27jHeCYEpTM2dZktx6v16ESZ1DjXbe9FTU6QsmW6p4cWZVN78VczxSF38ru3eeasecAAYgMenuFkNQVdaJcJpotmW")
   }
 }
