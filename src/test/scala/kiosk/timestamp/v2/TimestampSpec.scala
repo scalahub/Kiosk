@@ -1,4 +1,4 @@
-package kiosk.timestamp
+package kiosk.timestamp.v2
 
 import kiosk.Box
 import kiosk.ergo.{DhtData, KioskBox, KioskCollByte, KioskInt}
