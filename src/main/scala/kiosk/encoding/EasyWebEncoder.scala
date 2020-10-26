@@ -6,6 +6,6 @@ import sigmastate.Values.ErgoTree
 import special.sigma.GroupElement
 
 object EasyWebEncoder {
-//  DefaultTypeHandler.addType[GroupElement](classOf[GroupElement], stringToGroupElement, groupElementToString)
-//  DefaultTypeHandler.addType[ErgoTree](classOf[ErgoTree], stringToErgoTree, ergoTreeToString)
+  DefaultTypeHandler.addType[GroupElement](classOf[GroupElement], stringToGroupElement, groupElementToString)
+  DefaultTypeHandler.addType[ErgoTree](classOf[ErgoTree], stringToErgoTree, ergoTreeToString)
 }

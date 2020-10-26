@@ -1,14 +1,16 @@
 package kiosk
 
 import kiosk.box.KioskBoxCreator
-import kiosk.encoding.EasyWebEncoder
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
+import kiosk.wallet.KioskWallet
 
 object Env extends KioskScriptEnv
-object Box extends KioskBoxCreator(Script)
 object Script extends KioskScriptCreator(Env)
+object Box extends KioskBoxCreator(Script)
+object Wallet extends KioskWallet(Box)
 
 object KioskWeb extends App {
+  org.sh.reflect.Util.debug = true
   val appInfo =
     """This is front-end for Kiosk, which is a library for interacting with the Ergo blockchain.
       |Kiosk is built on top of Ergo-AppKit and provides the ability to send transactions by spending
@@ -28,9 +30,8 @@ object KioskWeb extends App {
     Env,
     Script,
     ECC,
-    Box
+    Box,
+    Wallet
   )
-  EasyWebEncoder
   new org.sh.easyweb.AutoWebSession(objects, appInfo).generateWebXml
 }
-

@@ -7,7 +7,6 @@ import kiosk.encoding.ScalaErgoConverters
 import kiosk.encoding.ScalaErgoConverters._
 import kiosk.ergo._
 import kiosk.script.KioskScriptCreator
-import org.ergoplatform.DataInput
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit.{BlockchainContext, ErgoToken, InputBox, OutBox, OutBoxBuilder, SignedTransaction}
 import org.sh.easyweb.Text
@@ -37,7 +36,7 @@ object KioskBoxCreator {
   }
 }
 
-class KioskBoxCreator($ergoScript: KioskScriptCreator) extends EasyMirrorSession {
+class KioskBoxCreator(val $ergoScript: KioskScriptCreator) extends EasyMirrorSession {
   import KioskBoxCreator._
 
   val $boxesDhts = boxMap($ergoScript.$myEnv.$sessionSecret)

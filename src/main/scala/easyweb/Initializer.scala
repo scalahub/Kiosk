@@ -14,8 +14,8 @@ Stacktrace of the call is given below:
 org.sh.reflect.CodeGenUtil$:CodeGenUtil.scala:69
 org.sh.easyweb.AutoWebSession:AutoWebSession.scala:22
 org.sh.easyweb.AutoWebSession:AutoWebSession.scala:141
-kiosk.KioskWeb$:KioskWeb.scala:34
-kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:11
+kiosk.KioskWeb$:KioskWeb.scala:36
+kiosk.KioskWeb$delayedInit$body:KioskWeb.scala:12
 scala.Function0:Function0.scala:39
 scala.Function0:Function0.scala:39
 scala.runtime.AbstractFunction0:AbstractFunction0.scala:17
@@ -32,7 +32,7 @@ package easyweb {
 
   class ShowHtmlServlet extends HttpServlet {
     val anyRefs = List(
-      kiosk.Env,kiosk.Script,kiosk.ECC,kiosk.Box
+      kiosk.Env,kiosk.Script,kiosk.ECC,kiosk.Box,kiosk.Wallet
     )
     val htmlGen = new HTMLClientCodeGenerator(anyRefs, """This is front-end for Kiosk, which is a library for interacting with the Ergo blockchain.
 Kiosk is built on top of Ergo-AppKit and provides the ability to send transactions by spending
@@ -75,7 +75,7 @@ Note that environments are not saved to disk so the garbage collector may clear 
   class Initializer extends HttpServlet {
 
     val anyRefs = List(
-      kiosk.Env,kiosk.Script,kiosk.ECC,kiosk.Box
+      kiosk.Env,kiosk.Script,kiosk.ECC,kiosk.Box,kiosk.Wallet
     )
     anyRefs.foreach(EasyProxy.addProcessor("", _, DefaultTypeHandler, true))
     def getReq(hReq:HReq) = {}
