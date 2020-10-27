@@ -56,7 +56,9 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     val needed = nanoErgs + feeNanoErgs
     val index: Int = unspentBoxSums.find { case (i, before, after) => before < needed && needed <= after }.getOrElse(throw new Exception("Insufficient funds"))._1
     val inputs: Seq[String] = unspentBoxes.take(index).map(_.optBoxId.get)
-    $ergoBox.createTx(inputs.toArray, Array(), Array(boxName), feeNanoErgs, toAddress, Array(secretKey.toString(10)), Array(), true)
+    val txJson = $ergoBox.createTx(inputs.toArray, Array(), Array(boxName), feeNanoErgs, toAddress, Array(secretKey.toString(10)), Array(), true)
+    $ergoBox.$deleteBox(boxName)
+    txJson
   }
 
   override def $setSession(sessionSecret: Option[String]): KioskWallet = new KioskWallet($ergoBox.$setSession(sessionSecret))
