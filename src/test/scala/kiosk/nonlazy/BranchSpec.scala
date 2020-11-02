@@ -31,7 +31,7 @@ class BranchSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
       val customInputBox = ctx
         .newTxBuilder()
         .outBoxBuilder
-        .value(10000000000000L)
+        .value(10000000000L)
         .contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript))
         .build()
         .convertToInputWith(dummyTxId, 0)
@@ -81,36 +81,27 @@ class BranchSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         tokens = Array()
       )
 
-      val tryLongBranchTx =
-        Try(
-          Box.$createTx(
-            inputBoxes = Array(branchBox, customInputBox),
-            dataInputs = Array[InputBox](dataBoxWithLong),
-            boxesToCreate = Array(longSelectionBox),
-            fee,
-            changeAddress,
-            Array[String](),
-            Array[DhtData](),
-            false
-          )
-        )
+      Box.$createTx(
+        inputBoxes = Array(branchBox, customInputBox),
+        dataInputs = Array[InputBox](dataBoxWithCollByte),
+        boxesToCreate = Array(collByteSelectionBox),
+        fee,
+        changeAddress,
+        Array[String](),
+        Array[DhtData](),
+        false
+      )
 
-      val tryCollByteBranchTx =
-        Try(
-          Box.$createTx(
-            inputBoxes = Array(branchBox, customInputBox),
-            dataInputs = Array[InputBox](dataBoxWithCollByte),
-            boxesToCreate = Array(collByteSelectionBox),
-            fee,
-            changeAddress,
-            Array[String](),
-            Array[DhtData](),
-            false
-          )
-        )
-
-      assert(tryLongBranchTx.isFailure)
-      assert(tryCollByteBranchTx.isSuccess)
+      Box.$createTx(
+        inputBoxes = Array(branchBox, customInputBox),
+        dataInputs = Array[InputBox](dataBoxWithLong),
+        boxesToCreate = Array(longSelectionBox),
+        fee,
+        changeAddress,
+        Array[String](),
+        Array[DhtData](),
+        false
+      )
     }
   }
 }
