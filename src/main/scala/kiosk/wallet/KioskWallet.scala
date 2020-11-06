@@ -3,11 +3,15 @@ package kiosk.wallet
 import kiosk.appkit.Client
 import kiosk.box.KioskBoxCreator
 import kiosk.encoding.EasyWebEncoder
+import kiosk.offchain._
 import kiosk.{Reader, ergo}
 import org.ergoplatform.ErgoAddressEncoder
 import org.ergoplatform.appkit.ConstantsBuilder
+import org.sh.easyweb.Text
 import org.sh.reflect.DataStructures.EasyMirrorSession
+import play.api.libs.json.Json
 import scorex.crypto.hash.Blake2b256
+
 import sigmastate.eval._
 import sigmastate.interpreter.CryptoConstants
 import special.sigma.GroupElement
@@ -27,14 +31,14 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
             publicKey
           )
           .build(),
-        "{proveDlog(gZ)}"
+        "proveDlog(gZ)"
       )
       val addressEncoder = new ErgoAddressEncoder(ctx.getNetworkType.networkPrefix)
       addressEncoder.fromProposition(contract.getErgoTree).get.toString
     }
   }
 
-  def balance = BigDecimal((Reader.getUnspentBoxes(myAddress).map(_.value).sum)) / BigDecimal(1000000000) + " Ergs"
+  def balance = BigDecimal(Reader.getUnspentBoxes(myAddress).map(_.value).sum) / BigDecimal(1000000000) + " Ergs"
 
   def send(toAddress: String, ergs: BigDecimal) = {
     val $INFO$ = "Using 0.001 Ergs as fee"
@@ -60,5 +64,11 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     txJson
   }
 
+  def eval(protocol: Text) = {
+    implicit val dictionary = new Dictionary
+    val parser = new Parser
+    import parser._
+    Json.toJson(Json.parse(protocol.getText).as[Protocol]).toString()
+  }
   override def $setSession(sessionSecret: Option[String]): KioskWallet = new KioskWallet($ergoBox.$setSession(sessionSecret))
 }

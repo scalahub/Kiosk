@@ -16,21 +16,21 @@ object KioskScriptCreator {
   implicit val $ergoAddressEncoder: ErgoAddressEncoder = new ErgoAddressEncoder($networkPrefix)
 }
 
-class KioskScriptCreator(val $myEnv:KioskScriptEnv) extends EasyMirrorSession {
+class KioskScriptCreator(val $myEnv: KioskScriptEnv) extends EasyMirrorSession {
 
   import KioskScriptCreator._
-  def getScriptHash(ergoScript:Text):Array[Byte] = {
+  def getScriptHash(ergoScript: Text): Array[Byte] = {
     val $INFO$ = "Outputs the blake2b256 hash of the ErgoTree corresponding to ergoScript"
-    val $ergoScript$:String = """{
+    val $ergoScript$ : String = """{
   sigmaProp(1 < 2)
 }"""
 
     scorex.crypto.hash.Blake2b256(getErgoTree(ergoScript)).toArray
   }
 
-  def getErgoTree(ergoScript:Text):Array[Byte] = {
-    val $INFO$ = "Outputs the blake2b256 hash of the ErgoTree corresponding to ergoScript"
-    val $ergoScript$:String = """{
+  def getErgoTree(ergoScript: Text): Array[Byte] = {
+    val $INFO$ = "Outputs the ErgoTree corresponding to ergoScript. This is the output of box.propositionBytes"
+    val $ergoScript$ : String = """{
   sigmaProp(1 < 2)
 }"""
 
@@ -38,21 +38,21 @@ class KioskScriptCreator(val $myEnv:KioskScriptEnv) extends EasyMirrorSession {
     DefaultSerializer.serializeErgoTree(ergoTree)
   }
 
-  def getP2SAddress(ergoScript:Text) = {
+  def getP2SAddress(ergoScript: Text) = {
     val $ergoScript$ = """{
   sigmaProp(1 < 2)
 }"""
     Pay2SAddress($compile(ergoScript)).toString
   }
 
-  def $compile(ergoScript:Text):ErgoTree = {
-    val $ergoScript$:String = """{
+  def $compile(ergoScript: Text): ErgoTree = {
+    val $ergoScript$ : String = """{
   sigmaProp(1 < 2)
 }"""
     $compile(ergoScript.getText)
   }
 
-  def $compile(ergoScript:String):ErgoTree = {
+  def $compile(ergoScript: String): ErgoTree = {
     import sigmastate.lang.Terms._
     implicit val irContext = new CompiletimeIRContext
     $compiler.compile($myEnv.$getEnv.toMap, ergoScript).asSigmaProp // compiler.compile($myEnv.$getEnv, ergoScript).asInstanceOf[Value[SBoolean.type]].toSigmaProp
@@ -60,4 +60,3 @@ class KioskScriptCreator(val $myEnv:KioskScriptEnv) extends EasyMirrorSession {
 
   override def $setSession(sessionSecret: Option[String]): KioskScriptCreator = new KioskScriptCreator($myEnv.$setSession(sessionSecret))
 }
-
