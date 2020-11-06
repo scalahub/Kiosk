@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % "2.4.+",
   "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.1.0",
   "com.lihaoyi" %% "fastparse" % "1.0.0",
-  "org.ergoplatform" %% "ergo-appkit" % "3.2.2",
+  "org.ergoplatform" %% "ergo-appkit" % "3.3.3",
   "com.typesafe.play" %% "play-json" % "2.9.1",
   "com.squareup.okhttp3" % "mockwebserver" % "3.14.9" % Test,
   "org.scalatest" %% "scalatest" % "3.0.8" % Test,

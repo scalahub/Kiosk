@@ -6,8 +6,6 @@ import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, 
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-import scala.util.Try
-
 class BranchSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
 
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
@@ -17,7 +15,6 @@ class BranchSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
 
   property("Not-so-lazy evaluation") {
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val height = ctx.getHeight
       val fee = 1500000
 
       val branchBoxToCreate = KioskBox(
