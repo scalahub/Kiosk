@@ -22,46 +22,41 @@ case class Protocol(constants: Option[Seq[Constant]],
                     outputs: Option[Seq[MultiOutput]],
                     fee: Option[Long])
 
-trait Multi {
-  implicit val isMulti: Boolean
-}
-abstract class AbstractAddress(val name: Option[String], val value: Option[String], val ref: Option[String])(implicit dictionary: Dictionary) extends Defines with Refers with Multi {
+abstract class AbstractAddress(val name: Option[String], val value: Option[String], val ref: Option[String])(implicit dictionary: Dictionary) extends Defines with Refers {
   atMostOne(this, value, ref)
   override lazy val isLazy = false
   override lazy val referrer = name
-  override lazy val defines = name.map(defName => Variable(defName, DataType.getSeqType(DataType.Address)))
-  override lazy val references = ref.map(refName => Variable(refName, DataType.getSeqType(DataType.Address))).toSeq
+  override lazy val defines = name.map(defName => Variable(defName, DataType.Address))
+  override lazy val references = ref.map(refName => Variable(refName, DataType.Address)).toSeq
 }
 
 abstract class AbstractRegister(val name: Option[String], val num: RegNum.Num, val `type`: DataType.Type, val value: Option[String], val ref: Option[String])(implicit dictionary: Dictionary)
     extends Defines
-    with Refers
-    with Multi {
+    with Refers {
   atMostOne(this, value, ref)
   override lazy val referrer = name
-  override lazy val defines = name.map(defName => Variable(defName, DataType.getSeqType(`type`)))
+  override lazy val defines = name.map(defName => Variable(defName, `type`))
   override lazy val isLazy = false
-  override lazy val references = ref.map(refName => Variable(refName, DataType.getSeqType(`type`))).toSeq
+  override lazy val references = ref.map(refName => Variable(refName, `type`)).toSeq
 }
 
-abstract class AbstractCollByte(val name: Option[String], val value: Option[String], val ref: Option[String])(implicit dictionary: Dictionary) extends Defines with Refers with Multi {
+abstract class AbstractCollByte(val name: Option[String], val value: Option[String], val ref: Option[String])(implicit dictionary: Dictionary) extends Defines with Refers {
   atMostOne(this, value, ref)
   override lazy val isLazy = false
   override lazy val referrer = name
-  override lazy val defines = name.map(defName => Variable(defName, DataType.getSeqType(DataType.CollByte)))
-  override lazy val references = ref.map(refName => Variable(refName, DataType.getSeqType(DataType.CollByte))).toSeq
+  override lazy val defines = name.map(defName => Variable(defName, DataType.CollByte))
+  override lazy val references = ref.map(refName => Variable(refName, DataType.CollByte)).toSeq
 }
 
-abstract class AbstractLong(val name: Option[String], val value: Option[scala.Long], val ref: Option[String], val filters: Option[Seq[RangeFilter]])(implicit dictionary: Dictionary)
-    extends Defines
-    with Multi {
+abstract class AbstractLong(val name: Option[String], val value: Option[scala.Long], val ref: Option[String], val filters: Option[Seq[RangeFilter]])(implicit dictionary: Dictionary) extends Defines {
   atMostOne(this, value, ref, filters)
-  override lazy val defines = name.map(defName => Variable(defName, DataType.getSeqType(DataType.Long)))
+  override lazy val defines = name.map(defName => Variable(defName, DataType.Long))
   override lazy val isLazy: Boolean = false
 }
 
 case class RangeFilter(op: QuantifierOp.Op, value: Option[scala.Long], ref: Option[String])(implicit val dictionary: Dictionary) extends Refers {
   atMostOne(this, value, ref)
+  override implicit lazy val isMulti = Some(false)
   override lazy val referrer: Option[String] = None
   override lazy val isLazy = false
   override lazy val references = ref.map(refName => Variable(refName, DataType.Long)).toSeq
@@ -69,24 +64,24 @@ case class RangeFilter(op: QuantifierOp.Op, value: Option[scala.Long], ref: Opti
 
 case class Address(override val name: Option[String], override val value: Option[String], override val ref: Option[String])(implicit val dictionary: Dictionary)
     extends AbstractAddress(name, value, ref) {
-  override implicit lazy val isMulti: Boolean = false
+  override implicit lazy val isMulti = Some(false)
 }
 
 case class Register(override val name: Option[String], override val num: RegNum.Num, override val `type`: DataType.Type, override val value: Option[String], override val ref: Option[String])(
     implicit val dictionary: Dictionary)
     extends AbstractRegister(name, num, `type`, value, ref) {
-  override implicit lazy val isMulti: Boolean = false
+  override implicit lazy val isMulti = Some(false)
 }
 
 case class CollByte(override val name: Option[String], override val value: Option[String], override val ref: Option[String])(implicit val dictionary: Dictionary)
     extends AbstractCollByte(name, value, ref) {
-  override implicit lazy val isMulti: Boolean = false
+  override implicit lazy val isMulti = Some(false)
 }
 
 case class Long(override val name: Option[String], override val value: Option[scala.Long], override val ref: Option[String], override val filters: Option[Seq[RangeFilter]])(
     implicit val dictionary: Dictionary)
     extends AbstractLong(name, value, ref, filters) {
-  override implicit lazy val isMulti: Boolean = false
+  override implicit lazy val isMulti = Some(false)
 }
 
 case class Token(index: Option[Int], id: Option[CollByte], numTokens: Option[Long])(implicit val dictionary: Dictionary)
@@ -100,23 +95,23 @@ case class SingleOutput(address: Address, registers: Option[Seq[Register]], toke
 case class MultiLong(override val name: Option[String], override val value: Option[scala.Long], override val ref: Option[String], override val filters: Option[Seq[RangeFilter]])(
     implicit val dictionary: Dictionary)
     extends AbstractLong(name, value, ref, filters) {
-  override implicit lazy val isMulti: Boolean = true
+  override implicit lazy val isMulti = Some(true)
 }
 
 case class MultiRegister(override val name: Option[String], override val num: RegNum.Num, override val `type`: DataType.Type, override val value: Option[String], override val ref: Option[String])(
     implicit val dictionary: Dictionary)
     extends AbstractRegister(name, num, `type`, value, ref) {
-  override implicit lazy val isMulti: Boolean = true
+  override implicit lazy val isMulti = Some(true)
 }
 
 case class MultiCollByte(override val name: Option[String], override val value: Option[String], override val ref: Option[String])(implicit val dictionary: Dictionary)
     extends AbstractCollByte(name, value, ref) {
-  override implicit lazy val isMulti: Boolean = true
+  override implicit lazy val isMulti = Some(true)
 }
 
 case class MultiAddress(override val name: Option[String], override val value: Option[String], override val ref: Option[String])(implicit val dictionary: Dictionary)
     extends AbstractAddress(name, value, ref) {
-  override implicit lazy val isMulti: Boolean = true
+  override implicit lazy val isMulti = Some(true)
 }
 
 case class MultiToken(index: Option[Int], id: Option[MultiCollByte], numTokens: Option[MultiLong])(implicit val dictionary: Dictionary)

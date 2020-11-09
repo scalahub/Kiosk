@@ -11,7 +11,6 @@ object Main {
     lazy val constantInt = Constant("myInt", DataType.Long, "1234")
     lazy val constantCollByte = Constant("myCollByte", DataType.CollByte, "120a23")
     lazy val constantTokenRef = Constant("token_ref", DataType.CollByte, "120a23")
-    lazy val constantTokenRefInvalid = Constant("token_ref1", DataType.MultiCollByte, "120a23") // lazy so won't throw error, even though invalid
 
     lazy val binaryOp1 = BinaryOpResult("foo", "myLong", BinaryOp.Add, "myInt")
     lazy val binaryOp2 = BinaryOpResult("bar", "foo", BinaryOp.Max, "myLong")

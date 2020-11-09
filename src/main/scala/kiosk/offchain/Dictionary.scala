@@ -2,12 +2,12 @@ package kiosk.offchain
 
 import scala.collection.mutable.{Map => MMap}
 
-case class DictionaryObject(isLazy: Boolean, `type`: DataType.Type, anyRef: AnyRef)
+case class DictionaryObject(isLazy: Boolean, t: DataType.Type, anyRef: AnyRef, isMulti: Option[Boolean])
 
 object InternalMethod
 
 class Dictionary {
-  val reservedTypes = Seq("HEIGHT" -> DictionaryObject(isLazy = false, `type` = DataType.Int, InternalMethod))
+  val reservedTypes = Seq("HEIGHT" -> DictionaryObject(isLazy = false, t = DataType.Int, InternalMethod, Some(false)))
 
   private val dict = MMap[String, DictionaryObject]()
   private val lazyRefs = MMap[String, Seq[Variable]]()
@@ -26,20 +26,30 @@ class Dictionary {
     lazyRefs.clear()
     addReservedTypes
   }
-  def resolve(name: String, `type`: DataType.Type): Unit = {
-    println(s"Resolving $name: ${`type`}")
-    require(`type` != DataType.Lazy)
+
+  def matchMulti(left: Option[Boolean], right: Option[Boolean]) = {
+    (left, right) match {
+      case (a, b) if a == b    => true
+      case (Some(true), _)     => true
+      case (Some(false), None) => true
+      case _                   => false
+    }
+  }
+
+  def resolve(name: String, t: DataType.Type, isMulti: Option[Boolean]): Unit = {
+    println(s"Resolving $name: ${t}")
+    require(t != DataType.Lazy)
     dict.get(name) match {
-      case Some(dictionaryObject) if dictionaryObject.`type` == `type` || dictionaryObject.`type` == DataType.Lazy =>
-        if (dictionaryObject.isLazy) {
+      case Some(d) if (d.t == t || d.t == DataType.Lazy) && matchMulti(isMulti, d.isMulti) =>
+        if (d.isLazy) {
           dict -= name // remove temporarily
-          lazyRefs(name).foreach(ref => resolve(ref.name, if (ref.`type` == DataType.Lazy) `type` else ref.`type`))
-          dict += name -> dictionaryObject.copy(isLazy = false, `type` = `type`)
+          lazyRefs(name).foreach(ref => resolve(ref.name, if (ref.`type` == DataType.Lazy) t else ref.`type`, isMulti))
+          dict += name -> d.copy(isLazy = false, t = t)
         }
-      case Some(dictionaryObject) =>
-        throw new Exception(s"Invalid type found for $name. Need ${`type`}. Found ${dictionaryObject.`type`}")
-      case any =>
-        throw new Exception(s"Reference to undefined variable $name")
+      case Some(d) =>
+        throw new Exception(s"Invalid type found for $name. Need $t (multi: $isMulti). Found ${d.t} (multi: ${d.isMulti})")
+      case _ =>
+        throw new Exception(s"Reference to undefined variable $name: $t")
     }
   }
 
@@ -58,6 +68,7 @@ case class Variable(name: String, `type`: DataType.Type)
 
 trait Refers {
   implicit val dictionary: Dictionary
+  val isMulti: Option[Boolean]
   val referrer: Option[String]
   val references: Seq[Variable]
   val isLazy: Boolean
@@ -67,14 +78,15 @@ trait Refers {
   if (isLazy) {
     dictionary.addLazyRefs(referrer.getOrElse(throw new Exception("Empty variableName not allowed for lazy references")), references)
   } else {
-    references.map(reference => dictionary.resolve(reference.name, reference.`type`))
+    references.map(reference => dictionary.resolve(reference.name, reference.`type`, isMulti))
   }
 }
 
 trait Defines {
   implicit val dictionary: Dictionary
+  val isMulti: Option[Boolean]
   val defines: Option[Variable]
   val isLazy: Boolean
-  defines.map(define => dictionary.add(define.name, DictionaryObject(isLazy, define.`type`, this)))
+  defines.map(define => dictionary.add(define.name, DictionaryObject(isLazy, define.`type`, this, isMulti)))
   println(s"Defined $defines")
 }
