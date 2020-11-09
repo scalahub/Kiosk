@@ -35,11 +35,11 @@ object Main {
 
     lazy val inputRegister = Register(Some("inputRegister"), RegNum.R4, DataType.CollByte, None, ref = Some("dataInputRegister2"))
 
-    lazy val tokenQuantifier = Filter(QuantifierOp.Ge, Some(100), None)
+    lazy val tokenQuantifier = RangeFilter(QuantifierOp.Ge, Some(100), None)
 
-    lazy val inputQuantifier = Filter(QuantifierOp.Ge, Some(10000), None)
+    lazy val inputQuantifier = RangeFilter(QuantifierOp.Ge, Some(10000), None)
 
-    lazy val dataInputQuantifier = Filter(QuantifierOp.Le, None, Some("foo"))
+    lazy val dataInputQuantifier = RangeFilter(QuantifierOp.Le, None, Some("foo"))
 
     lazy val inputToken = Token(
       index = Some(1),
