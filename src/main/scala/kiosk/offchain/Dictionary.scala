@@ -2,26 +2,44 @@ package kiosk.offchain
 
 import scala.collection.mutable.{Map => MMap}
 
-case class DictionaryObject(isLazy: Boolean, `type`: NamedType.Type, anyRef: AnyRef)
+case class DictionaryObject(isLazy: Boolean, `type`: DataType.Type, anyRef: AnyRef)
+
+object InternalMethod
 
 class Dictionary {
-  private val lazyRefs = MMap[String, Seq[String]]()
+  val reservedTypes = Seq("HEIGHT" -> DictionaryObject(isLazy = false, `type` = DataType.Int, InternalMethod))
+
   private val dict = MMap[String, DictionaryObject]()
+  private val lazyRefs = MMap[String, Seq[Variable]]()
+
+  def print = dict foreach {
+    case (key, value) =>
+      println(s"$key -> $value")
+  }
+
+  def addReservedTypes = reservedTypes foreach { case (name, dictionaryObject) => add(name, dictionaryObject) }
+
+  addReservedTypes
 
   def reset = {
     dict.clear()
     lazyRefs.clear()
+    addReservedTypes
   }
-
-  def resolve(name: String, allowedTypes: Seq[NamedType.Type]): Unit = {
+  def resolve(name: String, `type`: DataType.Type): Unit = {
+    println(s"Resolving $name: ${`type`}")
+    require(`type` != DataType.Lazy)
     dict.get(name) match {
-      case Some(dictionaryObject) if allowedTypes.contains(dictionaryObject.`type`) || allowedTypes.isEmpty =>
+      case Some(dictionaryObject) if dictionaryObject.`type` == `type` || dictionaryObject.`type` == DataType.Lazy =>
         if (dictionaryObject.isLazy) {
           dict -= name // remove temporarily
-          lazyRefs(name).foreach(resolve(_, allowedTypes))
-          dict += name -> dictionaryObject.copy(isLazy = false)
+          lazyRefs(name).foreach(ref => resolve(ref.name, if (ref.`type` == DataType.Lazy) `type` else ref.`type`))
+          dict += name -> dictionaryObject.copy(isLazy = false, `type` = `type`)
         }
-      case _ => throw new Exception(s"Invalid or non-existent type $name found")
+      case Some(dictionaryObject) =>
+        throw new Exception(s"Invalid type found for $name. Need ${`type`}. Found ${dictionaryObject.`type`}")
+      case any =>
+        throw new Exception(s"Reference to undefined variable $name")
     }
   }
 
@@ -30,32 +48,33 @@ class Dictionary {
     else dict += name -> dictionaryObject
   }
 
-  def addLazyRefs(name: String, refs: Seq[String]) = {
-    if (lazyRefs.contains(name)) throw new Exception(s"References for $name already exists as ${lazyRefs(name)}")
+  def addLazyRefs(name: String, refs: Seq[Variable]) = {
+    if (lazyRefs.contains(name)) throw new Exception(s"References for $name already exist as ${lazyRefs(name)}")
     else lazyRefs += name -> refs
   }
 }
 
+case class Variable(name: String, `type`: DataType.Type)
+
 trait Refers {
   implicit val dictionary: Dictionary
-  val variableName: Option[String] // referrer
-  val references: Seq[String]
+  val referrer: Option[String]
+  val references: Seq[Variable]
   val isLazy: Boolean
-  val validRefTypes: Seq[NamedType.Type]
 
-  if (references.toSet.size != references.size) throw new Exception(s"References for $variableName contain duplicates ${references.reduceLeft(_ + "," + _)}")
+  if (references.toSet.size != references.size) throw new Exception(s"References for $referrer contain duplicates ${references.map(_.name).reduceLeft(_ + ", " + _)}")
+
   if (isLazy) {
-    dictionary.addLazyRefs(variableName.getOrElse(throw new Exception("Empty variableName not allowed for lazy references")), references)
+    dictionary.addLazyRefs(referrer.getOrElse(throw new Exception("Empty variableName not allowed for lazy references")), references)
   } else {
-    references.map(dictionary.resolve(_, validRefTypes))
+    references.map(reference => dictionary.resolve(reference.name, reference.`type`))
   }
 }
 
 trait Defines {
   implicit val dictionary: Dictionary
-  val variableType: NamedType.Type
-  val variableName: Option[String]
+  val defines: Option[Variable]
   val isLazy: Boolean
-
-  variableName.map(dictionary.add(_, DictionaryObject(isLazy, variableType, this)))
+  defines.map(define => dictionary.add(define.name, DictionaryObject(isLazy, define.`type`, this)))
+  println(s"Defined $defines")
 }

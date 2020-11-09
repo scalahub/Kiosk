@@ -23,45 +23,7 @@ class MultiProveDlogSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
   private val defaultGenerator: GroupElement = CryptoConstants.dlogGroup.generator
   private val gX: GroupElement = defaultGenerator.exp(secret1.bigInteger)
   private val gY: GroupElement = defaultGenerator.exp(secret2.bigInteger)
-  /*
-expected:
-  Vector(
-    ErgoBox(
-      ce70d0abe6a3bfb3dcc33aa91d275ffb9f524d130c1053349f104e32396d4f1e,
-      100000000,
-      ErgoTree(0,WrappedArray(),Right(ConstantNode(SigmaProp(ProveDlog(ECPoint(cf33bd,17bd6c,...))),SSigmaProp)),0,[B@3bcd426c),
-      tokens: (Coll()),
-      f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809,
-      0,
-      Map(),
-      123414
-    ),
-    ErgoBox(
-      388236b2bb6323e6cc41aa1a185bfcfdcffe0625a05c7c47fe9674e7d9dcf167,
-      100000000,
-      ErgoTree(0,WrappedArray(),Right(ConstantNode(SigmaProp(ProveDlog(ECPoint(565453,2dac17,...))),SSigmaProp)),0,[B@c4c0b41),
-      tokens: (Coll()),
-      f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809,
-      1,
-      Map(),
-      123414
-    )
-  ),
 
-got
-  ArrayBuffer(
-    ErgoBox(
-      ce70d0abe6a3bfb3dcc33aa91d275ffb9f524d130c1053349f104e32396d4f1e,
-      100000000,
-      ErgoTree(0,WrappedArray(),Right(ConstantNode(SigmaProp(ProveDlog(ECPoint(cf33bd,17bd6c,...))),SSigmaProp)),0,[B@3bcd426c),
-      tokens: (Coll()),
-      f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809,
-      0,
-      Map(),
-      123414
-    )
-  )
-   */
   property("Multi proveDlog") {
     ergoClient.execute { implicit ctx: BlockchainContext =>
       val fee = 1500000

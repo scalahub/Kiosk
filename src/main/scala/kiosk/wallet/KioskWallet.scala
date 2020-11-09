@@ -3,15 +3,13 @@ package kiosk.wallet
 import kiosk.appkit.Client
 import kiosk.box.KioskBoxCreator
 import kiosk.encoding.EasyWebEncoder
-import kiosk.offchain._
+import kiosk.offchain.Compiler
 import kiosk.{Reader, ergo}
 import org.ergoplatform.ErgoAddressEncoder
 import org.ergoplatform.appkit.ConstantsBuilder
 import org.sh.easyweb.Text
 import org.sh.reflect.DataStructures.EasyMirrorSession
-import play.api.libs.json.Json
 import scorex.crypto.hash.Blake2b256
-
 import sigmastate.eval._
 import sigmastate.interpreter.CryptoConstants
 import special.sigma.GroupElement
@@ -64,11 +62,9 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     txJson
   }
 
-  def eval(protocol: Text) = {
-    implicit val dictionary = new Dictionary
-    val parser = new Parser
-    import parser._
-    Json.toJson(Json.parse(protocol.getText).as[Protocol]).toString()
+  def eval(protocol: Text, broadcast: Boolean) = {
+    val $broadcast$ = "false"
+    Compiler.compile(protocol.getText)
   }
   override def $setSession(sessionSecret: Option[String]): KioskWallet = new KioskWallet($ergoBox.$setSession(sessionSecret))
 }
