@@ -1,5 +1,6 @@
-package kiosk.offchain
-import kiosk.offchain.DataType.Type
+package kiosk.offchain.model
+
+import kiosk.offchain.model.DataType.Type
 
 abstract class MyEnum extends Enumeration {
   def fromString(str: String): Value =
@@ -26,13 +27,13 @@ object RegNum extends MyEnum {
 
 case class UnaryConverterTypes(inputType: Type, returnType: Type)
 
-object BinaryOp extends MyEnum { // input and output types are same
-  type Op = Value
+object BinaryOperator extends MyEnum { // input and output types are same
+  type Operator = Value
   val Add, Sub, Mul, Div, Max, Min = Value
 }
 
-object UnaryOp extends MyEnum { // input and output types are same
-  type Op = Value
+object UnaryOperator extends MyEnum { // input and output types are same
+  type Operator = Value
   val Hash, Sum, Min, Max = Value
 }
 

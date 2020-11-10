@@ -3,7 +3,7 @@ package kiosk.wallet
 import kiosk.appkit.Client
 import kiosk.box.KioskBoxCreator
 import kiosk.encoding.EasyWebEncoder
-import kiosk.offchain.Compiler
+import kiosk.offchain.parser.Parser
 import kiosk.{Reader, ergo}
 import org.ergoplatform.ErgoAddressEncoder
 import org.ergoplatform.appkit.ConstantsBuilder
@@ -64,7 +64,7 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
 
   def eval(protocol: Text, broadcast: Boolean) = {
     val $broadcast$ = "false"
-    Compiler.compile(protocol.getText)
+    Parser.parse(protocol.getText)
   }
   override def $setSession(sessionSecret: Option[String]): KioskWallet = new KioskWallet($ergoBox.$setSession(sessionSecret))
 }
