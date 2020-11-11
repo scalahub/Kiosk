@@ -27,23 +27,25 @@ object Compiler {
     optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions) ++
       optSeqToSeq(p.dataInputs).flatMap(declareInput) ++
       optSeqToSeq(p.inputs).flatMap(declareInput) ++
-      optSeqToSeq(p.outputs).flatMap(declareOutput)
+      optSeqToSeq(p.outputs).flatMap(declareOutput) ++
+      p.fee.toSeq.flatMap(declareLong)
   }
 
   private def declareInput(input: Input) = {
-    implicit val optIsMulti = Some(input.boxCount.isDefined)
+    implicit val optIsMulti = Some(input.numBoxes.isDefined)
 
     opt(input.boxId) ++ opt(input.address) ++ optSeq(input.registers) ++
       optSeqToSeq(input.tokens).flatMap(declareToken) ++
       input.nanoErgs.toSeq.flatMap(declareLong) ++
-      input.boxCount.toSeq.flatMap(declareLong(_)(Some(false)))
+      input.numBoxes.toSeq.flatMap(declareLong(_)(Some(false)))
   }
 
   private def declareOutput(output: Output) = {
     implicit val optIsMulti = Some(output.numBoxes.isDefined)
 
     Seq((output.address, optIsMulti)) ++ optSeq(output.registers) ++ optSeqToSeq(output.tokens).flatMap(declareToken) ++
-      declareLong(output.nanoErgs) ++ output.numBoxes.toSeq.flatMap(declareLong(_)(Some(false)))
+      declareLong(output.nanoErgs) ++
+      output.numBoxes.toSeq.flatMap(declareLong(_)(Some(false)))
   }
 
   private def declareToken(token: Token)(implicit optIsMulti: Option[Boolean]) = {
@@ -51,6 +53,7 @@ object Compiler {
   }
 
   private def declareLong(long: Long)(implicit optIsMulti: Option[Boolean]) = {
-    Seq((long, optIsMulti)) ++ optSeq(long.filters)(Some(false))
+    Seq((long, optIsMulti)) ++
+      optSeq(long.filters)(Some(false))
   }
 }

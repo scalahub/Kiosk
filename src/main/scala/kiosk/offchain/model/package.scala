@@ -83,7 +83,7 @@ package object model {
    x = y  (allowed, value of y will be copied to register at index i of all boxes in x)
    y = x  (not allowed)
    */
-  case class Input(boxId: Option[CollByte], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], boxCount: Option[Long]) {
+  case class Input(boxId: Option[CollByte], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], numBoxes: Option[Long]) {
     atLeastOne(this, boxId, address)
   }
 
