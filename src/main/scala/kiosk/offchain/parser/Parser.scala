@@ -1,7 +1,7 @@
 package kiosk.offchain.parser
 
 import kiosk.offchain.model.{Address, BinaryOperator, CollByte, DataType, Input, Long, Output, Protocol, QuantifierOp, RangeFilter, RegNum, Register, Token, UnaryConverter, UnaryOperator}
-import kiosk.offchain.{BinaryOp, Constant, Conversion, UnaryOp}
+import kiosk.offchain.compiler._
 import play.api.libs.json._
 
 object Parser {
