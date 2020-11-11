@@ -3,19 +3,32 @@ package kiosk.offchain.compiler
 import kiosk.offchain.model._
 
 object Compiler {
+  private def fromOptSeq(s: Option[Seq[Declaration]], isMulti: Option[Boolean]): Seq[(Declaration, Option[Boolean])] = {
+    s.toSeq.flatten.map((_, isMulti))
+  }
+
+  private def fromOpt(s: Option[Declaration], isMulti: Option[Boolean]): Seq[(Declaration, Option[Boolean])] = {
+    s.toSeq.map((_, isMulti))
+  }
+
+  private def toSeqT[T](t: Option[Seq[T]]) = t.toSeq.flatten
+
   def compile(protocol: Protocol) = {
     implicit val dictionary = new Dictionary
-    val single: Option[Boolean] = Some(false)
-    val inputs: Seq[(Input, Option[Boolean])] = (protocol.dataInputs.toSeq.flatten ++ protocol.inputs.toSeq.flatten).map(input => (input, Some(input.isMulti)))
-    val declarations = protocol.constants.toSeq.flatten.map((_, single)) ++
-      protocol.unaryOps.toSeq.flatten.map((_, None)) ++
-      protocol.binaryOps.toSeq.flatten.map((_, None)) ++
-      protocol.conversions.toSeq.flatten.map((_, None)) ++
-      inputs.flatMap(input => addInput(input._1, input._2)) ++
-      protocol.outputs.toSeq.flatten.flatMap(addOutput)
+
+    val declarations: Seq[(Declaration, Option[Boolean])] =
+      fromOptSeq(protocol.constants, Some(false)) ++
+        fromOptSeq(protocol.unaryOps, None) ++
+        fromOptSeq(protocol.binaryOps, None) ++
+        fromOptSeq(protocol.conversions, None) ++
+        toSeqT(protocol.dataInputs).flatMap(addInput) ++
+        toSeqT(protocol.inputs).flatMap(addInput) ++
+        toSeqT(protocol.outputs).flatMap(addOutput)
 
     declarations.foreach {
-      case (declaration, isMulti) => dictionary.addDeclaration(declaration, isMulti)
+      case (declaration, isMulti) =>
+        println(s"Adding declaration ${declaration.name}: ${declaration.`type`} -> ${declaration.refs}")
+        dictionary.addDeclaration(declaration, isMulti)
     }
     println("\n== USED ==")
     dictionary.print(isLazy = false)
@@ -23,24 +36,28 @@ object Compiler {
     dictionary.print(isLazy = true)
   }
 
-  def addInput(input: Input, isMulti: Option[Boolean]): Seq[(Declaration, Option[Boolean])] = {
-    input.boxId.toSeq.map((_, isMulti)) ++
-      input.address.toSeq.map((_, isMulti)) ++
-      input.registers.toSeq.flatten.map((_, isMulti)) ++
-      input.tokens.toSeq.flatten.flatMap(token => addToken(token, isMulti)) ++
-      input.nanoErgs.toSeq.map((_, isMulti)) ++
-      input.boxCount.toSeq.map((_, isMulti))
+  def addInput(input: Input): Seq[(Declaration, Option[Boolean])] = {
+    val optionMulti = Some(input.boxCount.isDefined)
+
+    fromOpt(input.boxId, optionMulti) ++
+      fromOpt(input.address, optionMulti) ++
+      fromOptSeq(input.registers, optionMulti) ++
+      toSeqT(input.tokens).flatMap(addToken(_, optionMulti)) ++
+      fromOpt(input.nanoErgs, optionMulti) ++
+      fromOpt(input.boxCount, optionMulti)
   }
 
   def addOutput(output: Output): Seq[(Declaration, Option[Boolean])] = {
-    Seq((output.address, None)) ++
-      output.registers.toSeq.flatten.map((_, None)) ++
-      output.tokens.toSeq.flatten.flatMap(token => addToken(token, None)) ++
-      Seq((output.nanoErgs, None))
+    val optionMulti = Some(output.boxCount.isDefined)
+
+    Seq((output.address, optionMulti)) ++
+      fromOptSeq(output.registers, optionMulti) ++
+      toSeqT(output.tokens).flatMap(addToken(_, optionMulti)) ++
+      Seq((output.nanoErgs, optionMulti)) ++
+      fromOpt(output.boxCount, optionMulti)
   }
 
   def addToken(token: Token, isMulti: Option[Boolean]): Seq[(Declaration, Option[Boolean])] = {
-    token.id.toSeq.map((_, isMulti)) ++
-      token.numTokens.toSeq.map((_, isMulti))
+    fromOpt(token.id, isMulti) ++ fromOpt(token.numTokens, isMulti)
   }
 }

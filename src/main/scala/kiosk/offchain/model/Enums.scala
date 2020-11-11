@@ -16,8 +16,6 @@ object QuantifierOp extends MyEnum {
 object DataType extends MyEnum {
   type Type = Value
   val Long, Int, CollByte, GroupElement, Address, ErgoTree, Lazy = Value
-
-  val validExternalTypes = Seq(Long, Int, CollByte, GroupElement, Address, ErgoTree)
 }
 
 object RegNum extends MyEnum {
@@ -25,7 +23,7 @@ object RegNum extends MyEnum {
   val R4, R5, R6, R7, R8, R9 = Value
 }
 
-case class UnaryConverterTypes(inputType: Type, returnType: Type)
+case class ConvertFromTo(inputType: Type, returnType: Type)
 
 object BinaryOperator extends MyEnum { // input and output types are same
   type Operator = Value
@@ -42,12 +40,12 @@ object UnaryConverter extends MyEnum { // input and output types are different
   val ProveDlog, ToAddress, ToErgoTree, ToCollByte, ToLong, ToInt = Value
   def getTypes(converter: Converter) = {
     converter match {
-      case ProveDlog  => UnaryConverterTypes(DataType.GroupElement, DataType.ErgoTree)
-      case ToAddress  => UnaryConverterTypes(DataType.ErgoTree, DataType.Address)
-      case ToErgoTree => UnaryConverterTypes(DataType.Address, DataType.ErgoTree)
-      case ToCollByte => UnaryConverterTypes(DataType.ErgoTree, DataType.CollByte)
-      case ToLong     => UnaryConverterTypes(DataType.Int, DataType.Long)
-      case ToInt      => UnaryConverterTypes(DataType.Long, DataType.Int)
+      case ProveDlog  => ConvertFromTo(DataType.GroupElement, DataType.ErgoTree)
+      case ToAddress  => ConvertFromTo(DataType.ErgoTree, DataType.Address)
+      case ToErgoTree => ConvertFromTo(DataType.Address, DataType.ErgoTree)
+      case ToCollByte => ConvertFromTo(DataType.ErgoTree, DataType.CollByte)
+      case ToLong     => ConvertFromTo(DataType.Int, DataType.Long)
+      case ToInt      => ConvertFromTo(DataType.Long, DataType.Int)
     }
   }
 }

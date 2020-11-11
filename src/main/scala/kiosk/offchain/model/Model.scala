@@ -27,44 +27,58 @@ case class Protocol(constants: Option[Seq[Constant]],
 
 case class RangeFilter(op: QuantifierOp.Op, value: Option[scala.Long], ref: Option[String]) extends Declaration {
   atMostOne(this, value, ref)
-  override lazy val isLazy = false
-  override lazy val defines = None
-  override lazy val references = ref.map(refName => Variable(refName, DataType.Long)).toSeq
+  override lazy val name = None
+  override lazy val `type` = DataType.Long
+  override lazy val refs = ref.toSeq
 }
 
 case class Address(name: Option[String], value: Option[String], ref: Option[String]) extends Declaration {
   atMostOne(this, value, ref)
-  override lazy val isLazy = false
-  override lazy val defines: Option[Variable] = name.map(defName => Variable(defName, DataType.Address))
-  override lazy val references = ref.map(refName => Variable(refName, DataType.Address)).toSeq
+  override lazy val refs = ref.toSeq
+  override lazy val `type` = DataType.Address
 }
 
 case class Register(name: Option[String], num: RegNum.Num, `type`: DataType.Type, value: Option[String], ref: Option[String]) extends Declaration {
   atMostOne(this, value, ref)
-  override lazy val isLazy = false
-  override lazy val defines = name.map(defName => compiler.Variable(defName, `type`))
-  override lazy val references = ref.map(refName => compiler.Variable(refName, `type`)).toSeq
+  override lazy val refs = ref.toSeq
 }
 
 case class CollByte(name: Option[String], value: Option[String], ref: Option[String]) extends Declaration {
   atMostOne(this, value, ref)
-  override lazy val isLazy = false
-  override lazy val defines = name.map(defName => Variable(defName, DataType.CollByte))
-  override lazy val references = ref.map(refName => Variable(refName, DataType.CollByte)).toSeq
+  override lazy val refs = ref.toSeq
+  override lazy val `type` = DataType.CollByte
 }
 
 case class Long(name: Option[String], value: Option[scala.Long], ref: Option[String], filters: Option[Seq[RangeFilter]]) extends Declaration {
   atMostOne(this, value, ref, filters)
-  override lazy val isLazy: Boolean = false
-  override lazy val defines = name.map(defName => Variable(defName, DataType.Long))
-  override lazy val references = ref.map(refName => Variable(refName, DataType.Long)).toSeq
+  override lazy val refs = ref.toSeq
+  override lazy val `type` = DataType.Long
 }
 
 case class Token(index: Option[Int], id: Option[CollByte], numTokens: Option[Long])
 
+/*
+ If boxCount is defined then we will assume that the Input refers to a "multi" input, that is, a definition that matches multiple input boxes.
+ To specify a single input (most common scenario), ensure that this value is kept empty.
+
+ A "multi" definition is treated different to a single one even if the final number of boxes matched turn out to be 0 or 1 (because the compiler does not know in advance how many boxes will actually be matched)
+
+ For instance a multi-address x corresponds to a sequence of addresses, not a single address.
+ A single-address y cannot be assigned the value x but the reverse is possible.
+
+ x = y  (allowed, single address of y will be copied to all boxes in x)
+ y = x  (not allowed, since we cannot convert multiple rows to single row)
+
+ The same rules apply for other types such as CollByte, Long, etc
+
+ if a multi register x has index i
+ and y is any single register then the following rules apply
+
+ x = y  (allowed, value of y will be copied to register at index i of all boxes in x)
+ y = x  (not allowed)
+ */
 case class Input(boxId: Option[CollByte], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], boxCount: Option[Long]) {
   atLeastOne(this, boxId, address)
-  def isMulti = boxCount.isDefined
 }
 
-case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long)
+case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long, boxCount: Option[Long])

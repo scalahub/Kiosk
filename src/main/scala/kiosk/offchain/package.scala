@@ -1,35 +1,32 @@
 package kiosk
 
-import kiosk.offchain.compiler
 import kiosk.offchain.compiler.{Declaration, Variable}
 import kiosk.offchain.model.{BinaryOperator, DataType, UnaryConverter, UnaryOperator}
 
 package object offchain {
-  case class Constant(name: String, `type`: DataType.Type, value: String) extends Declaration {
-    if (!DataType.validExternalTypes.contains(`type`))
-      throw new Exception(s"Invalid type ${`type`} for $name. Permitted types are [${DataType.validExternalTypes.map(_.toString).reduceLeft(_ + ", " + _)}]")
-    override lazy val isLazy = false
-    override lazy val defines = Some(Variable(name, `type`))
-    override lazy val references = Nil
+  case class Constant(`val`: String, `type`: DataType.Type, value: String) extends Declaration {
+    require(`type` != DataType.Lazy, "Data type cannot be lazy")
+    override lazy val name = Some(`val`)
+    override lazy val refs = Nil
   }
 
-  case class BinaryOp(name: String, left: String, op: BinaryOperator.Operator, right: String) extends Declaration {
-    override lazy val references = Seq(Variable(left, DataType.Lazy), Variable(right, DataType.Lazy))
-    override lazy val defines: Option[Variable] = Some(Variable(name, DataType.Lazy))
-    override lazy val isLazy = true
+  case class BinaryOp(`val`: String, left: String, op: BinaryOperator.Operator, right: String) extends Declaration {
+    override lazy val name = Some(`val`)
+    override lazy val refs = Seq(left, right)
+    override lazy val `type` = DataType.Lazy
   }
 
-  case class UnaryOp(name: String, operand: String, op: UnaryOperator.Operator) extends Declaration {
-    override lazy val references = Seq(Variable(name, DataType.Lazy))
-    override lazy val defines: Option[Variable] = Some(Variable(name, DataType.Lazy))
-    override lazy val isLazy = true
+  case class UnaryOp(`val`: String, operand: String, op: UnaryOperator.Operator) extends Declaration {
+    override lazy val name = Some(`val`)
+    override lazy val refs = Seq(operand)
+    override lazy val `type` = DataType.Lazy
   }
 
-  case class Conversion(name: String, operand: String, converter: UnaryConverter.Converter) extends Declaration {
+  case class Conversion(`val`: String, operand: String, converter: UnaryConverter.Converter) extends Declaration {
     lazy val unaryConverterTypes = UnaryConverter.getTypes(converter)
-    override lazy val references = Seq(compiler.Variable(name, unaryConverterTypes.inputType))
-    override lazy val defines: Option[Variable] = Some(compiler.Variable(name, unaryConverterTypes.returnType))
-    override lazy val isLazy = true
+    override lazy val name = Some(`val`)
+    override lazy val refs = Seq(operand)
+    override lazy val `type` = DataType.Lazy
   }
 
   def atMostOne(obj: Any, options: Option[_]*): Unit = {
