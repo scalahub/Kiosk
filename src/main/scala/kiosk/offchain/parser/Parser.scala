@@ -1,6 +1,6 @@
 package kiosk.offchain.parser
 
-import kiosk.offchain.model.{Address, BinaryOperator, CollByte, DataType, Input, Long, Output, Protocol, QuantifierOp, RangeFilter, RegNum, Register, Token, UnaryConverter, UnaryOperator}
+import kiosk.offchain.model.{Address, BinaryOperator, CollByte, DataType, Input, Long, Output, Protocol, QuantifierOp, Filter, RegNum, Register, Token, UnaryConverter, UnaryOperator}
 import kiosk.offchain.compiler._
 import play.api.libs.json._
 
@@ -51,7 +51,7 @@ object Parser {
   private implicit val formatBinaryOpResult = Json.format[BinaryOp]
   private implicit val formatUnaryOpResult = Json.format[UnaryOp]
   private implicit val formatUnaryConverterResult = Json.format[Conversion]
-  private implicit val formatLongFilter = Json.format[RangeFilter]
+  private implicit val formatLongFilter = Json.format[Filter]
   private implicit val formatLong = Json.format[Long]
   private implicit val formatRegister = Json.format[Register]
   private implicit val formatAddress = Json.format[Address]

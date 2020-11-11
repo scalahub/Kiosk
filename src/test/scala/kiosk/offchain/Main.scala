@@ -36,9 +36,9 @@ object Main {
     lazy val myRegister3 = Register(Some("myRegister3"), RegNum.R4, DataType.CollByte, None, ref = Some("myRegister1"))
     lazy val myRegister4 = Register(Some("myRegister4"), RegNum.R4, DataType.CollByte, None, ref = Some("myRegister2"))
 
-    lazy val myQuantifier1 = RangeFilter(QuantifierOp.Ge, Some(100), None)
-    lazy val myQuantifier2 = RangeFilter(QuantifierOp.Ge, Some(10000), None)
-    lazy val myQuantifier3 = RangeFilter(QuantifierOp.Le, None, Some("myLong2"))
+    lazy val myQuantifier1 = Filter(QuantifierOp.Ge, Some(100), None)
+    lazy val myQuantifier2 = Filter(QuantifierOp.Ge, Some(10000), None)
+    lazy val myQuantifier3 = Filter(QuantifierOp.Le, None, Some("myLong2"))
 
     lazy val myToken1 = Token(
       index = Some(1),

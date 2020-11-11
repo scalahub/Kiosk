@@ -5,7 +5,7 @@ import kiosk.offchain.model._
 object Compiler {
   def compile(protocol: Protocol) = {
     implicit val dictionary = new Dictionary
-    declare(protocol).foreach {
+    declareProtocol(protocol).foreach {
       case (declaration, optIsMulti) =>
         println(s"Adding ${declaration.name.getOrElse("_")}: ${declaration.`type`} -> ${declaration.refs}")
         dictionary.addDeclaration(declaration, optIsMulti)
@@ -16,44 +16,41 @@ object Compiler {
     dictionary.print(isLazy = true)
   }
 
-  private def fromOptSeq(s: Option[Seq[Declaration]], optIsMulti: Option[Boolean]) = s.toSeq.flatten.map((_, optIsMulti))
+  private def optSeq(s: Option[Seq[Declaration]])(implicit optIsMulti: Option[Boolean]) = s.toSeq.flatten.map((_, optIsMulti))
 
-  private def fromOpt(s: Option[Declaration], optIsMulti: Option[Boolean]) = s.toSeq.map((_, optIsMulti))
+  private def opt(s: Option[Declaration])(implicit optIsMulti: Option[Boolean]) = s.toSeq.map((_, optIsMulti))
 
-  private def toSeq[T](t: Option[Seq[T]]) = t.toSeq.flatten
+  private def optSeqToSeq[T](t: Option[Seq[T]]) = t.toSeq.flatten
 
-  private def declare(protocol: Protocol): Seq[(Declaration, Option[Boolean])] = {
-    fromOptSeq(protocol.constants, None) ++
-      fromOptSeq(protocol.unaryOps, None) ++
-      fromOptSeq(protocol.binaryOps, None) ++
-      fromOptSeq(protocol.conversions, None) ++
-      toSeq(protocol.dataInputs).flatMap(declare) ++
-      toSeq(protocol.inputs).flatMap(declare) ++
-      toSeq(protocol.outputs).flatMap(declare)
+  private def declareProtocol(p: Protocol) = {
+    implicit val optIsMulti: Option[Boolean] = None
+    optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions) ++
+      optSeqToSeq(p.dataInputs).flatMap(declareInput) ++
+      optSeqToSeq(p.inputs).flatMap(declareInput) ++
+      optSeqToSeq(p.outputs).flatMap(declareOutput)
   }
 
-  private def declare(input: Input): Seq[(Declaration, Option[Boolean])] = {
-    val optIsMulti = Some(input.isMulti)
+  private def declareInput(input: Input) = {
+    implicit val optIsMulti = Some(input.boxCount.isDefined)
 
-    fromOpt(input.boxId, optIsMulti) ++
-      fromOpt(input.address, optIsMulti) ++
-      fromOptSeq(input.registers, optIsMulti) ++
-      toSeq(input.tokens).flatMap(declare(_, optIsMulti)) ++
-      fromOpt(input.nanoErgs, optIsMulti) ++
-      fromOpt(input.boxCount, optIsMulti)
+    opt(input.boxId) ++ opt(input.address) ++ optSeq(input.registers) ++
+      optSeqToSeq(input.tokens).flatMap(declareToken) ++
+      input.nanoErgs.toSeq.flatMap(declareLong) ++
+      input.boxCount.toSeq.flatMap(declareLong(_)(Some(false)))
   }
 
-  private def declare(output: Output): Seq[(Declaration, Option[Boolean])] = {
-    val optIsMulti = Some(output.isMulti)
+  private def declareOutput(output: Output) = {
+    implicit val optIsMulti = Some(output.numBoxes.isDefined)
 
-    Seq((output.address, optIsMulti)) ++
-      fromOptSeq(output.registers, optIsMulti) ++
-      toSeq(output.tokens).flatMap(declare(_, optIsMulti)) ++
-      Seq((output.nanoErgs, optIsMulti)) ++
-      fromOpt(output.boxCount, optIsMulti)
+    Seq((output.address, optIsMulti)) ++ optSeq(output.registers) ++ optSeqToSeq(output.tokens).flatMap(declareToken) ++
+      declareLong(output.nanoErgs) ++ output.numBoxes.toSeq.flatMap(declareLong(_)(Some(false)))
   }
 
-  private def declare(token: Token, optIsMulti: Option[Boolean]): Seq[(Declaration, Option[Boolean])] = {
-    fromOpt(token.id, optIsMulti) ++ fromOpt(token.numTokens, optIsMulti)
+  private def declareToken(token: Token)(implicit optIsMulti: Option[Boolean]) = {
+    opt(token.id) ++ token.numTokens.toSeq.flatMap(declareLong)
+  }
+
+  private def declareLong(long: Long)(implicit optIsMulti: Option[Boolean]) = {
+    Seq((long, optIsMulti)) ++ optSeq(long.filters)(Some(false))
   }
 }

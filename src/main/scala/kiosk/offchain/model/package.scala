@@ -26,14 +26,6 @@ package object model {
                       outputs: Option[Seq[Output]],
                       fee: Option[Long])
 
-  case class RangeFilter(op: QuantifierOp.Op, value: Option[scala.Long], ref: Option[String]) extends Declaration {
-    atMostOne(this, value, ref)
-    override lazy val name = None
-    override lazy val `type` = DataType.Long
-    override lazy val refs = ref.toSeq
-    override lazy val refTypes = refs.map(_ => DataType.Long)
-  }
-
   case class Address(name: Option[String], value: Option[String], ref: Option[String]) extends Declaration {
     atMostOne(this, value, ref)
     override lazy val refs = ref.toSeq
@@ -54,7 +46,15 @@ package object model {
     override lazy val refTypes = refs.map(_ => DataType.CollByte)
   }
 
-  case class Long(name: Option[String], value: Option[scala.Long], ref: Option[String], filters: Option[Seq[RangeFilter]]) extends Declaration {
+  case class Filter(op: QuantifierOp.Op, value: Option[scala.Long], ref: Option[String]) extends Declaration {
+    atMostOne(this, value, ref)
+    override lazy val name = None
+    override lazy val `type` = DataType.Long
+    override lazy val refs = ref.toSeq
+    override lazy val refTypes = refs.map(_ => DataType.Long)
+  }
+
+  case class Long(name: Option[String], value: Option[scala.Long], ref: Option[String], filters: Option[Seq[Filter]]) extends Declaration {
     atMostOne(this, value, ref, filters)
     override lazy val refs = ref.toSeq
     override lazy val `type` = DataType.Long
@@ -85,10 +85,7 @@ package object model {
    */
   case class Input(boxId: Option[CollByte], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], boxCount: Option[Long]) {
     atLeastOne(this, boxId, address)
-    def isMulti = boxCount.isDefined
   }
 
-  case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long, boxCount: Option[Long]) {
-    def isMulti = boxCount.isDefined
-  }
+  case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long, numBoxes: Option[Long])
 }
