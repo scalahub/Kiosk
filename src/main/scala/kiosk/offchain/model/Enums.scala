@@ -6,22 +6,20 @@ abstract class MyEnum extends Enumeration {
   def toString(op: Value): String = op.toString
 }
 
-object QuantifierOp extends MyEnum {
+object FilterOp extends MyEnum {
   type Op = Value
   val Le, Ge, Lt, Gt = Value
 }
 
 object DataType extends MyEnum {
   type Type = Value
-  val Long, Int, CollByte, GroupElement, Address, ErgoTree, Lazy = Value
+  val Long, Int, CollByte, GroupElement, Address, ErgoTree, Unknown = Value
 }
 
 object RegNum extends MyEnum {
   type Num = Value
   val R4, R5, R6, R7, R8, R9 = Value
 }
-
-case class FromTo(from: DataType.Type, to: DataType.Type)
 
 object BinaryOperator extends MyEnum { // input and output types are same
   type Operator = Value
@@ -32,6 +30,8 @@ object UnaryOperator extends MyEnum { // input and output types are same
   type Operator = Value
   val Hash, Sum, Min, Max = Value
 }
+
+case class FromTo(from: DataType.Type, to: DataType.Type)
 
 object UnaryConverter extends MyEnum { // input and output types are different
   type Converter = Value

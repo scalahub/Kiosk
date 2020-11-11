@@ -36,9 +36,9 @@ object Main {
     lazy val myRegister3 = Register(Some("myRegister3"), RegNum.R4, DataType.CollByte, None, ref = Some("myRegister1"))
     lazy val myRegister4 = Register(Some("myRegister4"), RegNum.R4, DataType.CollByte, None, ref = Some("myRegister2"))
 
-    lazy val myQuantifier1 = Filter(QuantifierOp.Ge, Some(100), None)
-    lazy val myQuantifier2 = Filter(QuantifierOp.Ge, Some(10000), None)
-    lazy val myQuantifier3 = Filter(QuantifierOp.Le, None, Some("myLong2"))
+//    lazy val myQuantifier1 = Filter(FilterOp.Ge, Some(100), None)
+//    lazy val myQuantifier2 = Filter(FilterOp.Ge, Some(10000), None)
+//    lazy val myQuantifier3 = Filter(FilterOp.Le, None, Some("myLong2"))
 
     lazy val myToken1 = Token(
       index = Some(1),
@@ -48,7 +48,7 @@ object Main {
           name = Some("someLong1"),
           value = None,
           ref = None,
-          filters = Some(Seq(myQuantifier1))
+          op = Some(FilterOp.Le)
         ))
     )
 
@@ -60,15 +60,16 @@ object Main {
           name = Some("someLong2"),
           value = None,
           ref = None,
-          filters = Some(Seq(myQuantifier1))
-        ))
+          op = Some(FilterOp.Gt)
+        )
+      )
     )
 
     lazy val myToken3 = Token(
       index = Some(1),
       id = None,
       numTokens = Some(
-        model.Long(name = Some("someLong3"), value = None, ref = None, filters = Some(Seq(myQuantifier1)))
+        model.Long(name = Some("someLong3"), value = None, ref = None, op = Some(FilterOp.Gt))
       )
     )
 
@@ -77,8 +78,7 @@ object Main {
       address = None,
       registers = Some(Seq(myRegister3)),
       tokens = Some(Seq(myToken1)),
-      nanoErgs = Some(model.Long(name = None, value = None, ref = None, filters = Some(Seq(myQuantifier2)))),
-      None
+      nanoErgs = Some(model.Long(name = None, value = None, ref = None, op = Some(FilterOp.Gt)))
     )
 
     lazy val myInput2 = Input(
@@ -86,8 +86,7 @@ object Main {
       Some(Address(name = None, value = Some("someId"), ref = None)),
       registers = Some(Seq(myRegister4)),
       tokens = Some(Seq(myToken2)),
-      nanoErgs = Some(model.Long(name = None, value = None, ref = None, filters = Some(Seq(myQuantifier2)))),
-      Some(model.Long(name = Some("someLong4"), value = None, ref = None, filters = Some(Seq(myQuantifier1))))
+      nanoErgs = Some(model.Long(name = None, value = None, ref = None, op = Some(FilterOp.Gt)))
     )
 
     lazy val myInput3 = Input(
@@ -95,8 +94,7 @@ object Main {
       address = Some(Address(name = None, value = Some("someAddress"), ref = None)),
       registers = Some(Seq(myRegister1, myRegister2)),
       tokens = Some(Seq(myToken3)),
-      nanoErgs = Some(model.Long(name = None, value = None, ref = None, filters = Some(Seq(myQuantifier3)))),
-      None
+      nanoErgs = Some(model.Long(name = None, value = None, ref = None, op = Some(FilterOp.Gt)))
     )
 
     lazy val protocol = Protocol(
@@ -118,7 +116,7 @@ object Main {
     val protocolToJsonToProtocol = Parser.parse(protocolToJson.toString())
     println(protocolToJson)
     val str =
-      """{"constants":[{"val":"myLong1","type":"Long","value":"1234L"},{"val":"myCollByte","type":"CollByte","value":"123abc"},{"val":"myInt","type":"Long","value":"1234"},{"val":"myTokenId","type":"CollByte","value":"123abc"},{"val":"myGroupElement","type":"GroupElement","value":"123abc"}],"binaryOps":[{"val":"myLong2","left":"myLong1","op":"Add","right":"myInt"},{"val":"myLong3","left":"myLong2","op":"Max","right":"myLong1"},{"val":"myLong4","left":"myLong2","op":"Add","right":"myLong3"},{"val":"myLong5","left":"myLong4","op":"Add","right":"myLong2"},{"val":"myLong6","left":"myLong5","op":"Add","right":"myLong4"}],"unaryOps":[{"val":"myLong7","operand":"myLong2","op":"Sum"},{"val":"myLong8","operand":"myLong7","op":"Sum"}],"conversions":[{"to":"myErgoTree1","from":"myGroupElement","converter":"ProveDlog"},{"to":"myCollByte2","from":"myErgoTree1","converter":"ToCollByte"}],"dataInputs":[{"address":{"value":"someAddress"},"registers":[{"name":"myRegister1","num":"R4","type":"CollByte","ref":"myTokenId"},{"name":"myRegister2","num":"R4","type":"CollByte","ref":"myCollByte"}],"tokens":[{"index":1,"numTokens":{"name":"someLong3","filters":[{"op":"Ge","value":100}]}}],"nanoErgs":{"filters":[{"op":"Le","ref":"myLong2"}]}},{"address":{"value":"someId"},"registers":[{"name":"myRegister4","num":"R4","type":"CollByte","ref":"myRegister2"}],"tokens":[{"index":1,"id":{"value":"123abc"},"numTokens":{"name":"someLong2","filters":[{"op":"Ge","value":100}]}}],"nanoErgs":{"filters":[{"op":"Ge","value":10000}]},"boxCount":{"name":"someLong4","filters":[{"op":"Ge","value":100}]}}],"inputs":[{"boxId":{"value":"someId"},"registers":[{"name":"myRegister3","num":"R4","type":"CollByte","ref":"myRegister1"}],"tokens":[{"index":1,"id":{"value":"123abc"},"numTokens":{"name":"someLong1","filters":[{"op":"Ge","value":100}]}}],"nanoErgs":{"filters":[{"op":"Ge","value":10000}]}}]}
+      """{"constants":[{"val":"myLong1","type":"Long","value":"1234L"},{"val":"myCollByte","type":"CollByte","value":"123abc"},{"val":"myInt","type":"Long","value":"1234"},{"val":"myTokenId","type":"CollByte","value":"123abc"},{"val":"myGroupElement","type":"GroupElement","value":"123abc"}],"binaryOps":[{"val":"myLong2","left":"myLong1","op":"Add","right":"myInt"},{"val":"myLong3","left":"myLong2","op":"Max","right":"myLong1"},{"val":"myLong4","left":"myLong2","op":"Add","right":"myLong3"},{"val":"myLong5","left":"myLong4","op":"Add","right":"myLong2"},{"val":"myLong6","left":"myLong5","op":"Add","right":"myLong4"}],"unaryOps":[{"val":"myLong7","operand":"myLong2","op":"Sum"},{"val":"myLong8","operand":"myLong7","op":"Sum"}],"conversions":[{"to":"myErgoTree1","from":"myGroupElement","converter":"ProveDlog"},{"to":"myCollByte2","from":"myErgoTree1","converter":"ToCollByte"}],"dataInputs":[{"address":{"value":"someAddress"},"registers":[{"name":"myRegister1","num":"R4","type":"CollByte","ref":"myTokenId"},{"name":"myRegister2","num":"R4","type":"CollByte","ref":"myCollByte"}],"tokens":[{"index":1,"numTokens":{"name":"someLong3","op":"Gt"}}],"nanoErgs":{"op":"Gt"}},{"address":{"value":"someId"},"registers":[{"name":"myRegister4","num":"R4","type":"CollByte","ref":"myRegister2"}],"tokens":[{"index":1,"id":{"value":"123abc"},"numTokens":{"name":"someLong2","op":"Gt"}}],"nanoErgs":{"op":"Gt"}}],"inputs":[{"boxId":{"value":"someId"},"registers":[{"name":"myRegister3","num":"R4","type":"CollByte","ref":"myRegister1"}],"tokens":[{"index":1,"id":{"value":"123abc"},"numTokens":{"name":"someLong1","op":"Le"}}],"nanoErgs":{"op":"Gt"}}]}
         |""".stripMargin
     val strToProtocol = Parser.parse(str)
     offchain.compiler.Compiler.compile(protocol)

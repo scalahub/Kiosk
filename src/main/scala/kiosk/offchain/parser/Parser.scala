@@ -1,6 +1,6 @@
 package kiosk.offchain.parser
 
-import kiosk.offchain.model.{Address, BinaryOperator, CollByte, DataType, Input, Long, Output, Protocol, QuantifierOp, Filter, RegNum, Register, Token, UnaryConverter, UnaryOperator}
+import kiosk.offchain.model.{Address, BinaryOperator, CollByte, DataType, Input, Long, Output, Protocol, FilterOp, RegNum, Register, Token, UnaryConverter, UnaryOperator}
 import kiosk.offchain.compiler._
 import play.api.libs.json._
 
@@ -34,11 +34,11 @@ object Parser {
     override def writes(o: RegNum.Num): JsValue = JsString(RegNum.toString(o))
   }
 
-  private implicit val readsQuantifierOp = new Reads[QuantifierOp.Op] {
-    override def reads(json: JsValue): JsResult[QuantifierOp.Op] = JsSuccess(QuantifierOp.fromString(json.as[String]))
+  private implicit val readsQuantifierOp = new Reads[FilterOp.Op] {
+    override def reads(json: JsValue): JsResult[FilterOp.Op] = JsSuccess(FilterOp.fromString(json.as[String]))
   }
-  private implicit val writesQuantifierOp = new Writes[QuantifierOp.Op] {
-    override def writes(o: QuantifierOp.Op): JsValue = JsString(QuantifierOp.toString(o))
+  private implicit val writesQuantifierOp = new Writes[FilterOp.Op] {
+    override def writes(o: FilterOp.Op): JsValue = JsString(FilterOp.toString(o))
   }
 
   private implicit val readsDataType = new Reads[DataType.Type] {
@@ -51,7 +51,6 @@ object Parser {
   private implicit val formatBinaryOpResult = Json.format[BinaryOp]
   private implicit val formatUnaryOpResult = Json.format[UnaryOp]
   private implicit val formatUnaryConverterResult = Json.format[Conversion]
-  private implicit val formatLongFilter = Json.format[Filter]
   private implicit val formatLong = Json.format[Long]
   private implicit val formatRegister = Json.format[Register]
   private implicit val formatAddress = Json.format[Address]
