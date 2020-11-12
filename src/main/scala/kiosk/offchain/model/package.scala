@@ -30,12 +30,12 @@ package object model {
   case class Address(name: Option[String], value: Option[String], ref: Option[String]) extends Declaration {
     atMostOne(this, value, ref)
     override lazy val refs = ref.toSeq
-    override lazy val `type` = DataType.Address
+    override var `type` = DataType.Address
     override lazy val refTypes = refs.map(_ => DataType.Address)
     override lazy val isLazy = false
   }
 
-  case class Register(name: Option[String], num: RegNum.Num, `type`: DataType.Type, value: Option[String], ref: Option[String]) extends Declaration {
+  case class Register(name: Option[String], num: RegNum.Num, var `type`: DataType.Type, value: Option[String], ref: Option[String]) extends Declaration {
     atMostOne(this, value, ref)
     override lazy val refs = ref.toSeq
     override lazy val refTypes = refs.map(_ => `type`)
@@ -45,7 +45,7 @@ package object model {
   case class CollByte(name: Option[String], value: Option[String], ref: Option[String]) extends Declaration {
     atMostOne(this, value, ref)
     override lazy val refs = ref.toSeq
-    override lazy val `type` = DataType.CollByte
+    override var `type` = DataType.CollByte
     override lazy val refTypes = refs.map(_ => DataType.CollByte)
     override lazy val isLazy = false
   }
@@ -53,7 +53,7 @@ package object model {
   case class Long(name: Option[String], value: Option[scala.Long], ref: Option[String], op: Option[FilterOp.Op]) extends Declaration {
     atMostOne(this, value, ref)
     override lazy val refs = ref.toSeq
-    override lazy val `type` = DataType.Long
+    override var `type` = DataType.Long
     override lazy val refTypes = refs.map(_ => DataType.Long)
     override lazy val isLazy = false
   }

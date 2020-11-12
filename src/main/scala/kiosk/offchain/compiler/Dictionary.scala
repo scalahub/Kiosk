@@ -9,29 +9,30 @@ class Dictionary {
   private val dict = MMap[String, DictionaryObject]()
   private val lazyRefs = MMap[String, Seq[Variable]]()
 
-  def print(isLazy: Boolean) = dict collect {
-    case (key, value) if value.isUnresolved == isLazy =>
-      println(s"$key: ${value.`type`}")
+  def print(unresolved: Boolean) = dict collect {
+    case (key, value) if value.isUnresolved == unresolved =>
+      println(s"$key: ${value.declaration.`type`}")
   }
 
   private def resolve(name: String, `type`: DataType.Type, stack: Seq[String]): Unit = {
     require(`type` != DataType.Unknown)
     dict.get(name) match {
-      case Some(d) if Seq(`type`, DataType.Unknown).contains(d.`type`) =>
+      case Some(d) if Seq(`type`, DataType.Unknown) contains d.declaration.`type` =>
         if (d.isUnresolved) {
           dict -= name // remove temporarily
-          lazyRefs(name).foreach(ref => resolve(ref.name, if (ref.`type` == DataType.Unknown) `type` else ref.`type`, stack :+ name))
-          dict += name -> d.copy(isUnresolved = false, `type` = `type`)
+          lazyRefs(name).foreach(ref => resolve(ref.name, if (ref.`type` == DataType.Unknown) `type` else ref.`type`, stack :+ d.declaration.toString))
+          d.declaration.updateType(`type`)
+          dict += name -> d.copy(isUnresolved = false)
         }
       case Some(d) =>
-        throw new Exception(s"Invalid type found for $name. Need ${`type`}. Found ${d.`type`}. Stack $stack")
+        throw new Exception(s"Needed $name: ${`type`}. Found ${d.declaration}. Stack $stack")
       case _ =>
-        throw new Exception(s"Reference to undefined variable $name: ${`type`}")
+        throw new Exception(s"Reference to undefined variable $name: ${`type`}. Stack $stack")
     }
   }
 
   private def add(name: String, dictionaryObject: DictionaryObject) = {
-    if (dict.contains(name)) throw new Exception(s"Variable $name already exists as ${dict(name).`type`}")
+    if (dict.contains(name)) throw new Exception(s"Variable $name already exists as ${dict(name).declaration}")
     else dict += name -> dictionaryObject
   }
 
@@ -44,10 +45,10 @@ class Dictionary {
     if (declaration.isLazy) {
       addLazyRefs(declaration.name.get, declaration.references)
     } else {
-      declaration.references.map(reference => resolve(reference.name, reference.`type`, declaration.name.toSeq))
+      declaration.references.map(reference => resolve(reference.name, reference.`type`, Seq(declaration.toString)))
     }
 
-    declaration.name.map(add(_, DictionaryObject(declaration.isLazy, declaration.`type`, declaration)))
+    declaration.name.map(add(_, DictionaryObject(declaration.isLazy, declaration)))
   }
 
   addDeclaration(Height)

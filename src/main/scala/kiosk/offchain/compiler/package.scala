@@ -1,26 +1,30 @@
 package kiosk.offchain
 
-import kiosk.offchain.model.DataType.Type
 import kiosk.offchain.model.{BinaryOperator, DataType, UnaryConverter, UnaryOperator}
 
 package object compiler {
-  case class DictionaryObject(isUnresolved: Boolean, `type`: DataType.Type, anyRef: Declaration)
+  case class DictionaryObject(isUnresolved: Boolean, declaration: Declaration)
 
   case class Variable(name: String, `type`: DataType.Type)
 
   object Height extends Declaration {
     override lazy val name: Option[String] = Some("HEIGHT")
     override lazy val refs: Seq[String] = Nil
-    override lazy val refTypes: Seq[Type] = Nil
-    override lazy val `type` = DataType.Int
+    override lazy val refTypes: Seq[DataType.Type] = Nil
+    override var `type` = DataType.Int
     override lazy val isLazy = false
   }
 
   trait Declaration {
     val name: Option[String]
-    val `type`: DataType.Type
+    def updateType(newType: DataType.Type) = {
+      `type` = newType
+      this
+    }
+    var `type`: DataType.Type
     val refs: Seq[String]
     val refTypes: Seq[DataType.Type]
+    override def toString = name.getOrElse("_") + ": " + `type`
 
     lazy val references = (refs zip refTypes) map { case (ref, refType) => Variable(ref, refType) }
     val isLazy: Boolean
@@ -30,7 +34,7 @@ package object compiler {
     if (isLazy && name.isEmpty) throw new Exception("Empty name not allowed for lazy references")
   }
 
-  case class Constant(`val`: String, `type`: DataType.Type, value: String) extends Declaration {
+  case class Constant(`val`: String, var `type`: DataType.Type, value: String) extends Declaration {
     require(`type` != DataType.Unknown, "Data type cannot be lazy")
     override lazy val name = Some(`val`)
     override lazy val refs = Nil
@@ -43,7 +47,7 @@ package object compiler {
     override lazy val name = Some(to)
     override lazy val refs = Seq(from)
     lazy val types = UnaryConverter.getFromTo(converter)
-    override lazy val `type` = types.to
+    override var `type` = types.to
     override lazy val refTypes = Seq(types.from)
     override lazy val isLazy = true
   }
@@ -51,7 +55,7 @@ package object compiler {
   case class BinaryOp(`val`: String, left: String, op: BinaryOperator.Operator, right: String) extends Declaration {
     override lazy val name = Some(`val`)
     override lazy val refs = Seq(left, right)
-    override lazy val `type` = DataType.Unknown
+    override var `type` = DataType.Unknown
     override lazy val refTypes = Seq(DataType.Unknown, DataType.Unknown)
     override lazy val isLazy = true
   }
@@ -59,7 +63,7 @@ package object compiler {
   case class UnaryOp(`val`: String, operand: String, op: UnaryOperator.Operator) extends Declaration {
     override lazy val name = Some(`val`)
     override lazy val refs = Seq(operand)
-    override lazy val `type` = DataType.Unknown
+    override var `type` = DataType.Unknown
     override lazy val refTypes = Seq(DataType.Unknown)
     override lazy val isLazy = true
   }
