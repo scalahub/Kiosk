@@ -6,7 +6,7 @@ import scala.collection.mutable
 
 object Compiler {
   def printDictionaryObject(key: String, dictionaryObject: DictionaryObject) = {
-    println(s"$key: ${dictionaryObject.declaration.`type`} = ${dictionaryObject.value.map(_.hex).getOrElse("")}")
+    println(s"$key: ${dictionaryObject.declaration.`type`}")
   }
   def printDictionary(dictionary: mutable.Map[String, DictionaryObject]) = {
     dictionary.map { case (key, dictionaryObject) => printDictionaryObject(key, dictionaryObject) }

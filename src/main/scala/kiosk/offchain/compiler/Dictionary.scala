@@ -1,10 +1,8 @@
 package kiosk.offchain.compiler
 
-import kiosk.ergo
 import kiosk.offchain.model.DataType
 
 import scala.collection.mutable.{Map => MMap}
-import scala.util.Try
 
 class Dictionary {
 
@@ -42,22 +40,13 @@ class Dictionary {
     else lazyRefs += name -> refs
   }
 
-  def getValue(declaration: Declaration): Option[ergo.KioskType[_]] = {
-    declaration.maybeValue.map { string =>
-      Try(DataType.getKioskValue(string, declaration.`type`)).recover {
-        case throwable => throw new Exception(s"Error converting $string to $declaration. ${throwable.getMessage}")
-      }.get
-    }
-  }
-
   def addDeclaration(declaration: Declaration) = {
-    val dictionaryObject = DictionaryObject(declaration.isLazy, declaration, getValue(declaration))
     if (declaration.isLazy) {
       addLazyRefs(declaration.maybeId.get, declaration.references)
     } else {
       declaration.references.map(reference => resolve(reference.name, reference.`type`, Seq(declaration.toString)))
     }
-    declaration.maybeId.map(add(_, dictionaryObject))
+    declaration.maybeId.map(add(_, DictionaryObject(declaration.isLazy, declaration)))
   }
 
   addDeclaration(Height)

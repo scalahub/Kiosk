@@ -21,44 +21,41 @@ object Main {
     lazy val myLong5 = BinaryOp("myLong5", "myLong4", BinaryOperator.Add, "myLong2")
     lazy val myLong6 = BinaryOp("myLong6", "myLong5", BinaryOperator.Add, "myLong4")
 
-    lazy val myLong7 = UnaryOp("myLong7", "myLong2", UnaryOperator.Sum)
-    lazy val myLong8 = UnaryOp("myLong8", "myLong7", UnaryOperator.Sum)
+    lazy val myLong7 = UnaryOp("myLong7", "myLong2", UnaryOperator.Neg)
+    lazy val myLong8 = UnaryOp("myLong8", "myLong7", UnaryOperator.Neg)
 
     lazy val myErgoTree2 = Conversion("myErgoTree2", "myGroupElement", UnaryConverter.ProveDlog)
     lazy val myCollByte2 = Conversion("myCollByte2", "myErgoTree2", UnaryConverter.ToCollByte)
-    lazy val myAddress = Conversion("myAddress", "myErgoTree1", UnaryConverter.ToAddress)
 
     lazy val constants = Some(Seq(myLong1, myCollByte, myInt, myTokenId, myGroupElement, myErgoTree1))
     lazy val unaryOps = Some(Seq(myLong7, myLong8))
-    lazy val conversions = Some(Seq(myErgoTree2, myCollByte2, myAddress, myIntToLong))
+    lazy val conversions = Some(Seq(myErgoTree2, myCollByte2, myIntToLong))
     lazy val binaryOps = Some(Seq(myLong2, myLong3, myLong4, myLong5, myLong6))
 
-    lazy val myRegister1 = Register(Some("myRegister1"), RegNum.R4, DataType.CollByte, None, ref = Some("myTokenId"))
-    lazy val myRegister2 = Register(Some("myRegister2"), RegNum.R4, DataType.CollByte, None, ref = Some("myCollByte"))
-    lazy val myRegister3 = Register(Some("myRegister3"), RegNum.R4, DataType.CollByte, None, ref = Some("myRegister1"))
-    lazy val myRegister4 = Register(Some("myRegister4"), RegNum.R4, DataType.CollByte, None, ref = Some("myRegister2"))
+    lazy val myRegister1 = Register(Some("myRegister1"), RegNum.R4, DataType.CollByte, value = Some("myTokenId"))
+    lazy val myRegister2 = Register(Some("myRegister2"), RegNum.R4, DataType.CollByte, value = Some("myCollByte"))
+    lazy val myRegister3 = Register(Some("myRegister3"), RegNum.R4, DataType.CollByte, value = Some("myRegister1"))
+    lazy val myRegister4 = Register(Some("myRegister4"), RegNum.R4, DataType.CollByte, value = Some("myRegister2"))
 
     lazy val myToken1 = Token(
       index = Some(1),
-      tokenId = Some(CollByte(name = None, value = Some("77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"), ref = None)),
+      tokenId = Some(CollByte(name = None, value = None)),
       amount = Some(
         model.Long(
           name = Some("someLong1"),
           value = None,
-          ref = None,
-          op = Some(FilterOp.Le)
+          filter = Some(FilterOp.Le)
         ))
     )
 
     lazy val myToken2 = Token(
       index = Some(1),
-      tokenId = Some(CollByte(name = None, value = Some("77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"), ref = None)),
+      tokenId = Some(CollByte(name = None, value = None)),
       amount = Some(
         model.Long(
           name = Some("someLong2"),
           value = None,
-          ref = None,
-          op = Some(FilterOp.Gt)
+          filter = Some(FilterOp.Gt)
         )
       )
     )
@@ -67,32 +64,32 @@ object Main {
       index = Some(1),
       tokenId = None,
       amount = Some(
-        model.Long(name = Some("someLong3"), value = None, ref = None, op = Some(FilterOp.Gt))
+        model.Long(name = Some("someLong3"), value = None, filter = Some(FilterOp.Gt))
       )
     )
 
     lazy val myInput1 = Input(
-      boxId = Some(CollByte(name = None, value = None, ref = Some("myCollByte"))),
+      boxId = Some(CollByte(name = None, value = Some("myCollByte"))),
       address = None,
       registers = Some(Seq(myRegister3)),
       tokens = Some(Seq(myToken1)),
-      nanoErgs = Some(model.Long(name = None, value = None, ref = None, op = Some(FilterOp.Gt)))
+      nanoErgs = Some(model.Long(name = None, value = None, filter = Some(FilterOp.Gt)))
     )
 
     lazy val myInput2 = Input(
       None,
-      Some(Address(name = None, value = None, ref = Some("myAddress"))),
+      Some(Address(name = None, value = Some("myAddress"))),
       registers = Some(Seq(myRegister4)),
       tokens = Some(Seq(myToken2)),
-      nanoErgs = Some(model.Long(name = None, value = None, ref = None, op = Some(FilterOp.Gt)))
+      nanoErgs = Some(model.Long(name = None, value = None, filter = Some(FilterOp.Gt)))
     )
 
     lazy val myInput3 = Input(
       boxId = None,
-      address = Some(Address(name = None, value = Some("4MQyML64GnzMxZgm"), ref = None)),
+      address = Some(Address(name = None, value = None)),
       registers = Some(Seq(myRegister1, myRegister2)),
       tokens = Some(Seq(myToken3)),
-      nanoErgs = Some(model.Long(name = None, value = None, ref = None, op = Some(FilterOp.Gt)))
+      nanoErgs = Some(model.Long(name = None, value = None, filter = Some(FilterOp.Gt)))
     )
 
     lazy val protocol = Protocol(
@@ -100,7 +97,7 @@ object Main {
       dataInputs = Some(Seq(myInput3, myInput2)),
       inputs = Some(Seq(myInput1)),
       outputs = None,
-      Some(Long(None, None, Some("myLong8"), None)),
+      Some(Long(None, Some("myLong8"), None)),
       binaryOps,
       unaryOps,
       conversions
