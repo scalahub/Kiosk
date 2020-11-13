@@ -1,17 +1,18 @@
 package kiosk.offchain.compiler
 
+import kiosk.ergo
 import kiosk.offchain.model.DataType
 
 import scala.collection.mutable.{Map => MMap}
+import scala.util.Try
 
 class Dictionary {
 
   private val dict = MMap[String, DictionaryObject]()
   private val lazyRefs = MMap[String, Seq[Variable]]()
 
-  def print(unresolved: Boolean) = dict collect {
-    case (key, value) if value.isUnresolved == unresolved =>
-      println(s"$key: ${value.declaration.`type`}")
+  def getDictionaryObjects(unresolved: Boolean) = dict collect {
+    case (key, dictionaryObject) if dictionaryObject.isUnresolved == unresolved => key -> dictionaryObject
   }
 
   private def resolve(name: String, `type`: DataType.Type, stack: Seq[String]): Unit = {
@@ -21,7 +22,7 @@ class Dictionary {
         if (d.isUnresolved) {
           dict -= name // remove temporarily
           lazyRefs(name).foreach(ref => resolve(ref.name, if (ref.`type` == DataType.Unknown) `type` else ref.`type`, stack :+ d.declaration.toString))
-          d.declaration.updateType(`type`)
+          if (d.declaration.`type` == DataType.Unknown) d.declaration.updateType(`type`)
           dict += name -> d.copy(isUnresolved = false)
         }
       case Some(d) =>
@@ -41,14 +42,22 @@ class Dictionary {
     else lazyRefs += name -> refs
   }
 
+  def getValue(declaration: Declaration): Option[ergo.KioskType[_]] = {
+    declaration.maybeValue.map { string =>
+      Try(DataType.getKioskValue(string, declaration.`type`)).recover {
+        case throwable => throw new Exception(s"Error converting $string to $declaration. ${throwable.getMessage}")
+      }.get
+    }
+  }
+
   def addDeclaration(declaration: Declaration) = {
+    val dictionaryObject = DictionaryObject(declaration.isLazy, declaration, getValue(declaration))
     if (declaration.isLazy) {
-      addLazyRefs(declaration.name.get, declaration.references)
+      addLazyRefs(declaration.maybeId.get, declaration.references)
     } else {
       declaration.references.map(reference => resolve(reference.name, reference.`type`, Seq(declaration.toString)))
     }
-
-    declaration.name.map(add(_, DictionaryObject(declaration.isLazy, declaration)))
+    declaration.maybeId.map(add(_, dictionaryObject))
   }
 
   addDeclaration(Height)

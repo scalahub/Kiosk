@@ -1,5 +1,8 @@
 package kiosk.offchain.model
 
+import kiosk.encoding.ScalaErgoConverters
+import kiosk.ergo._
+
 abstract class MyEnum extends Enumeration {
   def fromString(str: String): Value =
     values.find(value => value.toString.equalsIgnoreCase(str)).getOrElse(throw new Exception(s"Invalid op $str. Permitted options are ${values.map(_.toString).reduceLeft(_ + ", " + _)}"))
@@ -14,6 +17,18 @@ object FilterOp extends MyEnum {
 object DataType extends MyEnum {
   type Type = Value
   val Long, Int, CollByte, GroupElement, Address, ErgoTree, Unknown = Value
+
+  def getKioskValue(stringValue: String, `type`: DataType.Type): KioskType[_] = {
+    `type` match {
+      case Long         => KioskLong(stringValue.toLong)
+      case Int          => KioskInt(stringValue.toInt)
+      case GroupElement => KioskGroupElement(ScalaErgoConverters.stringToGroupElement(stringValue))
+      case CollByte     => KioskCollByte(stringValue.decodeHex)
+      case Address      => KioskErgoTree(ScalaErgoConverters.getAddressFromString(stringValue).script)
+      case ErgoTree     => KioskErgoTree(ScalaErgoConverters.stringToErgoTree(stringValue))
+      case any          => throw new Exception(s"Unknown type $any")
+    }
+  }
 }
 
 object RegNum extends MyEnum {

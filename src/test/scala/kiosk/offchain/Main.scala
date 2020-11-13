@@ -7,12 +7,12 @@ import kiosk.offchain.compiler._
 
 object Main {
   object Dummy {
-    lazy val myLong1 = Constant("myLong1", DataType.Long, "1234L")
+    lazy val myLong1 = Constant("myLong1", DataType.Long, "1234")
     lazy val myInt = Constant("myInt", DataType.Int, "1234")
     lazy val myCollByte = Constant("myCollByte", DataType.CollByte, "123abc")
-    lazy val myTokenId = Constant("myTokenId", DataType.CollByte, "123abc")
-    lazy val myGroupElement = Constant("myGroupElement", DataType.GroupElement, "123abc")
-    lazy val myErgoTree1 = Constant("myErgoTree1", DataType.ErgoTree, "123abc")
+    lazy val myTokenId = Constant("myTokenId", DataType.CollByte, "77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456")
+    lazy val myGroupElement = Constant("myGroupElement", DataType.GroupElement, "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67")
+    lazy val myErgoTree1 = Constant("myErgoTree1", DataType.ErgoTree, "10010101D17300")
 
     lazy val myIntToLong = Conversion("myIntToLong", "myInt", UnaryConverter.ToLong)
     lazy val myLong2 = BinaryOp("myLong2", "myLong1", BinaryOperator.Add, "myIntToLong")
@@ -40,8 +40,8 @@ object Main {
 
     lazy val myToken1 = Token(
       index = Some(1),
-      id = Some(CollByte(name = None, value = Some("123abc"), ref = None)),
-      numTokens = Some(
+      tokenId = Some(CollByte(name = None, value = Some("77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"), ref = None)),
+      amount = Some(
         model.Long(
           name = Some("someLong1"),
           value = None,
@@ -52,8 +52,8 @@ object Main {
 
     lazy val myToken2 = Token(
       index = Some(1),
-      id = Some(CollByte(name = None, value = Some("123abc"), ref = None)),
-      numTokens = Some(
+      tokenId = Some(CollByte(name = None, value = Some("77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"), ref = None)),
+      amount = Some(
         model.Long(
           name = Some("someLong2"),
           value = None,
@@ -65,8 +65,8 @@ object Main {
 
     lazy val myToken3 = Token(
       index = Some(1),
-      id = None,
-      numTokens = Some(
+      tokenId = None,
+      amount = Some(
         model.Long(name = Some("someLong3"), value = None, ref = None, op = Some(FilterOp.Gt))
       )
     )
@@ -89,7 +89,7 @@ object Main {
 
     lazy val myInput3 = Input(
       boxId = None,
-      address = Some(Address(name = None, value = Some("someAddress"), ref = None)),
+      address = Some(Address(name = None, value = Some("4MQyML64GnzMxZgm"), ref = None)),
       registers = Some(Seq(myRegister1, myRegister2)),
       tokens = Some(Seq(myToken3)),
       nanoErgs = Some(model.Long(name = None, value = None, ref = None, op = Some(FilterOp.Gt)))
@@ -97,13 +97,13 @@ object Main {
 
     lazy val protocol = Protocol(
       constants,
-      binaryOps,
-      unaryOps,
-      conversions,
       dataInputs = Some(Seq(myInput3, myInput2)),
       inputs = Some(Seq(myInput1)),
       outputs = None,
-      Some(Long(None, None, Some("myLong8"), None))
+      Some(Long(None, None, Some("myLong8"), None)),
+      binaryOps,
+      unaryOps,
+      conversions
     )
   }
 
@@ -113,12 +113,12 @@ object Main {
     val protocolToJson = Parser.unparse(protocol)
     val protocolToJsonToProtocol = Parser.parse(protocolToJson.toString())
     println(protocolToJson)
+    require(protocolToJsonToProtocol == protocol, "protocolToJsonToProtocol")
+    offchain.compiler.Compiler.compile(protocol)
     val str =
-      """{"constants":[{"val":"myLong1","type":"Long","value":"1234L"},{"val":"myCollByte","type":"CollByte","value":"123abc"},{"val":"myInt","type":"Int","value":"1234"},{"val":"myTokenId","type":"CollByte","value":"123abc"},{"val":"myGroupElement","type":"GroupElement","value":"123abc"},{"val":"myErgoTree1","type":"ErgoTree","value":"123abc"}],"binaryOps":[{"val":"myLong2","left":"myLong1","op":"Add","right":"myIntToLong"},{"val":"myLong3","left":"myLong2","op":"Max","right":"myLong1"},{"val":"myLong4","left":"myLong2","op":"Add","right":"myLong3"},{"val":"myLong5","left":"myLong4","op":"Add","right":"myLong2"},{"val":"myLong6","left":"myLong5","op":"Add","right":"myLong4"}],"unaryOps":[{"val":"myLong7","operand":"myLong2","op":"Sum"},{"val":"myLong8","operand":"myLong7","op":"Sum"}],"conversions":[{"to":"myErgoTree2","from":"myGroupElement","converter":"ProveDlog"},{"to":"myCollByte2","from":"myErgoTree2","converter":"ToCollByte"},{"to":"myAddress","from":"myErgoTree1","converter":"ToAddress"},{"to":"myIntToLong","from":"myInt","converter":"ToLong"}],"dataInputs":[{"address":{"value":"someAddress"},"registers":[{"name":"myRegister1","num":"R4","type":"CollByte","ref":"myTokenId"},{"name":"myRegister2","num":"R4","type":"CollByte","ref":"myCollByte"}],"tokens":[{"index":1,"numTokens":{"name":"someLong3","op":"Gt"}}],"nanoErgs":{"op":"Gt"}},{"address":{"ref":"myAddress"},"registers":[{"name":"myRegister4","num":"R4","type":"CollByte","ref":"myRegister2"}],"tokens":[{"index":1,"id":{"value":"123abc"},"numTokens":{"name":"someLong2","op":"Gt"}}],"nanoErgs":{"op":"Gt"}}],"inputs":[{"boxId":{"ref":"myCollByte"},"registers":[{"name":"myRegister3","num":"R4","type":"CollByte","ref":"myRegister1"}],"tokens":[{"index":1,"id":{"value":"123abc"},"numTokens":{"name":"someLong1","op":"Le"}}],"nanoErgs":{"op":"Gt"}}],"fee":{"ref":"myLong8"}}
+      """{"constants":[{"name":"myLong1","type":"Long","value":"1234"},{"name":"myCollByte","type":"CollByte","value":"123abc"},{"name":"myInt","type":"Int","value":"1234"},{"name":"myTokenId","type":"CollByte","value":"77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"},{"name":"myGroupElement","type":"GroupElement","value":"028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"},{"name":"myErgoTree1","type":"ErgoTree","value":"10010101D17300"}],"binaryOps":[{"name":"myLong2","left":"myLong1","op":"Add","right":"myIntToLong"},{"name":"myLong3","left":"myLong2","op":"Max","right":"myLong1"},{"name":"myLong4","left":"myLong2","op":"Add","right":"myLong3"},{"name":"myLong5","left":"myLong4","op":"Add","right":"myLong2"},{"name":"myLong6","left":"myLong5","op":"Add","right":"myLong4"}],"unaryOps":[{"out":"myLong7","in":"myLong2","op":"Sum"},{"out":"myLong8","in":"myLong7","op":"Sum"}],"conversions":[{"to":"myErgoTree2","from":"myGroupElement","converter":"ProveDlog"},{"to":"myCollByte2","from":"myErgoTree2","converter":"ToCollByte"},{"to":"myAddress","from":"myErgoTree1","converter":"ToAddress"},{"to":"myIntToLong","from":"myInt","converter":"ToLong"}],"dataInputs":[{"address":{"value":"4MQyML64GnzMxZgm"},"registers":[{"name":"myRegister1","num":"R4","type":"CollByte","ref":"myTokenId"},{"name":"myRegister2","num":"R4","type":"CollByte","ref":"myCollByte"}],"tokens":[{"index":1,"amount":{"name":"someLong3","op":"Gt"}}],"nanoErgs":{"op":"Gt"}},{"address":{"ref":"myAddress"},"registers":[{"name":"myRegister4","num":"R4","type":"CollByte","ref":"myRegister2"}],"tokens":[{"index":1,"tokenId":{"value":"77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"},"amount":{"name":"someLong2","op":"Gt"}}],"nanoErgs":{"op":"Gt"}}],"inputs":[{"boxId":{"ref":"myCollByte"},"registers":[{"name":"myRegister3","num":"R4","type":"CollByte","ref":"myRegister1"}],"tokens":[{"index":1,"tokenId":{"value":"77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"},"amount":{"name":"someLong1","op":"Le"}}],"nanoErgs":{"op":"Gt"}}],"fee":{"ref":"myLong8"}}
         |""".stripMargin
     val strToProtocol = Parser.parse(str)
-    offchain.compiler.Compiler.compile(protocol)
-    require(protocolToJsonToProtocol == protocol, "protocol")
-    require(strToProtocol == protocol)
+    require(strToProtocol == protocol, "strToProtocol")
   }
 }
