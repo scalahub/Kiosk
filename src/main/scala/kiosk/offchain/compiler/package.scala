@@ -1,17 +1,52 @@
 package kiosk.offchain
 
-import kiosk.offchain.model.DataType
+import java.util.UUID
+
+import kiosk.encoding.ScalaErgoConverters
+import kiosk.ergo
+import kiosk.ergo.{KioskBox, KioskCollByte, KioskErgoTree, KioskLong, KioskType, StringToBetterString}
+import kiosk.offchain.model.{Constant, DataType, RegNum}
 
 package object compiler {
   case class DictionaryObject(isUnresolved: Boolean, declaration: Declaration)
 
   case class Variable(name: String, `type`: DataType.Type)
 
-  object Height extends Declaration {
-    override lazy val maybeId: Option[String] = Some("HEIGHT")
-    override lazy val refs: Seq[String] = Nil
-    override lazy val refTypes: Seq[DataType.Type] = Nil
-    override var `type` = DataType.Int
-    override lazy val isLazy = false
+  val height = Constant("HEIGHT", DataType.Int, "1")
+
+  def randId = UUID.randomUUID.toString
+
+  case class OnChainBox(boxId: KioskCollByte, address: KioskErgoTree, nanoErgs: KioskLong, tokenIds: Seq[KioskCollByte], tokenAmounts: Seq[KioskLong], registers: Seq[KioskType[_]]) {
+    require(tokenIds.size == tokenAmounts.size, s"tokenIds.size (${tokenIds.size}) != tokenAmounts.size (${tokenAmounts.size})")
   }
+
+  object OnChainBox {
+    def fromKioskBox(kioskBox: KioskBox) = {
+      if (kioskBox.spentTxId.isDefined) throw new Exception(s"Box with id ${kioskBox.optBoxId} has been spent")
+      val address = KioskErgoTree(ScalaErgoConverters.getAddressFromString(kioskBox.address).script)
+      val nanoErgs = KioskLong(kioskBox.value)
+      val boxIdHex = kioskBox.optBoxId.getOrElse(throw new Exception(s"No box id found in $kioskBox"))
+      val boxId = KioskCollByte(boxIdHex.decodeHex)
+      val registers = kioskBox.registers.toSeq
+      val (tokenIdsHex, tokenValues) = kioskBox.tokens.unzip
+      val tokenIds = tokenIdsHex.map(tokenIdHex => KioskCollByte(tokenIdHex.decodeHex)).toSeq
+      val tokenAmounts = tokenValues.map(tokenValue => KioskLong(tokenValue)).toSeq
+      OnChainBox(boxId, address, nanoErgs, tokenIds, tokenAmounts, registers)
+    }
+  }
+
+  case class OnChainConstant(name: String, var `type`: DataType.Type) extends Declaration {
+    override lazy val maybeId = Some(name)
+    override lazy val refs = Nil
+    override lazy val refTypes = Nil
+    override lazy val isLazy = true
+    override def getValue(dictionary: Dictionary): ergo.KioskType[_] = dictionary.getOnChainValue(name)
+    override lazy val isConstant: Boolean = true
+  }
+
+  def exactlyOne(obj: Any)(names: String*)(options: Option[_]*): Unit =
+    if (options.count(_.isDefined) != 1) throw new Exception(s"Exactly one of {${names.toSeq.reduceLeft(_ + "," + _)}} must be defined in $obj")
+
+  def atLeastOne(obj: Any)(names: String*)(options: Option[_]*): Unit =
+    if (options.count(_.isDefined) == 0) throw new Exception(s"At least one of {${names.toSeq.reduceLeft(_ + "," + _)}} must be defined in $obj")
 }

@@ -123,9 +123,9 @@ package object ergo {
     }
   }
 
-  case class KioskBox(address: String, value: Long, registers: Array[KioskType[_]], tokens: Tokens, optBoxId: Option[String] = None) extends JsonFormatted {
-    val keys = Array[String]("address", "value", "registers", "tokens", "boxId")
-    val vals = Array[Any](address, value, regs2Json(registers), tokens2Json(tokens), optBoxId.getOrElse("none"))
+  case class KioskBox(address: String, value: Long, registers: Array[KioskType[_]], tokens: Tokens, optBoxId: Option[String] = None, spentTxId: Option[String] = None) extends JsonFormatted {
+    val keys = Array[String]("address", "value", "registers", "tokens", "boxId", "spentTxId")
+    val vals = Array[Any](address, value, regs2Json(registers), tokens2Json(tokens), optBoxId.getOrElse("none"), spentTxId.getOrElse("none"))
   }
 
 }

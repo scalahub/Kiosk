@@ -53,7 +53,7 @@ object Parser {
   private implicit val formatLong = Json.format[Long]
   private implicit val formatRegister = Json.format[Register]
   private implicit val formatAddress = Json.format[Address]
-  private implicit val formatCollByte = Json.format[CollByte]
+  private implicit val formatId = Json.format[Id]
   private implicit val formatToken = Json.format[Token]
   private implicit val formatInput = Json.format[Input]
   private implicit val formatOutput = Json.format[Output]

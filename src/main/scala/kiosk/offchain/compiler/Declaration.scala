@@ -4,26 +4,26 @@ import kiosk.ergo.KioskType
 import kiosk.offchain.model.DataType
 
 trait Declaration {
-  val maybeId: Option[String] // the name of the object declared. Option because not every Declaration needs a name, only those that must be referenced in another Declaration
   var `type`: DataType.Type
-  val refs: Seq[String] // names of the other Declarations referenced by this
-  val refTypes: Seq[DataType.Type] // types of the other Declarations referenced by this
 
-  def updateType(newType: DataType.Type) = {
-    require(`type` == DataType.Unknown, s"Only Unknown type can be updated. Current type is ${`type`} for object $this (new type is $newType)") // only Unknown types should be updatable
-    require(newType != DataType.Unknown, s"New type must not be Unknown for object $this") // new type should not be Unknown
-    `type` = newType
-    this
-  }
+  protected val maybeId: Option[String] // the name of the object declared. Option because not every Declaration needs a name, only those that must be referenced in another Declaration
+  protected val refs: Seq[String] // names of the other Declarations referenced by this
+  protected val refTypes: Seq[DataType.Type] // types of the other Declarations referenced by this
 
-  override def toString = maybeId.getOrElse("_") + ": " + `type`
-
-  lazy val references = (refs zip refTypes) map { case (ref, refType) => Variable(ref, refType) }
   val isLazy: Boolean
 
-  if (refs.size != refTypes.size) throw new Exception(s"Sizes of refs (${refs.size}) and refTypes (${refTypes.size}) do not match")
-  if (refs.toSet.size != refs.size) throw new Exception(s"Refs for $maybeId contain duplicates ${refs.reduceLeft(_ + ", " + _)}")
-  if (isLazy && maybeId.isEmpty) throw new Exception("Empty name not allowed for lazy references")
+  lazy val id = maybeId.getOrElse(randId)
+  lazy val isConstant: Boolean = false
 
-  def getValue(fromRefs: Seq[KioskType[_]]): KioskType[_] = fromRefs.head
+  lazy val isOnChainVariable = refs.isEmpty && !isConstant
+
+  lazy val onChainVariable: Option[Variable] = if (isOnChainVariable) Some(Variable("OnChain_" + randId, `type`)) else None
+  lazy val references: Seq[Variable] = (refs zip refTypes).map { case (ref, refType) => Variable(ref, refType) } ++ onChainVariable
+
+  def updateType(newType: DataType.Type) = `type` = newType
+  def getValue(dictionary: Dictionary): KioskType[_] = dictionary.getValue(references.head.name)
+
+  override def toString = id + ": " + `type`
+
+  if (refs.toSet.size != refs.size) throw new Exception(s"Refs for $id contain duplicates ${refs.reduceLeft(_ + ", " + _)}")
 }

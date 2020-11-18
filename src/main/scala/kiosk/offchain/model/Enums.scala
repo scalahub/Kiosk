@@ -13,20 +13,21 @@ abstract class MyEnum extends Enumeration {
 
 object FilterOp extends MyEnum {
   type Op = Value
-  val Le, Ge, Lt, Gt = Value
+  val Eq, Le, Ge, Lt, Gt = Value
 }
 
 object DataType extends MyEnum {
   type Type = Value
-  val Long, Int, CollByte, GroupElement, ErgoTree, Unknown = Value
+  val Long, Int, CollByte, GroupElement, ErgoTree, Address, Unknown = Value
 
-  def getKioskValue(stringValue: String, `type`: DataType.Type): KioskType[_] = {
+  def getValue(stringValue: String, `type`: DataType.Type): KioskType[_] = {
     `type` match {
       case Long         => KioskLong(stringValue.toLong)
       case Int          => KioskInt(stringValue.toInt)
       case GroupElement => KioskGroupElement(ScalaErgoConverters.stringToGroupElement(stringValue))
       case CollByte     => KioskCollByte(stringValue.decodeHex)
       case ErgoTree     => KioskErgoTree(ScalaErgoConverters.stringToErgoTree(stringValue))
+      case Address      => KioskErgoTree(ScalaErgoConverters.getAddressFromString(stringValue).script)
       case any          => throw new Exception(s"Unknown type $any")
     }
   }
@@ -35,6 +36,8 @@ object DataType extends MyEnum {
 object RegNum extends MyEnum {
   type Num = Value
   val R4, R5, R6, R7, R8, R9 = Value
+  val valueMap = values.zipWithIndex.toMap
+  def getIndex(reg: RegNum.Value): Int = valueMap(reg)
 }
 
 object BinaryOperator extends MyEnum { // input and output types are same
@@ -80,26 +83,31 @@ case class FromTo(from: DataType.Type, to: DataType.Type)
 
 object UnaryConverter extends MyEnum { // input and output types are different
   type Converter = Value
-  val ProveDlog, ToCollByte, ToLong, ToInt = Value
+  val ProveDlog, ToCollByte, ToLong, ToInt, ToAddress, ToErgoTree = Value
   def getFromTo(converter: Converter) = {
     converter match {
       case ProveDlog  => FromTo(from = DataType.GroupElement, to = DataType.ErgoTree)
       case ToCollByte => FromTo(from = DataType.ErgoTree, to = DataType.CollByte)
       case ToLong     => FromTo(from = DataType.Int, to = DataType.Long)
       case ToInt      => FromTo(from = DataType.Long, to = DataType.Int)
+      case ToAddress  => FromTo(from = DataType.ErgoTree, to = DataType.Address)
+      case ToErgoTree => FromTo(from = DataType.Address, to = DataType.ErgoTree)
     }
   }
 
   def convert(converter: Converter, fromValue: KioskType[_]) = {
     converter match {
       case ProveDlog =>
+        val g = fromValue.asInstanceOf[KioskGroupElement]
         val env = new KioskScriptEnv()
-        env.$addIfNotExist("g", fromValue.asInstanceOf[KioskGroupElement])
+        env.$addIfNotExist("g", g)
         val compiler = new KioskScriptCreator(env)
         KioskErgoTree(compiler.$compile("proveDlog(g)"))
       case ToCollByte => KioskCollByte(fromValue.asInstanceOf[KioskErgoTree].serialize)
       case ToLong     => KioskLong(fromValue.asInstanceOf[KioskInt].value.toLong)
       case ToInt      => KioskInt(fromValue.asInstanceOf[KioskLong].value.toInt)
+      case ToAddress  => fromValue.ensuring(_.isInstanceOf[KioskErgoTree])
+      case ToErgoTree => fromValue.ensuring(_.isInstanceOf[KioskErgoTree])
     }
   }
 }

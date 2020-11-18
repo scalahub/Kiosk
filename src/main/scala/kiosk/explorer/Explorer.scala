@@ -1,13 +1,12 @@
-package kiosk
+package kiosk.explorer
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo.{KioskBox, KioskType, Token}
-import kiosk.explorer.Curl
+import io.circe.Json
 
-object Reader {
+import scala.util.Try
 
-  import io.circe.Json
-
+object Explorer {
   private val baseUrl = "https://api.ergoplatform.com" // https://api.ergoplatform.com/api/v0/
   private val boxUrl = s"$baseUrl/transactions/boxes/"
   private val unspentUrl = s"$baseUrl/transactions/boxes/byAddress/unspent/"
@@ -18,6 +17,7 @@ object Reader {
 
   private def getBoxFromJson(j: Json): KioskBox = {
     val id = (j \\ "id").map(v => v.asString.get).apply(0)
+    val spentTxId = Try((j \\ "spentTransactionId").map(v => v.asString.get).apply(0)).toOption
     val value = (j \\ "value").map(v => v.asNumber.get).apply(0)
     val assets: Array[Json] = (j \\ "assets").map(v => v.asArray.get).apply(0).toArray
     val tokens: Array[Token] = assets.map { asset =>
@@ -39,10 +39,17 @@ object Reader {
 
     val regs: Array[KioskType[_]] = registers.map(ScalaErgoConverters.deserialize)
 
-    KioskBox(address, value.toLong.get, regs, tokens, Some(id))
+    KioskBox(address, value.toLong.get, regs, tokens, Some(id), spentTxId)
   }
 
   def getUnspentBoxes(address: String): Seq[KioskBox] = {
     Curl.get(unspentUrl + address).asArray.get.map(getBoxFromJson)
+  }
+}
+
+object ExplorerTest {
+  def main(args: Array[String]): Unit = {
+    println(Explorer.getBoxById("17da0c63a00008ce3659d074a9cf3f2f473045fabdc2b8918114807de9ca5831"))
+    println(Explorer.getBoxById("9e289deab858c3f14c7056e568cfa1026c01242d151a94b165268b650e9ac966"))
   }
 }

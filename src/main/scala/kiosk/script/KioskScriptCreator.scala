@@ -1,5 +1,6 @@
 package kiosk.script
 
+import kiosk.encoding.ScalaErgoConverters
 import org.ergoplatform.ErgoAddressEncoder.MainnetNetworkPrefix
 import org.ergoplatform.{ErgoAddressEncoder, Pay2SAddress}
 import org.sh.easyweb.Text
@@ -26,6 +27,20 @@ class KioskScriptCreator(val $myEnv: KioskScriptEnv) extends EasyMirrorSession {
 }"""
 
     scorex.crypto.hash.Blake2b256(getErgoTree(ergoScript)).toArray
+  }
+
+  def getAddressHash(address: String): Array[Byte] = {
+    val $INFO$ = "Outputs the blake2b256 hash of the ErgoTree corresponding to address"
+    val scriptBytes = ScalaErgoConverters.getAddressFromString(address).script.bytes
+
+    scorex.crypto.hash.Blake2b256(scriptBytes).toArray
+  }
+
+  def getAddress(ergoTree: String): String = {
+    val $INFO$ = "Outputs the address corresponding to (hex encoded) ergoTree"
+    val ergoTreeBytes = ScalaErgoConverters.stringToErgoTree(ergoTree)
+    val address = ScalaErgoConverters.getAddressFromErgoTree(ergoTreeBytes)
+    ScalaErgoConverters.getStringFromAddress(address)
   }
 
   def getErgoTree(ergoScript: Text): Array[Byte] = {

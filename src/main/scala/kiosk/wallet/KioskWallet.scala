@@ -4,7 +4,8 @@ import kiosk.appkit.Client
 import kiosk.box.KioskBoxCreator
 import kiosk.encoding.EasyWebEncoder
 import kiosk.offchain.parser.Parser
-import kiosk.{Reader, ergo}
+import kiosk.ergo
+import kiosk.explorer.Explorer
 import org.ergoplatform.ErgoAddressEncoder
 import org.ergoplatform.appkit.ConstantsBuilder
 import org.sh.easyweb.Text
@@ -36,14 +37,14 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     }
   }
 
-  def balance = BigDecimal(Reader.getUnspentBoxes(myAddress).map(_.value).sum) / BigDecimal(1000000000) + " Ergs"
+  def balance = BigDecimal(Explorer.getUnspentBoxes(myAddress).map(_.value).sum) / BigDecimal(1000000000) + " Ergs"
 
   def send(toAddress: String, ergs: BigDecimal) = {
     val $INFO$ = "Using 0.001 Ergs as fee"
     val $ergs$ = "0.001"
     val nanoErgs = (ergs * BigDecimal(1000000000)).toBigInt().toLong
     val feeNanoErgs = 1000000L
-    val unspentBoxes: Seq[ergo.KioskBox] = Reader.getUnspentBoxes(myAddress).sortBy(-_.value)
+    val unspentBoxes: Seq[ergo.KioskBox] = Explorer.getUnspentBoxes(myAddress).sortBy(-_.value)
     val boxName = scala.util.Random.nextString(100)
     $ergoBox.createBoxFromAddress(boxName, toAddress, Array(), Array(), Array(), nanoErgs)
 
