@@ -1,5 +1,6 @@
 package kiosk.offchain.compiler
 
+import kiosk.appkit.Client
 import kiosk.ergo
 import kiosk.ergo.KioskType
 import kiosk.offchain.model.DataType
@@ -42,7 +43,9 @@ class Dictionary {
     }
   }
 
-  private def add(name: String, dictionaryObject: DictionaryObject) = {
+  private def add(declaration: Declaration): Unit = {
+    val name = declaration.id
+    val dictionaryObject = DictionaryObject(isUnresolved = declaration.isLazy, declaration)
     if (dict.contains(name)) throw new Exception(s"Variable $name already exists as ${dict(name).declaration}")
     else dict += name -> dictionaryObject
   }
@@ -52,22 +55,39 @@ class Dictionary {
     else lazyRefs += name -> refs
   }
 
+  private var commitBuffer: Seq[() => Unit] = Nil
+
+  def commit = {
+    commitBuffer.foreach(_.apply)
+    commitBuffer = Nil
+  }
+
+  def addDeclarationLazily(declaration: Declaration) = {
+    validateRefs(declaration)
+    commitBuffer :+= (() => add(declaration))
+  }
+
   def addDeclaration(declaration: Declaration) = {
+    validateRefs(declaration)
+    add(declaration)
+  }
+
+  private def validateRefs(declaration: Declaration) = {
     if (declaration.isLazy) {
       addLazyRefs(declaration.id, declaration.references)
     } else {
       declaration.references.map(reference => resolve(reference.name, reference.`type`, Seq(declaration.toString)))
     }
-    add(declaration.id, DictionaryObject(isUnresolved = declaration.isLazy, declaration))
   }
+  def addOnChainBoxMapping(name: String, f: (Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]) = onChainBoxMap += name -> f
 
-  def addOnChainInput(onChainInput: OnChainBox) = onChainInputs :+= onChainInput
+  def addInput(onChainBox: OnChainBox) = onChainInputs :+= onChainBox
 
-  def addRealDataInput(onChainDataInput: OnChainBox) = onChainDataInputs :+= onChainDataInput
+  def addDataInput(onChainBox: OnChainBox) = onChainDataInputs :+= onChainBox
 
   def getOnChainValue(name: String) = onChainBoxMap(name)(onChainDataInputs, onChainInputs)
 
-  def addRealBoxMapping(name: String, f: (Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]) = onChainBoxMap += name -> f
-
-  addDeclaration(height)
+  addDeclaration(height(Client.usingClient { ctx =>
+    ctx.getHeight
+  }))
 }

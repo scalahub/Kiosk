@@ -13,7 +13,18 @@ abstract class MyEnum extends Enumeration {
 
 object FilterOp extends MyEnum {
   type Op = Value
-  val Eq, Le, Ge, Lt, Gt = Value
+  val Eq, Le, Ge, Lt, Gt, Ne = Value
+  def matches(actual: KioskLong, required: KioskLong, op: FilterOp.Op) = {
+    (actual.value, required.value, op) match {
+      case (actual, required, Eq) if actual == required => true
+      case (actual, required, Le) if actual <= required => true
+      case (actual, required, Ge) if actual >= required => true
+      case (actual, required, Lt) if actual < required  => true
+      case (actual, required, Gt) if actual > required  => true
+      case (actual, required, Ne) if actual != required => true
+      case _                                            => false
+    }
+  }
 }
 
 object DataType extends MyEnum {
@@ -29,6 +40,18 @@ object DataType extends MyEnum {
       case ErgoTree     => KioskErgoTree(ScalaErgoConverters.stringToErgoTree(stringValue))
       case Address      => KioskErgoTree(ScalaErgoConverters.getAddressFromString(stringValue).script)
       case any          => throw new Exception(s"Unknown type $any")
+    }
+  }
+
+  def isValid(value: KioskType[_], `type`: DataType.Type) = {
+    (`type`, value) match {
+      case (Long, _: KioskLong)                 => true
+      case (Int, _: KioskInt)                   => true
+      case (CollByte, _: KioskCollByte)         => true
+      case (GroupElement, _: KioskGroupElement) => true
+      case (ErgoTree, _: KioskErgoTree)         => true
+      case (Address, _: KioskErgoTree)          => true
+      case _                                    => false
     }
   }
 }

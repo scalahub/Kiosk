@@ -13,15 +13,15 @@ trait Declaration {
   val isLazy: Boolean
 
   lazy val id = maybeId.getOrElse(randId)
-  lazy val isConstant: Boolean = false
+  lazy val possiblyOnChain: Boolean = false
 
-  lazy val isOnChainVariable = refs.isEmpty && !isConstant
+  lazy val isOnChainVariable = maybeId.nonEmpty && possiblyOnChain
 
-  lazy val onChainVariable: Option[Variable] = if (isOnChainVariable) Some(Variable("OnChain_" + randId, `type`)) else None
+  lazy val onChainVariable: Option[Variable] = if (isOnChainVariable) Some(Variable(randId, `type`)) else None
   lazy val references: Seq[Variable] = (refs zip refTypes).map { case (ref, refType) => Variable(ref, refType) } ++ onChainVariable
 
   def updateType(newType: DataType.Type) = `type` = newType
-  def getValue(dictionary: Dictionary): KioskType[_] = dictionary.getValue(references.head.name)
+  def getValue(dictionary: Dictionary): KioskType[_] = if (isOnChainVariable) dictionary.getOnChainValue(onChainVariable.get.name) else dictionary.getValue(references.head.name)
 
   override def toString = id + ": " + `type`
 

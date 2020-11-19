@@ -5,14 +5,14 @@ import java.util.UUID
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo
 import kiosk.ergo.{KioskBox, KioskCollByte, KioskErgoTree, KioskLong, KioskType, StringToBetterString}
-import kiosk.offchain.model.{Constant, DataType, RegNum}
+import kiosk.offchain.model.{Constant, DataType}
 
 package object compiler {
   case class DictionaryObject(isUnresolved: Boolean, declaration: Declaration)
 
   case class Variable(name: String, `type`: DataType.Type)
 
-  val height = Constant("HEIGHT", DataType.Int, "1")
+  def height(actualHeight: Int) = Constant("HEIGHT", DataType.Int, actualHeight.toString)
 
   def randId = UUID.randomUUID.toString
 
@@ -22,7 +22,7 @@ package object compiler {
 
   object OnChainBox {
     def fromKioskBox(kioskBox: KioskBox) = {
-      if (kioskBox.spentTxId.isDefined) throw new Exception(s"Box with id ${kioskBox.optBoxId} has been spent")
+      kioskBox.spentTxId.map(_ => throw new Exception(s"Box id ${kioskBox.optBoxId.get} has been spent"))
       val address = KioskErgoTree(ScalaErgoConverters.getAddressFromString(kioskBox.address).script)
       val nanoErgs = KioskLong(kioskBox.value)
       val boxIdHex = kioskBox.optBoxId.getOrElse(throw new Exception(s"No box id found in $kioskBox"))
@@ -41,7 +41,6 @@ package object compiler {
     override lazy val refTypes = Nil
     override lazy val isLazy = true
     override def getValue(dictionary: Dictionary): ergo.KioskType[_] = dictionary.getOnChainValue(name)
-    override lazy val isConstant: Boolean = true
   }
 
   def exactlyOne(obj: Any)(names: String*)(options: Option[_]*): Unit =
@@ -49,4 +48,6 @@ package object compiler {
 
   def atLeastOne(obj: Any)(names: String*)(options: Option[_]*): Unit =
     if (options.count(_.isDefined) == 0) throw new Exception(s"At least one of {${names.toSeq.reduceLeft(_ + "," + _)}} must be defined in $obj")
+
+  def optSeq[T](s: Option[Seq[T]]) = s.toSeq.flatten
 }

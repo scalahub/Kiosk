@@ -8,10 +8,13 @@ import kiosk.offchain.model.RegNum.Num
 
 package object model {
   case class Protocol(constants: Option[Seq[Constant]],
+                      // on-chain
                       dataInputs: Option[Seq[Input]],
                       inputs: Seq[Input],
+                      // to-create
                       outputs: Seq[Output],
-                      fee: Option[Long],
+                      fee: Option[scala.Long],
+                      // operations
                       binaryOps: Option[Seq[BinaryOp]],
                       unaryOps: Option[Seq[UnaryOp]],
                       conversions: Option[Seq[Conversion]])
@@ -24,10 +27,12 @@ package object model {
   case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long) {
     require(address.name.isEmpty, s"Output declaration (address) cannot be named: ${address.name}")
     require(nanoErgs.name.isEmpty, s"Output declaration (nanoErgs) cannot be named: ${nanoErgs.name}")
-    registers.toSeq.flatten.foreach(register => require(register.name.isEmpty, s"Output declaration (register) cannot be named: ${register.name}"))
-    tokens.toSeq.flatten.foreach { token =>
+    require(nanoErgs.filter.isEmpty, s"Output declaration (nanoErgs) cannot have a filter: ${nanoErgs.filter}")
+    optSeq(registers).foreach(register => require(register.name.isEmpty, s"Output declaration (register) cannot be named: ${register.name}"))
+    optSeq(tokens).foreach { token =>
       require(token.tokenId.name.isEmpty, s"Output declaration (token Id) cannot be named: ${token.tokenId.name}")
-      require(token.amount.name.isEmpty, s"Output declaration (token amount) cannot be named: ${token.tokenId.name}")
+      require(token.amount.name.isEmpty, s"Output declaration (token amount) cannot be named: ${token.amount.name}")
+      require(token.amount.filter.isEmpty, s"Output declaration (token amount) cannot have a filter: ${token.amount.filter}")
     }
   }
 
@@ -37,6 +42,7 @@ package object model {
     override var `type` = DataType.Address
     override lazy val refTypes = refs.map(_ => DataType.Address)
     override lazy val isLazy = false
+    override lazy val possiblyOnChain: Boolean = true
     exactlyOne(this)("name", "value")(name, value)
   }
 
@@ -45,6 +51,7 @@ package object model {
     override lazy val refs = value.toSeq
     override lazy val refTypes = refs.map(_ => `type`)
     override lazy val isLazy = false
+    override lazy val possiblyOnChain: Boolean = true
     exactlyOne(this)("name", "value")(name, value)
   }
 
@@ -54,6 +61,7 @@ package object model {
     override var `type` = DataType.CollByte
     override lazy val refTypes = refs.map(_ => DataType.CollByte)
     override lazy val isLazy = false
+    override lazy val possiblyOnChain: Boolean = true
     override def getValue(dictionary: Dictionary): ergo.KioskType[_] = {
       val collByte = super.getValue(dictionary).asInstanceOf[KioskCollByte]
       collByte.ensuring(collByte.value.size == 32, s"Id $this (${collByte.hex}) must be exactly 32 bytes")
@@ -67,8 +75,9 @@ package object model {
     override var `type` = DataType.Long
     override lazy val refTypes = refs.map(_ => DataType.Long)
     override lazy val isLazy = false
-    exactlyOne(this)("name", "value")(name, value)
-    exactlyOne(this)("name", "filter")(name, filter)
+    override lazy val possiblyOnChain: Boolean = true
+    if (filter.nonEmpty && value.isEmpty) throw new Exception(s"Value cannot be empty if filter is defined")
+    atLeastOne(this)("name", "value")(name, value)
   }
 
   case class Token(index: Int, tokenId: Id, amount: Long)
@@ -79,7 +88,6 @@ package object model {
     override lazy val refTypes = Nil
     override lazy val isLazy = true
     override def getValue(dictionary: Dictionary): ergo.KioskType[_] = DataType.getValue(value, `type`)
-    override lazy val isConstant: Boolean = true
     require(`type` != DataType.Unknown, "Data type cannot be unknown")
   }
 

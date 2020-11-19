@@ -90,7 +90,7 @@ object Main {
       Some(Address(name = None, value = Some("myAddress"))),
       registers = Some(Seq(myRegister4)),
       tokens = Some(Seq(myToken2)),
-      nanoErgs = Some(model.Long(name = Some("input2NanoErgs"), value = None, filter = None))
+      nanoErgs = Some(model.Long(name = None, value = Some("input1NanoErgs"), filter = Some(FilterOp.Eq)))
     )
 
     lazy val myInput3 = Input(
@@ -98,15 +98,15 @@ object Main {
       address = Some(Address(name = None, value = Some("myAddress"))),
       registers = Some(Seq(myRegister1, myRegister2)),
       tokens = Some(Seq(myToken3)),
-      nanoErgs = Some(model.Long(name = Some("input3NanoErgs"), value = None, filter = None))
+      nanoErgs = Some(model.Long(name = None, value = Some("someLong1"), filter = Some(FilterOp.Eq)))
     )
 
     lazy val protocol = Protocol(
       constants,
-      dataInputs = Some(Seq(myInput3, myInput2)),
-      inputs = Seq(myInput1),
+      dataInputs = Some(Seq(myInput1, myInput2)),
+      inputs = Seq(myInput3),
       outputs = Nil,
-      Some(Long(None, Some("myLong8"), Some(FilterOp.Eq))),
+      fee = Some(10000L),
       binaryOps,
       unaryOps,
       conversions
@@ -120,10 +120,10 @@ object Main {
     println(protocolToJson)
     require(protocolToJsonToProtocol == protocol, "protocolToJsonToProtocol")
     val str =
-      """{"constants":[{"name":"myLong1","type":"Long","value":"1234"},{"name":"myCollByte","type":"CollByte","value":"77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"},{"name":"myInt","type":"Int","value":"1234"},{"name":"myTokenId","type":"CollByte","value":"77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"},{"name":"myGroupElement","type":"GroupElement","value":"028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"},{"name":"myErgoTree1","type":"ErgoTree","value":"10010101D17300"},{"name":"myAddress","type":"Address","value":"9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"}],"dataInputs":[{"address":{"value":"myAddress"},"registers":[{"name":"myRegister1","num":"R4","type":"CollByte"},{"name":"myRegister2","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"tokenId":{"name":"randomName"},"amount":{"name":"someLong3"}}],"nanoErgs":{"name":"input3NanoErgs"}},{"address":{"value":"myAddress"},"registers":[{"name":"myRegister4","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"tokenId":{"name":"unreferencedToken2Id"},"amount":{"value":"myLong1","filter":"Gt"}}],"nanoErgs":{"name":"input2NanoErgs"}}],"inputs":[{"boxId":{"value":"myCollByte"},"registers":[{"name":"myRegister3","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"tokenId":{"name":"myToken1Id"},"amount":{"name":"someLong1"}}],"nanoErgs":{"name":"input1NanoErgs"}}],"outputs":[],"fee":{"value":"myLong8","filter":"Eq"},"binaryOps":[{"name":"myLong2","first":"myLong1","op":"Add","second":"myIntToLong"},{"name":"myLong3","first":"myLong2","op":"Max","second":"myLong1"},{"name":"myLong4","first":"myLong2","op":"Add","second":"myLong3"},{"name":"myLong5","first":"myLong4","op":"Add","second":"myLong2"},{"name":"myLong6","first":"myLong5","op":"Add","second":"myLong4"}],"unaryOps":[{"out":"myLong7","in":"myLong2","op":"Neg"},{"out":"myLong8","in":"myLong7","op":"Neg"}],"conversions":[{"to":"myErgoTree2","from":"myGroupElement","converter":"ProveDlog"},{"to":"myCollByte2","from":"myErgoTree2","converter":"ToCollByte"},{"to":"myIntToLong","from":"myInt","converter":"ToLong"}]}
+      """{"constants":[{"name":"myLong1","type":"Long","value":"1234"},{"name":"myCollByte","type":"CollByte","value":"77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"},{"name":"myInt","type":"Int","value":"1234"},{"name":"myTokenId","type":"CollByte","value":"77d14a018507949d1a88a631f76663e8e5101f57305dd5ebd319a41028d80456"},{"name":"myGroupElement","type":"GroupElement","value":"028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"},{"name":"myErgoTree1","type":"ErgoTree","value":"10010101D17300"},{"name":"myAddress","type":"Address","value":"9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"}],"dataInputs":[{"boxId":{"value":"myCollByte"},"address":{"name":"myAddressName"},"registers":[{"name":"myRegister3","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"tokenId":{"name":"myToken1Id"},"amount":{"name":"someLong1"}}],"nanoErgs":{"name":"input1NanoErgs"}},{"address":{"value":"myAddress"},"registers":[{"name":"myRegister4","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"tokenId":{"name":"unreferencedToken2Id"},"amount":{"value":"myLong1","filter":"Gt"}}],"nanoErgs":{"value":"input1NanoErgs","filter":"Eq"}}],"inputs":[{"address":{"value":"myAddress"},"registers":[{"name":"myRegister1","num":"R4","type":"CollByte"},{"name":"myRegister2","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"tokenId":{"name":"randomName"},"amount":{"name":"someLong3"}}],"nanoErgs":{"value":"someLong1","filter":"Eq"}}],"outputs":[],"fee":10000,"binaryOps":[{"name":"myLong2","first":"myLong1","op":"Add","second":"myIntToLong"},{"name":"myLong3","first":"myLong2","op":"Max","second":"myLong1"},{"name":"myLong4","first":"myLong2","op":"Add","second":"myLong3"},{"name":"myLong5","first":"myLong4","op":"Add","second":"myLong2"},{"name":"myLong6","first":"myLong5","op":"Add","second":"myLong4"}],"unaryOps":[{"out":"myLong7","in":"myLong2","op":"Neg"},{"out":"myLong8","in":"myLong7","op":"Neg"}],"conversions":[{"to":"myErgoTree2","from":"myGroupElement","converter":"ProveDlog"},{"to":"myCollByte2","from":"myErgoTree2","converter":"ToCollByte"},{"to":"myIntToLong","from":"myInt","converter":"ToLong"}]}
         |""".stripMargin
     val strToProtocol = Parser.parse(str)
-//    require(strToProtocol == protocol, "strToProtocol")
+    require(strToProtocol == protocol, "strToProtocol")
     offchain.compiler.Compiler.compile(protocol)
   }
 }
