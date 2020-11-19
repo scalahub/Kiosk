@@ -6,6 +6,9 @@ import kiosk.offchain.parser.Parser
 import play.api.libs.json.JsValue
 
 object TimestampProtocol {
+  val script =
+    """{"constants":[{"name":"boxIdToTimestamp","type":"CollByte","value":"b9e5c470e392ee8290c90c607128f50b5e4bf0d87b9e5e40f685a13e94d129c8"},{"name":"emissionAddress","type":"Address","value":"2z93aPPTpVrZJHkQN54V7PatEfg3Ac1zKesFxUz8TGGZwPT4Rr5q6tBwsjEjounQU4KNZVqbFAUsCNipEKZmMdx2WTqFEyUURcZCW2CrSqKJ8YNtSVDGm7eHcrbPki9VRsyGpnpEQvirpz6GKZgghcTRDwyp1XtuXoG7XWPC4bT1U53LhiM3exE2iUDgDkme2e5hx9dMyBUi9TSNLNY1oPy2MjJ5seYmGuXCTRPLqrsi"},{"name":"timestampAddress","type":"Address","value":"4MQyMKvMbnCJG3aJ"},{"name":"tokenId","type":"CollByte","value":"dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea"},{"name":"minTokenAmount","type":"Long","value":"2"},{"name":"one","type":"Long","value":"1"},{"name":"minStorageRent","type":"Long","value":"2000000"}],"dataInputs":[{"boxId":{"value":"boxIdToTimestamp"}}],"inputs":[{"address":{"value":"emissionAddress"},"tokens":[{"index":0,"tokenId":{"value":"tokenId"},"amount":{"name":"inputTokenAmount","value":"minTokenAmount","filter":"Ge"}}],"nanoErgs":{"name":"inputNanoErgs"}}],"outputs":[{"address":{"value":"emissionAddress"},"tokens":[{"index":0,"tokenId":{"value":"tokenId"},"amount":{"value":"balanceTokenAmount"}}],"nanoErgs":{"value":"inputNanoErgs"}},{"address":{"value":"timestampAddress"},"registers":[{"value":"boxIdToTimestamp","num":"R4","type":"CollByte"},{"value":"HEIGHT","num":"R5","type":"Int"}],"tokens":[{"index":0,"tokenId":{"value":"tokenId"},"amount":{"value":"one"}}],"nanoErgs":{"value":"minStorageRent"}}],"binaryOps":[{"name":"balanceTokenAmount","first":"inputTokenAmount","op":"Sub","second":"one"}]}
+                  |""".stripMargin
   // constants
   val boxIdToTimestamp = Constant("boxIdToTimestamp", DataType.CollByte, "b9e5c470e392ee8290c90c607128f50b5e4bf0d87b9e5e40f685a13e94d129c8")
   val one = Constant("one", DataType.Long, "1")
@@ -63,8 +66,9 @@ object TimestampProtocol {
     val json: JsValue = Parser.unparse(protocol)
     val string = json.toString()
     val json2Protocol = Parser.parse(string)
+    val str2Protocol = Parser.parse(script)
+    assert(str2Protocol == json2Protocol)
     println(Parser.unparse(json2Protocol))
     compiler.Compiler.compile(json2Protocol)
   }
-
 }
