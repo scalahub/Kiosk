@@ -1,7 +1,7 @@
 # Tx Builder
 
 Tx Builder is a tool for developing the offchain part of an Ergo DApp. It allows one to specify the offchain component of 
-any Ergo application protocol in Json and build a transaction to participate in the protocol. It is to used in conjunction with KioskWallet. However, it can also be used as a stand-alone library for a different wallet. 
+any Ergo application protocol in Json and build a transaction to participate in the protocol. It is to be used in conjunction with KioskWallet. However, it can also be used as a stand-alone library for a different wallet. 
 
 Tx Builder is more verbose than, for example, Scala. As an example the Scala code `c = a + b` must be written in Tx Builder as 
 `{"out":"c", "first":"a", "op":"Add", "second":"b"}`.
