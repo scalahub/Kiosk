@@ -8,6 +8,8 @@ import kiosk.ergo.{KioskBox, KioskCollByte, KioskErgoTree, KioskLong, KioskType,
 import kiosk.offchain.model.{Constant, DataType}
 
 package object compiler {
+  case class CompileResults(dataInputBoxIds: Seq[String], inputBoxIds: Seq[String], inputNanoErgs: Long, inputTokens: Seq[(String, Long)], outputs: Seq[KioskBox], fee: Option[Long])
+
   case class DictionaryObject(isUnresolved: Boolean, declaration: Declaration)
 
   case class Variable(name: String, `type`: DataType.Type)
@@ -18,6 +20,15 @@ package object compiler {
 
   case class OnChainBox(boxId: KioskCollByte, address: KioskErgoTree, nanoErgs: KioskLong, tokenIds: Seq[KioskCollByte], tokenAmounts: Seq[KioskLong], registers: Seq[KioskType[_]]) {
     require(tokenIds.size == tokenAmounts.size, s"tokenIds.size (${tokenIds.size}) != tokenAmounts.size (${tokenAmounts.size})")
+
+    def toKioskBox = KioskBox(
+      ScalaErgoConverters.getStringFromAddress(ScalaErgoConverters.getAddressFromErgoTree(address.value)),
+      nanoErgs.value,
+      registers.toArray,
+      (tokenIds zip tokenAmounts).map { case (id, amount) => (id.toString, amount.value) }.toArray,
+      Some(boxId.toString),
+      None
+    )
   }
 
   object OnChainBox {

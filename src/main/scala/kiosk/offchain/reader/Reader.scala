@@ -10,7 +10,7 @@ import kiosk.offchain.model.{DataType, FilterOp, Input, RegNum, Register}
 import sigmastate.Values
 
 object Reader {
-  def getBox(input: Input)(dictionary: Dictionary): Option[OnChainBox] = {
+  def getBox(input: Input, alreadySelected: Seq[OnChainBox])(dictionary: Dictionary): Option[OnChainBox] = {
     val boxById = input.id.flatMap { id =>
       id.value.map { name =>
         OnChainBox.fromKioskBox(Explorer.getBoxById(dictionary.getValue(name).asInstanceOf[KioskCollByte].value.toArray.encodeHex))
@@ -29,7 +29,9 @@ object Reader {
 
     val matchedBoxes = boxById ++ boxesByAddress
 
-    val filteredByRegisters = filterByRegisters(matchedBoxes, optSeq(input.registers))(dictionary)
+    val filteredBySelected = matchedBoxes.filterNot(alreadySelected.contains)
+
+    val filteredByRegisters = filterByRegisters(filteredBySelected, optSeq(input.registers))(dictionary)
 
     val filteredByTokens = filterByTokens(filteredByRegisters, optSeq(input.tokens))(dictionary)
 

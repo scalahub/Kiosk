@@ -16,6 +16,10 @@ class Dictionary {
   private var onChainDataInputs = Seq[OnChainBox]()
   private val onChainBoxMap: MMap[String, (Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]] = MMap()
 
+  def getOnChainInputs = onChainInputs
+
+  def getOnChainDataInputs = onChainDataInputs
+
   def getValue(name: String): ergo.KioskType[_] = dict(name).declaration.getValue(this)
 
   def getDictionaryObjects(unresolved: Boolean): Seq[(String, DictionaryObject)] =
