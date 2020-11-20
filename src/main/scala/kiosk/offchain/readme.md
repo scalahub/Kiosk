@@ -12,7 +12,7 @@ It allows us to specify a `Protocol`, which is a sequence of:
 - Conversions
 
 ## Declaration
-A `Declaration` maps to an actual object containing a `Kiosktype[_]`.
+A [`Declaration`](compiler/Declaration.scala) maps to an actual object containing a [`Kiosktype[_]`](../ergo.scala).
 For instance, an `Id` type maps to a `KioskCollByte` object (of size 32), 
 while an `Address` type maps to a `KioskErgoTree` object.
 
@@ -20,11 +20,13 @@ We have three types of declarations:
 - **Constants**: These specify initial values. Examples:  
   - `{"name":"myInt", "type":"int", "value":"123"}`
   - `{"name":"myAddress", "type":"address", "value":"9fcrXXaJgrGKC8iu98Y2spstDDxNccXSR9QjbfTvtuv7vJ3NQLk"}`
-- **Instructions**: These specify binary and unary operations and conversions. Example:
+- **Instructions**: These specify binary and unary operations and conversions. Examples:
   - Binary Op: `{"name":"mySum", "first":"someValue", "op":"Add", "second":"someOtherValue"}`
-  - Unary Op: `{"out":"myLong7", "in":"myLong2", "op":"Neg"}`
+  - Unary Op: `{"out":"myNegativeNumber", "in":"myNumber", "op":"Neg"}`
   - Conversion: `{"to":"myErgoTree", "from":"myGroupElement", "converter":"ProveDlog"}`
 - **Box**: These are used to define boxes or search for boxes. There are four types: `Address`, `Id`, `Register`, and `Long` (see below).  
+
+See [this page](model/package.scala) for the detailed schema of all declarations and [this page](model/Enums.scala) for the enumerations used.
 
 ## Box Declarations
 There are four type of box declarations:
@@ -44,7 +46,7 @@ boxes, and the name corresponds to the final value matched.
 The following give some examples:
 1. `{"name":"myAddress"}`
 2. `{"value":"myAddress"}`
-3. `{"name":"actualNanoErgs", "value":"someMinValue", "filter":"Gt"}`
+3. `{"name":"actualNanoErgs", "value":"someMinValue", "filter":"Ge"}`
 4. `{"name":"actualNanoErgs", "value":"someMinValue"}`
 
 - The first defines the address `myAddress`.
@@ -52,7 +54,7 @@ The following give some examples:
 - The third defines the value `actualNanoErgs` and references `someMinValue`.
   An error occurs if `actualNanoErgs < someMinValue`. 
 - The fourth defines the value `actualNanoErgs` and references `someMinValue`.
-  An error occurs if `actualNanoErgs != someMinValue`.
+  An error occurs if `actualNanoErgs != someMinValue`. (the default filter `Eq` is assumed here)
 
  
 #### Targets and Pointers

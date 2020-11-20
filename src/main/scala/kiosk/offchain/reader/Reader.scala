@@ -11,7 +11,7 @@ import sigmastate.Values
 
 object Reader {
   def getBox(input: Input)(dictionary: Dictionary): Option[OnChainBox] = {
-    val boxById = input.boxId.flatMap { id =>
+    val boxById = input.id.flatMap { id =>
       id.value.map { name =>
         OnChainBox.fromKioskBox(Explorer.getBoxById(dictionary.getValue(name).asInstanceOf[KioskCollByte].value.toArray.encodeHex))
       }
@@ -73,7 +73,7 @@ object Reader {
   private def filterByToken(onChainBoxes: Seq[OnChainBox], token: model.Token)(dictionary: Dictionary): Seq[OnChainBox] = {
     val index = token.index
 
-    val filteredByTokenId = token.tokenId.value
+    val filteredByTokenId = token.id.value
       .map { ref =>
         val requiredTokenId: KioskType[_] = dictionary.getValue(ref)
         onChainBoxes.filter { onChainBox =>

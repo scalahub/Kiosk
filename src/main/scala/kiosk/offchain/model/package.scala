@@ -19,9 +19,9 @@ package object model {
                       unaryOps: Option[Seq[UnaryOp]],
                       conversions: Option[Seq[Conversion]])
 
-  case class Input(boxId: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long]) {
-    atLeastOne(this)("boxId", "address")(boxId, address)
-    for { id <- boxId; ergoTree <- address } exactlyOne(this)("boxId.name", "address.name")(id.name, ergoTree.name)
+  case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long]) {
+    atLeastOne(this)("id", "address")(id, address)
+    for { boxId <- id; ergoTree <- address } exactlyOne(this)("id.name", "address.name")(boxId.name, ergoTree.name)
   }
 
   case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long) {
@@ -30,7 +30,7 @@ package object model {
     require(nanoErgs.filter.isEmpty, s"Output declaration (nanoErgs) cannot have a filter: ${nanoErgs.filter}")
     optSeq(registers).foreach(register => require(register.name.isEmpty, s"Output declaration (register) cannot be named: ${register.name}"))
     optSeq(tokens).foreach { token =>
-      require(token.tokenId.name.isEmpty, s"Output declaration (token Id) cannot be named: ${token.tokenId.name}")
+      require(token.id.name.isEmpty, s"Output declaration (token Id) cannot be named: ${token.id.name}")
       require(token.amount.name.isEmpty, s"Output declaration (token amount) cannot be named: ${token.amount.name}")
       require(token.amount.filter.isEmpty, s"Output declaration (token amount) cannot have a filter: ${token.amount.filter}")
     }
@@ -80,7 +80,7 @@ package object model {
     atLeastOne(this)("name", "value")(name, value)
   }
 
-  case class Token(index: Int, tokenId: Id, amount: Long)
+  case class Token(index: Int, id: Id, amount: Long)
 
   case class Constant(name: String, var `type`: DataType.Type, value: String) extends Declaration {
     override lazy val maybeId = Some(name)

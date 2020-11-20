@@ -14,7 +14,7 @@ object Loader {
     dictionary.addDeclarationLazily(output.address)
     output.registers.toSeq.flatten.foreach(register => dictionary.addDeclarationLazily(register))
     output.tokens.toSeq.flatten.foreach { outToken =>
-      dictionary.addDeclarationLazily(outToken.tokenId)
+      dictionary.addDeclarationLazily(outToken.id)
       dictionary.addDeclarationLazily(outToken.amount)
     }
     dictionary.addDeclarationLazily(output.nanoErgs)
@@ -22,7 +22,7 @@ object Loader {
   }
 
   private def addDeclarations(input: Input, inputIndex: Int, isDataInput: Boolean)(implicit dictionary: Dictionary): Unit = {
-    input.boxId.map { id =>
+    input.id.map { id =>
       id.onChainVariable.map { variable =>
         dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
         dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).boxId)
@@ -57,11 +57,11 @@ object Loader {
   }
 
   private def addDeclarations(token: Token, inputIndex: Int, isDataInput: Boolean)(implicit dictionary: Dictionary): Unit = {
-    token.tokenId.onChainVariable.map { variable =>
+    token.id.onChainVariable.map { variable =>
       dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
       dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).tokenIds(token.index))
     }
-    dictionary.addDeclarationLazily(token.tokenId)
+    dictionary.addDeclarationLazily(token.id)
     token.amount.onChainVariable.map { variable =>
       dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
       dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).tokenAmounts(token.index))
