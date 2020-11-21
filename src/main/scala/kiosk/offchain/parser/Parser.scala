@@ -47,9 +47,9 @@ object Parser {
     override def writes(o: DataType.Type): JsValue = JsString(DataType.toString(o))
   }
 
-  private implicit val formatBinaryOpResult = Json.format[BinaryOp]
-  private implicit val formatUnaryOpResult = Json.format[UnaryOp]
-  private implicit val formatUnaryConverterResult = Json.format[Conversion]
+  private implicit val formatBinaryOp = Json.format[BinaryOp]
+  private implicit val formatUnaryOp = Json.format[UnaryOp]
+  private implicit val formatConversion = Json.format[Conversion]
   private implicit val formatLong = Json.format[Long]
   private implicit val formatRegister = Json.format[Register]
   private implicit val formatAddress = Json.format[Address]

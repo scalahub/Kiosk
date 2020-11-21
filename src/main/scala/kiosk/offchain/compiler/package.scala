@@ -43,6 +43,7 @@ package object compiler {
     override lazy val refTypes = Nil
     override lazy val isLazy = true
     override def getValue(dictionary: Dictionary): ergo.KioskType[_] = dictionary.getOnChainValue(name)
+    override lazy val possiblyOnChain: Boolean = false
   }
 
   def exactlyOne(obj: Any)(names: String*)(options: Option[_]*): Unit =

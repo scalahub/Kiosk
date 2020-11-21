@@ -248,7 +248,7 @@ This initial release (v0.1) should be good enough to use for many existing dApps
 A future release will address one or more of the following issues:  
 1. Currently, each input (and data-input) definition matches at most one on-chain box. We would prefer one input definition to match multiple boxes. We call them **multi-inputs** definitions.
 2. There should be a meaningful way of mixing single and multi-input targets and pointers.
-3. Allow literal values to be directly defined in declarations instead of via constants. Example: `"address":{"value":"4MQyMKvMbnCJG3aJ"}`.
-4. Allow declarations to have both pointers and targets. Example: `"address":{"name":"myAddress", "value":"4MQyMKvMbnCJG3aJ"}`.     
+3. Allow literals to be directly used in declarations instead of via constants. Example: `"address":{"literal":"4MQyMKvMbnCJG3aJ"}`.
+4. Allow every declaration to have both pointers and targets. Example: `"address":{"name":"myAddress", "value":"someAddress"}`.     
 
 

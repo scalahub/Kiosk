@@ -11,9 +11,9 @@ trait Declaration {
   protected val refTypes: Seq[DataType.Type] // types of the other Declarations referenced by this
 
   val isLazy: Boolean
+  val possiblyOnChain: Boolean
 
   lazy val id = maybeId.getOrElse(randId)
-  lazy val possiblyOnChain: Boolean = false
 
   lazy val isOnChainVariable = maybeId.nonEmpty && possiblyOnChain
 

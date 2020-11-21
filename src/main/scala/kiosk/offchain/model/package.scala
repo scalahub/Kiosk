@@ -88,6 +88,7 @@ package object model {
     override lazy val refTypes = Nil
     override lazy val isLazy = true
     override def getValue(dictionary: Dictionary): ergo.KioskType[_] = DataType.getValue(value, `type`)
+    override lazy val possiblyOnChain: Boolean = false
     require(`type` != DataType.Unknown, "Data type cannot be unknown")
   }
 
@@ -98,6 +99,7 @@ package object model {
     override var `type` = types.to
     override lazy val refTypes = Seq(types.from)
     override lazy val isLazy = true
+    override lazy val possiblyOnChain: Boolean = false
     override def getValue(dictionary: Dictionary): ergo.KioskType[_] = UnaryConverter.convert(converter, dictionary.getValue(from))
   }
 
@@ -107,6 +109,7 @@ package object model {
     override var `type` = DataType.Unknown
     override lazy val refTypes = Seq(DataType.Unknown, DataType.Unknown)
     override lazy val isLazy = true
+    override lazy val possiblyOnChain: Boolean = false
     override def getValue(dictionary: Dictionary): ergo.KioskType[_] = BinaryOperator.operate(op, dictionary.getValue(first), dictionary.getValue(second))
   }
 
@@ -116,6 +119,7 @@ package object model {
     override var `type` = DataType.Unknown
     override lazy val refTypes = Seq(DataType.Unknown)
     override lazy val isLazy = true
+    override lazy val possiblyOnChain: Boolean = false
     override def getValue(dictionary: Dictionary): ergo.KioskType[_] = UnaryOperator.operate(op, dictionary.getValue(in))
   }
 }
