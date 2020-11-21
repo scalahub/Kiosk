@@ -10,6 +10,11 @@ object Builder {
   def buildOutputs(protocol: Protocol)(dictionary: Dictionary) = {
     protocol.outputs.map(createOutput(_)(dictionary))
   }
+
+  private def noGaps(sorted: Seq[(Int, _)]): Boolean = {
+    sorted.map(_._1).zipWithIndex.forall { case (int, index) => int == index }
+  }
+
   private def createOutput(output: Output)(dictionary: Dictionary): KioskBox = {
     val ergoAddress: ErgoAddress = ScalaErgoConverters.getAddressFromErgoTree(dictionary.getValue(output.address.value.get).asInstanceOf[KioskErgoTree].value)
     val address: String = ScalaErgoConverters.getStringFromAddress(ergoAddress)
@@ -22,6 +27,7 @@ object Builder {
         (index, value)
       }
       .sortBy(_._1)
+      .ensuring(noGaps(_), s"Register should start from R4 and must not have gaps")
       .map(_._2)
 
     val tokens: Seq[(String, scala.Long)] = optSeq(output.tokens)
@@ -32,6 +38,7 @@ object Builder {
         (index, (tokenId.toString, amount.value))
       }
       .sortBy(_._1)
+      .ensuring(noGaps(_), s"Token indices should start from 0 and must not have gaps")
       .map(_._2)
     val nanoErgs: scala.Long = dictionary.getValue(output.nanoErgs.value.get).asInstanceOf[KioskLong].value
     KioskBox(address, nanoErgs, registers.toArray, tokens.toArray)
