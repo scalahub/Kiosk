@@ -15,15 +15,6 @@ object Compiler {
     val outputs = Builder.buildOutputs(protocol)(dictionary)
     // Printer.print(dictionary) // print values
 
-    val dataInputs = dictionary.getOnChainDataInputs.map(_.toKioskBox)
-    val inputs = dictionary.getOnChainInputs.map(_.toKioskBox)
-    CompileResults(
-      dataInputs.map(_.optBoxId.get),
-      inputs.map(_.optBoxId.get),
-      inputs.map(_.value).sum,
-      inputs.flatMap(_.tokens).groupBy(_._1).map { case (id, seq) => (id, seq.map(_._2).sum) }.toSeq,
-      outputs,
-      protocol.fee
-    )
+    CompileResults(dictionary.getDataInputBoxIds, dictionary.getInputBoxIds, dictionary.getInputNanoErgs, dictionary.getInputTokens, outputs, protocol.fee)
   }
 }

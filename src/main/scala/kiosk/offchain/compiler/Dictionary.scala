@@ -16,9 +16,19 @@ class Dictionary {
   private var onChainDataInputs = Seq[OnChainBox]()
   private val onChainBoxMap: MMap[String, (Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]] = MMap()
 
-  def getOnChainInputs = onChainInputs
+  // inputs.flatMap(_.tokens).groupBy(_._1).map { case (id, seq) => (id, seq.map(_._2).sum) }.toSeq
+  def getInputNanoErgs = onChainInputs.map(_.nanoErgs.value).sum
 
-  def getOnChainDataInputs = onChainDataInputs
+  def getInputTokens =
+    onChainInputs
+      .flatMap(input => input.tokenIds.map(_.toString) zip input.tokenAmounts.map(_.value))
+      .groupBy(_._1)
+      .map { case (id, seq) => (id, seq.map(_._2).sum) }
+      .toSeq
+
+  def getInputBoxIds = onChainInputs.map(_.boxId.toString)
+
+  def getDataInputBoxIds = onChainDataInputs.map(_.boxId.toString)
 
   def getValue(name: String): ergo.KioskType[_] = dict(name).declaration.getValue(this)
 

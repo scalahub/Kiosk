@@ -20,15 +20,6 @@ package object compiler {
 
   case class OnChainBox(boxId: KioskCollByte, address: KioskErgoTree, nanoErgs: KioskLong, tokenIds: Seq[KioskCollByte], tokenAmounts: Seq[KioskLong], registers: Seq[KioskType[_]]) {
     require(tokenIds.size == tokenAmounts.size, s"tokenIds.size (${tokenIds.size}) != tokenAmounts.size (${tokenAmounts.size})")
-
-    def toKioskBox = KioskBox(
-      ScalaErgoConverters.getStringFromAddress(ScalaErgoConverters.getAddressFromErgoTree(address.value)),
-      nanoErgs.value,
-      registers.toArray,
-      (tokenIds zip tokenAmounts).map { case (id, amount) => (id.toString, amount.value) }.toArray,
-      Some(boxId.toString),
-      None
-    )
   }
 
   object OnChainBox {
