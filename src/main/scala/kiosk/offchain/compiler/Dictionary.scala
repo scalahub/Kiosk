@@ -31,14 +31,6 @@ class Dictionary {
 
   def getValue(name: String): ergo.KioskType[_] = dict(name).declaration.getValue(this)
 
-  def getDictionaryObjects(unresolved: Boolean): Seq[(String, DictionaryObject)] =
-    dict
-      .collect {
-        case (key, dictionaryObject) if dictionaryObject.isUnresolved == unresolved => key -> dictionaryObject
-      }
-      .toSeq
-      .sortBy(_._1)
-
   private def resolve(name: String, `type`: DataType.Type, stack: Seq[String]): Unit = {
     require(`type` != DataType.Unknown)
     dict.get(name) match {

@@ -4,8 +4,9 @@ Tx Builder is a tool for developing the offchain part of an Ergo dApp. It allows
 any Ergo application protocol in Json and build a transaction to participate in the protocol. 
 It is to be used in conjunction with KioskWallet. However, it can also be used as a stand-alone library for a different wallet. 
 
-Tx Builder is more verbose than, for example, Scala. As an example the Scala code `c = a + b` must be written in Tx Builder as 
-`{"name":"c", "first":"a", "op":"Add", "second":"b"}`.
+Tx Builder is more verbose than, for example, Scala. As an example, the Scala code `c = a + b` must be written in Tx Builder as 
+`{"name":"c", "first":"a", "op":"Add", "second":"b"}`. 
+That said, the only thing needed to use Tx Builder is the ability to write Json (and possibly use a pen and paper).
 
 #### Protocol
 
@@ -34,7 +35,7 @@ We can classify declarations into three types:
   - Binary Op: `{"name":"mySum", "first":"someValue", "op":"Add", "second":"someOtherValue"}`
   - Unary Op: `{"out":"myNegativeNumber", "in":"myNumber", "op":"Neg"}`
   - Conversion: `{"to":"myErgoTree", "from":"myGroupElement", "converter":"ProveDlog"}`
-- **Box declarations**: These are used to define boxes or search for boxes. There are four types: `Address`, `Id`, `Register`, and `Long` (see below).  
+- **Box declarations**: These are used to define or search for boxes. There are four types: `Address`, `Id`, `Register`, and `Long` (see below).  
 
 See [this page](model/package.scala) for the detailed schema of all declarations and [this page](model/Enums.scala) for the enumerations used.
 
@@ -70,7 +71,7 @@ The following are some example declarations:
 
 For clarity, we use the following terminology when describing box declarations:
 - A declaration that defines a variable is a "target".
-- A declaration that reference a variable is a "pointer".
+- A declaration that references a variable is a "pointer".
 
 We can then rewrite the rules for box declarations as follows:
 - It can be either a target or a pointer but not both, with `Long` being the exception.
@@ -102,7 +103,7 @@ Order of evaluation (resolution of variables):
   - Thus, a pointer in inputs can refer to a target in data-inputs, but a pointer in data-inputs cannot refer to a target in inputs.
   - Similarly, a pointer in the second input can refer to a target in the first input, but a pointer in the first input cannot refer to a target in the second input.
 - It is not possible for a pointer to refer to a target in the same input or data-input.
-- An output cannot contain targets. It can only contain pointers.
+- As mentioned earlier, an output cannot contain targets. It can only contain pointers.
 
 #### Complete example
 
