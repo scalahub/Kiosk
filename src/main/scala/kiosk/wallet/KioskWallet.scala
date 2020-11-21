@@ -47,16 +47,15 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     val $INFO$ = "Using 0.001 Ergs as fee"
     val $ergs$ = "0.001"
     val nanoErgs = (ergs * BigDecimal(1000000000)).toBigInt().toLong
-    val feeNanoErgs = 1000000L
     val unspentBoxes: Seq[ergo.KioskBox] = Explorer.getUnspentBoxes(myAddress).sortBy(-_.value)
     val boxName = randId
     $ergoBox.createBoxFromAddress(boxName, toAddress, Array(), Array(), Array(), nanoErgs)
-    val inputs: Seq[String] = boxSelector(nanoErgs + feeNanoErgs, unspentBoxes)
+    val inputs: Seq[String] = boxSelector(nanoErgs + defaultFee, unspentBoxes)
     val txJson = $ergoBox.createTx(
       inputBoxIds = inputs.toArray,
       dataInputBoxIds = Array(),
       outputBoxNames = Array(boxName),
-      fee = feeNanoErgs,
+      fee = defaultFee,
       changeAddress = myAddress,
       proveDlogSecrets = Array(secretKey.toString(10)),
       proveDhtDataNames = Array(),
@@ -87,9 +86,10 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     val $broadcast$ = "false"
 
     val compileResults = compiler.Compiler.compile(Parser.parse(script.getText))
-    val fee = compileResults.fee.getOrElse(defaultFee)
-    val outputNanoErgs = compileResults.outputs.map(_.value).sum + fee
+    val feeNanoErgs = compileResults.fee.getOrElse(defaultFee)
+    val outputNanoErgs = compileResults.outputs.map(_.value).sum + feeNanoErgs
     val deficientNanoErgs = (outputNanoErgs - compileResults.inputNanoErgs).max(0)
+
     /* Currently we are not going to look for deficient tokens, just nanoErgs */
     val moreInputBoxIds = if (deficientNanoErgs > 0) {
       val myBoxes: Seq[ergo.KioskBox] = Explorer.getUnspentBoxes(myAddress).filterNot(compileResults.inputBoxIds.contains).sortBy(-_.value)
@@ -99,12 +99,11 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     Client.usingClient { implicit ctx =>
       val inputBoxes: Array[InputBox] = ctx.getBoxesById(inputBoxIds: _*)
       val dataInputBoxes: Array[InputBox] = ctx.getBoxesById(compileResults.dataInputBoxIds: _*)
-      //myAddress
       $ergoBox.$createTx(
         inputBoxes = inputBoxes,
         dataInputs = dataInputBoxes,
         boxesToCreate = compileResults.outputs.toArray,
-        fee,
+        fee = feeNanoErgs,
         changeAddress = myAddress,
         proveDlogSecrets = Array(secretKey.toString(10)),
         dhtData = Array[DhtData](),

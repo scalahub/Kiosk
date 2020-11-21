@@ -13,8 +13,14 @@ object Compiler {
     OnChainLoader.load(protocol)(dictionary)
     // Step 4. build outputs
     val outputs = Builder.buildOutputs(protocol)(dictionary)
-    // Printer.print(dictionary) // print values
-
-    CompileResults(dictionary.getDataInputBoxIds, dictionary.getInputBoxIds, dictionary.getInputNanoErgs, dictionary.getInputTokens, outputs, protocol.fee)
+    // Return final result
+    CompileResult(
+      dictionary.getDataInputBoxIds,
+      dictionary.getInputBoxIds,
+      dictionary.getInputNanoErgs,
+      dictionary.getInputTokens,
+      outputs,
+      protocol.fee
+    )
   }
 }

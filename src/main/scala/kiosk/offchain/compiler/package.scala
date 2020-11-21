@@ -8,7 +8,7 @@ import kiosk.ergo.{KioskBox, KioskCollByte, KioskErgoTree, KioskLong, KioskType,
 import kiosk.offchain.model.{Constant, DataType}
 
 package object compiler {
-  case class CompileResults(dataInputBoxIds: Seq[String], inputBoxIds: Seq[String], inputNanoErgs: Long, inputTokens: Seq[(String, Long)], outputs: Seq[KioskBox], fee: Option[Long])
+  case class CompileResult(dataInputBoxIds: Seq[String], inputBoxIds: Seq[String], inputNanoErgs: Long, inputTokens: Seq[(String, Long)], outputs: Seq[KioskBox], fee: Option[Long])
 
   case class DictionaryObject(isUnresolved: Boolean, declaration: Declaration)
 

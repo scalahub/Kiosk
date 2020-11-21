@@ -1,15 +1,15 @@
 # Tx Builder
 
-Tx Builder is a tool for developing the offchain part of an Ergo DApp. It allows one to specify the offchain component of 
-any Ergo application protocol in Json and build a transaction to participate in the protocol. It is to be used in conjunction with KioskWallet. However, it can also be used as a stand-alone library for a different wallet. 
+Tx Builder is a tool for developing the offchain part of an Ergo dApp. It allows one to specify the offchain component of 
+any Ergo application protocol in Json and build a transaction to participate in the protocol. 
+It is to be used in conjunction with KioskWallet. However, it can also be used as a stand-alone library for a different wallet. 
 
 Tx Builder is more verbose than, for example, Scala. As an example the Scala code `c = a + b` must be written in Tx Builder as 
 `{"name":"c", "first":"a", "op":"Add", "second":"b"}`.
-In the long-term, it may be better to develop a higher-level language on top of Tx Builder that is less verbose. 
 
 #### Protocol
 
-The highest level of abstraction in Tx Builder is a `Protocol`, 
+The highest level of abstraction in Tx Builder is a [`Protocol`](model/package.scala#L10-L20), 
 which is a specification of the data-inputs, inputs and outputs of the transaction to be created.
 A `Protocol` is made up of the following items: 
 - Constants
@@ -66,7 +66,7 @@ The following are some example declarations:
   An error occurs if `actualNanoErgs != someMinValue`. (the default filter `Eq` is assumed here)
 
  
-#### Target or Pointer?
+#### Targets and  Pointers
 
 For clarity, we use the following terminology when describing box declarations:
 - A declaration that defines a variable is a "target".
@@ -97,16 +97,16 @@ Order of evaluation (resolution of variables):
 - Outputs
 - Binary Ops, Unary Ops and Conversions are "Lazy" (i.e., evaluated only if needed)
 
-#### Reference Rules
+#### Referencing rules
 - The order of evaluation determines what can and cannot be referenced. A pointer can only refer to a target that has been evaluated previously. 
   - Thus, a pointer in inputs can refer to a target in data-inputs, but a pointer in data-inputs cannot refer to a target in inputs.
   - Similarly, a pointer in the second input can refer to a target in the first input, but a pointer in the first input cannot refer to a target in the second input.
 - It is not possible for a pointer to refer to a target in the same input or data-input.
 - An output cannot contain targets. It can only contain pointers.
 
-#### Example Script
+#### Example
 
-The following is an example of a script to timestamp a box using the DApp described [here](https://www.ergoforum.org/t/a-trustless-timestamping-service-for-boxes/432/9?u=scalahub).
+The following is an example of a script to timestamp a box using the dApp described [here](https://www.ergoforum.org/t/a-trustless-timestamping-service-for-boxes/432/9?u=scalahub).
 ```JSON
 {
   "constants": [
@@ -238,3 +238,17 @@ The following is an example of a script to timestamp a box using the DApp descri
   ]
 }
 ```
+
+#### Development Status
+
+Tx Builder is in *experimental* status. Please use it at your own risk and definitely read the source before using it.
+This initial release (v0.1) should be good enough to use for many existing dApps, such as *Oracle-pools*, *Timestamping* and 
+*Auctions*.
+
+A future release will address one or more of the following issues:  
+1. Currently, each input (and data-input) definition matches at most one on-chain box. We would prefer one input definition to match multiple boxes. We call them **multi-inputs** definitions.
+2. There should be a meaningful way of mixing single and multi-input targets and pointers.
+3. Allow literal values to be directly defined in declarations instead of via constants. Example: `"address":{"value":"4MQyMKvMbnCJG3aJ"}`.
+4. Allow declarations to have both pointers and targets. Example: `"address":{"name":"myAddress", "value":"4MQyMKvMbnCJG3aJ"}`.     
+
+

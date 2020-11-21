@@ -3,14 +3,14 @@ package kiosk.offchain.compiler
 import kiosk.offchain.model.{Input, Output, Protocol, RegNum, Register, Token}
 
 object Loader {
-  def load(p: Protocol)(dictionary: Dictionary): Unit = {
+  def load(p: Protocol)(implicit dictionary: Dictionary): Unit = {
     (optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions)).foreach(dictionary.addDeclaration)
-    optSeq(p.dataInputs).zipWithIndex.foreach { case (input, index) => addDeclarations(input, index, true)(dictionary) }
-    p.inputs.zipWithIndex.foreach { case (input, index)             => addDeclarations(input, index, false)(dictionary) }
-    p.outputs.foreach(addDeclarations(_)(dictionary))
+    optSeq(p.dataInputs).zipWithIndex.foreach { case (input, index) => addDeclarations(input, index, true) }
+    p.inputs.zipWithIndex.foreach { case (input, index)             => addDeclarations(input, index, false) }
+    p.outputs.foreach(addDeclarations(_))
   }
 
-  private def addDeclarations(output: Output)(dictionary: Dictionary): Unit = {
+  private def addDeclarations(output: Output)(implicit dictionary: Dictionary): Unit = {
     dictionary.addDeclarationLazily(output.address)
     output.registers.toSeq.flatten.foreach(register => dictionary.addDeclarationLazily(register))
     output.tokens.toSeq.flatten.foreach { outToken =>

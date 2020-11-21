@@ -16,7 +16,6 @@ class Dictionary {
   private var onChainDataInputs = Seq[OnChainBox]()
   private val onChainBoxMap: MMap[String, (Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]] = MMap()
 
-  // inputs.flatMap(_.tokens).groupBy(_._1).map { case (id, seq) => (id, seq.map(_._2).sum) }.toSeq
   def getInputNanoErgs = onChainInputs.map(_.nanoErgs.value).sum
 
   def getInputTokens =
