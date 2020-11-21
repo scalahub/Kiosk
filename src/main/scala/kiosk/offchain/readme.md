@@ -104,7 +104,7 @@ Order of evaluation (resolution of variables):
 - It is not possible for a pointer to refer to a target in the same input or data-input.
 - An output cannot contain targets. It can only contain pointers.
 
-#### Example
+#### Complete example
 
 The following is an example of a script to timestamp a box using the dApp described [here](https://www.ergoforum.org/t/a-trustless-timestamping-service-for-boxes/432/9?u=scalahub).
 ```JSON
@@ -251,4 +251,48 @@ A future release will address one or more of the following issues:
 3. Allow literals to be directly used in declarations instead of via constants. Example: `"address":{"literal":"4MQyMKvMbnCJG3aJ"}`.
 4. Allow every declaration to have both pointers and targets. Example: `"address":{"name":"myAddress", "value":"someAddress"}`.     
 
+#### Using Tx Builder in your own wallet
+
+Tx Builder is written in Scala, and therefore supports any JVM language. The following shows how to use it from Scala.
+First include Kiosk in your project by doing the following in `build.sbt`:
+```sbt
+lazy val Kiosk = RootProject(uri("git://github.com/scalahub/Kiosk.git"))
+lazy val root = (project in file(".")).dependsOn(Kiosk)
+```
+
+Then use it in your code by importing classes in the package `kiosk.offchain` and its sub-packages. Please refer to [KioskWallet.scala](../wallet/KioskWallet.scala#L85-L113) for details on how to use Tx Assembler to generate your own wallet transaction.
+The following snippet (taken from KioskWallet) shows the main steps. 
+```Scala
+def txBuilder(script: String) = {
+  val compileResults = compiler.Compiler.compile(Parser.parse(script))
+  val feeNanoErgs = compileResults.fee.getOrElse(1000000L)
+  val outputNanoErgs = compileResults.outputs.map(_.value).sum + feeNanoErgs 
+  val deficientNanoErgs = (outputNanoErgs - compileResults.inputNanoErgs).max(0)
+
+  val moreInputBoxIds = if (deficientNanoErgs > 0) {
+    val myBoxes: Seq[ergo.KioskBox] = Explorer.getUnspentBoxes(myAddress).filterNot(compileResults.inputBoxIds.contains).sortBy(-_.value)
+    boxSelector(deficientNanoErgs, myBoxes)
+  } else Nil
+
+  val inputBoxIds = compileResults.inputBoxIds ++ moreInputBoxIds
+  // now we have all the information needed to create tx
+
+  // the following is specific to KioskWallet. This is where your wallet code will come instead  
+  Client.usingClient { implicit ctx =>    
+    val inputBoxes: Array[InputBox] = ctx.getBoxesById(inputBoxIds: _*)
+    val dataInputBoxes: Array[InputBox] = ctx.getBoxesById(compileResults.dataInputBoxIds: _*)
+
+    $ergoBox.$createTx(
+      inputBoxes = inputBoxes,
+      dataInputs = dataInputBoxes,
+      boxesToCreate = compileResults.outputs.toArray,
+      fee = feeNanoErgs,
+      changeAddress = myAddress,
+      proveDlogSecrets = Array(secretKey.toString(10)),
+      dhtData = Array[DhtData](),
+      broadcast = true
+    ).toJson(false)
+  }
+}
+```
 
