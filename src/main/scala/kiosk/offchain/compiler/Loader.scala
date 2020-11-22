@@ -22,23 +22,23 @@ object Loader {
   }
 
   private def addDeclarations(input: Input, inputIndex: Int, isDataInput: Boolean)(implicit dictionary: Dictionary): Unit = {
-    input.id.map { id =>
+    input.id.foreach { id =>
       id.onChainVariable.map { variable =>
         dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
         dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).boxId)
       }
       dictionary.addDeclarationLazily(id)
     }
-    input.address.map { ergoTree =>
+    input.address.foreach { ergoTree =>
       ergoTree.onChainVariable.map { variable =>
         dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
         dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).address)
       }
       dictionary.addDeclarationLazily(ergoTree)
     }
-    input.registers.toSeq.flatten.map(register => addDeclarations(register, inputIndex, isDataInput))
-    input.tokens.toSeq.flatten.map(token => addDeclarations(token, inputIndex, isDataInput))
-    input.nanoErgs.map { long =>
+    input.registers.toSeq.flatten.foreach(register => addDeclarations(register, inputIndex, isDataInput))
+    input.tokens.toSeq.flatten.foreach(token => addDeclarations(token, inputIndex, isDataInput))
+    input.nanoErgs.foreach { long =>
       long.onChainVariable.map { variable =>
         dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
         dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).nanoErgs)

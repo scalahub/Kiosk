@@ -8,7 +8,6 @@ import kiosk.offchain.model.DataType
 import scala.collection.mutable.{Map => MMap}
 
 class Dictionary {
-
   private val dict = MMap[String, DictionaryObject]()
   private val lazyRefs = MMap[String, Seq[Variable]]()
 
