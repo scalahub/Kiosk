@@ -14,7 +14,7 @@ class Reader(implicit dictionary: Dictionary) {
       id <- input.id
       _ <- id.value
     } yield {
-      val boxId: String = id.getValue.asInstanceOf[KioskCollByte].toString
+      val boxId: String = id.getValue.toString
       OnChainBox.fromKioskBox(Explorer.getBoxById(boxId))
     }
 
@@ -44,13 +44,6 @@ class Reader(implicit dictionary: Dictionary) {
     filteredByNanoErgs.getOrElse(filteredByTokens)
   }
 
-  //  private def getTarget(ref: String) = {
-  //    dictionary.getRef(ref).getValue match {
-  //      case kioskLong: KioskLong => kioskLong
-  //      case any                  => throw new Exception(s"Required KioskLong. Found ${any.typeName}")
-  //    }
-  //  }
-  //
   private def filterByRegisters(boxes: Seq[OnChainBox], registers: Seq[Register]): Seq[OnChainBox] = {
     registers.foldLeft(boxes)((boxesBeforeFilter, register) => filterByRegister(boxesBeforeFilter, register))
   }
