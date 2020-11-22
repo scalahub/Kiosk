@@ -10,7 +10,7 @@ That said, the only thing needed to use Tx Builder is the ability to write Json 
 
 #### Protocol
 
-The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L10-L20), 
+The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L9-L19), 
 which is a specification of the data-inputs, inputs and outputs of the transaction to be created.
 A **Protocol** is made up of the following items: 
 - Constants
@@ -51,7 +51,7 @@ A box declaration can contain exactly one of:
 - A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
 - A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
 
-The exception to this rule is the [**Long**](compiler/model/package.scala#L72-L81) declaration, which can have both fields, 
+The exception to this rule is the [**Long**](compiler/model/package.scala#L72-L85) declaration, which can have both fields, 
 provided that it also has a third field `filter` present. A [`filter`](compiler/model/Enums.scala#L16) can be any of `Ge, Le, Gt, Lt, Ne`. 
 Thus, a **Long** allows both of the following possibilities: 
 1. Either `name` or `value` as in other declarations.

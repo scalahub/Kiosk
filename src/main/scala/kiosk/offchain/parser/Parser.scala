@@ -1,11 +1,29 @@
 package kiosk.offchain.parser
 
 import kiosk.ergo.{KioskBox, KioskType}
-import kiosk.offchain.compiler.CompileResult
+import kiosk.offchain.compiler.{CompileResult, model}
 import kiosk.offchain.compiler.model._
-import play.api.libs.json._
 
 object Parser {
+  import play.api.libs.json._
+  import scala.reflect.runtime.universe._
+
+  def checkedReads[T](underlyingReads: Reads[T])(implicit typeTag: TypeTag[T]): Reads[T] = new Reads[T] {
+
+    def classFields[T: TypeTag]: Set[String] =
+      typeOf[T].members.collect {
+        case m: MethodSymbol if m.isCaseAccessor => m.name.decodedName.toString
+      }.toSet
+
+    def reads(json: JsValue): JsResult[T] = {
+      val caseClassFields = classFields[T]
+      json match {
+        case JsObject(fields) if (fields.keySet -- caseClassFields).nonEmpty =>
+          JsError(s"Unexpected fields provided: ${(fields.keySet -- caseClassFields).mkString(", ")}")
+        case _ => underlyingReads.reads(json)
+      }
+    }
+  }
 
   private implicit val readsUnaryConverter = new Reads[UnaryConverter.Converter] {
     override def reads(json: JsValue): JsResult[UnaryConverter.Converter] = JsSuccess(UnaryConverter.fromString(json.as[String]))
@@ -14,17 +32,17 @@ object Parser {
     override def writes(o: UnaryConverter.Converter): JsValue = JsString(UnaryConverter.toString(o))
   }
 
-  private implicit val readsUnaryOp = new Reads[UnaryOperator.Operator] {
+  private implicit val readsUnaryOperator = new Reads[UnaryOperator.Operator] {
     override def reads(json: JsValue): JsResult[UnaryOperator.Operator] = JsSuccess(UnaryOperator.fromString(json.as[String]))
   }
-  private implicit val writesUnaryOp = new Writes[UnaryOperator.Operator] {
+  private implicit val writesUnaryOperator = new Writes[UnaryOperator.Operator] {
     override def writes(o: UnaryOperator.Operator): JsValue = JsString(UnaryOperator.toString(o))
   }
 
-  private implicit val readsBinaryOp = new Reads[BinaryOperator.Operator] {
+  private implicit val readsBinaryOperator = new Reads[BinaryOperator.Operator] {
     override def reads(json: JsValue): JsResult[BinaryOperator.Operator] = JsSuccess(BinaryOperator.fromString(json.as[String]))
   }
-  private implicit val writesBinaryOp = new Writes[BinaryOperator.Operator] {
+  private implicit val writesBinaryOperator = new Writes[BinaryOperator.Operator] {
     override def writes(o: BinaryOperator.Operator): JsValue = JsString(BinaryOperator.toString(o))
   }
 
@@ -49,18 +67,30 @@ object Parser {
     override def writes(o: DataType.Type): JsValue = JsString(DataType.toString(o))
   }
 
-  private implicit val formatBinaryOp = Json.format[BinaryOp]
-  private implicit val formatUnaryOp = Json.format[UnaryOp]
-  private implicit val formatConversion = Json.format[Conversion]
-  private implicit val formatLong = Json.format[Long]
-  private implicit val formatRegister = Json.format[Register]
-  private implicit val formatAddress = Json.format[Address]
-  private implicit val formatId = Json.format[Id]
-  private implicit val formatToken = Json.format[Token]
-  private implicit val formatInput = Json.format[Input]
-  private implicit val formatOutput = Json.format[Output]
-  private implicit val formatConstant = Json.format[Constant]
-  private implicit val formatProtocol = Json.format[Protocol]
+  private implicit val readsBinaryOp = checkedReads(Json.reads[BinaryOp])
+  private implicit val writesBinaryOp = Json.writes[BinaryOp]
+  private implicit val readsUnaryOp = checkedReads(Json.reads[UnaryOp])
+  private implicit val writesUnaryOp = Json.writes[UnaryOp]
+  private implicit val readsConversion = checkedReads(Json.reads[Conversion])
+  private implicit val writesConversion = Json.writes[Conversion]
+  private implicit val readsLong = checkedReads(Json.reads[model.Long])
+  private implicit val writesLong = Json.writes[model.Long]
+  private implicit val readsRegister = checkedReads(Json.reads[Register])
+  private implicit val writesRegister = Json.writes[Register]
+  private implicit val readsAddress = checkedReads(Json.reads[Address])
+  private implicit val writesAddress = Json.writes[Address]
+  private implicit val readsId = checkedReads(Json.reads[Id])
+  private implicit val writesId = Json.writes[Id]
+  private implicit val readsToken = checkedReads(Json.reads[Token])
+  private implicit val writesToken = Json.writes[Token]
+  private implicit val readsInput = checkedReads(Json.reads[Input])
+  private implicit val writesInput = Json.writes[Input]
+  private implicit val readsOutput = checkedReads(Json.reads[Output])
+  private implicit val writesOutput = Json.writes[Output]
+  private implicit val readsConstant = checkedReads(Json.reads[model.Constant])
+  private implicit val writesConstant = Json.writes[model.Constant]
+  private implicit val readsProtocol = checkedReads(Json.reads[Protocol])
+  private implicit val writesProtocol = Json.writes[Protocol]
   private implicit val writeKioskType = new Writes[KioskType[_]] {
     override def writes(o: KioskType[_]): JsValue = JsString(o.hex)
   }
