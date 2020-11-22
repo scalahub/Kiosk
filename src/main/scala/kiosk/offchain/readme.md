@@ -10,9 +10,9 @@ That said, the only thing needed to use Tx Builder is the ability to write Json 
 
 #### Protocol
 
-The highest level of abstraction in Tx Builder is a [`Protocol`](model/package.scala#L10-L20), 
+The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L10-L20), 
 which is a specification of the data-inputs, inputs and outputs of the transaction to be created.
-A `Protocol` is made up of the following items: 
+A **Protocol** is made up of the following items: 
 - Constants
 - Data-input box definitions
 - Input box definitions 
@@ -23,9 +23,9 @@ A `Protocol` is made up of the following items:
 
 #### Declarations
 
-The next level of abstraction is a [`Declaration`](compiler/Declaration.scala), which maps to an instance of a [`Kiosktype[_]`](../ergo.scala#L29-37).
-For instance, an `Id` declaration maps to a `KioskCollByte` object (of size 32), 
-while an `Address` declaration maps to a `KioskErgoTree` object.
+The next level of abstraction is a [**Declaration**](compiler/Declaration.scala), which maps to an instance of a [`Kiosktype[_]`](../ergo.scala#L29-37).
+For instance, an **Id** declaration maps to a `KioskCollByte` object (of size 32), 
+while an **Address** declaration maps to a `KioskErgoTree` object.
 
 We can classify declarations into three types:
 - **Constants**: These specify initial values. Examples:  
@@ -35,9 +35,9 @@ We can classify declarations into three types:
   - Binary Op: `{"name":"mySum", "first":"someValue", "op":"Add", "second":"someOtherValue"}`
   - Unary Op: `{"out":"myNegativeNumber", "in":"myNumber", "op":"Neg"}`
   - Conversion: `{"to":"myErgoTree", "from":"myGroupElement", "converter":"ProveDlog"}`
-- **Box declarations**: These are used to define or search for boxes. There are four types: `Address`, `Id`, `Register`, and `Long` (see below).  
+- **Box declarations**: These are used to define or search for boxes. There are four types: **Address**, **Id**, **Register**, and **Long** (see below).  
 
-See [this page](model/package.scala) for the detailed schema of all declarations and [this page](model/Enums.scala) for the enumerations used.
+See [this page](compiler/model/package.scala) for the detailed schema of all declarations and [this page](compiler/model/Enums.scala) for the enumerations used.
 
 #### Box Declarations
 There are four type of box declarations:
@@ -51,21 +51,21 @@ A box declaration can contain exactly one of:
 - A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
 - A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
 
-The exception is the [`Long`](model/package.scala#L72-L81) declaration, which can have both fields. It can additionally have a [`filter`](model/Enums.scala#L16) field for inequalities. . 
+The exception to this rule is the [**Long**](compiler/model/package.scala#L72-L81) declaration, which can have both fields, 
+provided that it also has a third field `filter` present. A [`filter`](compiler/model/Enums.scala#L16) can be any of `Ge, Le, Gt, Lt, Ne`. 
+Thus, a **Long** allows both of the following possibilities: 
+1. Either `name` or `value` as in other declarations.
+2. All of `name`, `value` and `filter`.   
 
 The following are some example declarations:
 1. `{"name":"myAddress"}`
 2. `{"value":"myAddress"}`
 3. `{"name":"actualNanoErgs", "value":"someMinValue", "filter":"Ge"}`
-4. `{"name":"actualNanoErgs", "value":"someMinValue"}`
 
 - The first defines the address `myAddress`.
 - The second references that address.
-- The third defines the value `actualNanoErgs` and references `someMinValue`.
+- The third defines the (Long) value `actualNanoErgs` and references `someMinValue`.
   An error occurs if `actualNanoErgs < someMinValue`. 
-- The fourth defines the value `actualNanoErgs` and references `someMinValue`.
-  An error occurs if `actualNanoErgs != someMinValue`. (the default filter `Eq` is assumed here)
-
  
 #### Targets and  Pointers
 
@@ -74,7 +74,7 @@ For clarity, we use the following terminology when describing box declarations:
 - A declaration that references a variable is a "pointer".
 
 We can then rewrite the rules for box declarations as follows:
-- It can be either a target or a pointer but not both, with `Long` being the exception.
+- It can be either a target or a pointer but not both, with **Long** being the exception.
 - An input can contain both pointers and targets.
 - An output can only contain pointers.
 
@@ -87,15 +87,15 @@ For example, in `"address":{"name":"myAddress"}`, the address of the box will be
 
 #### Input rules
 The following rules apply for each input:
-- It must have at least one of `boxId` or `address` defined.
-- If both `boxId` and `address` have been defined, then both cannot be targets or pointers at the same time.
+- It must have at least one of `boxId` or `address` declarations defined.
+- If both `boxId` and `address` declarations have been defined, then both cannot be targets or pointers at the same time.
 
 #### Order of evaluation
-Order of evaluation (resolution of variables):
+Declarations are evaluated in the following order:
 - Constants
-- Data-inputs (from low to high index) 
-- Inputs (from low to high index) 
-- Outputs
+- Data-inputs declarations (from low to high index) 
+- Inputs declarations (from low to high index) 
+- Outputs declarations
 - Binary Ops, Unary Ops and Conversions are "Lazy" (i.e., evaluated only if needed)
 
 #### Referencing rules
@@ -250,7 +250,6 @@ A future release will address one or more of the following issues:
 1. Currently, each input (and data-input) definition matches at most one on-chain box. We would prefer one input definition to match multiple boxes. We call them **multi-inputs** definitions.
 2. There should be a meaningful way of mixing single and multi-input targets and pointers.
 3. Allow literals to be directly used in declarations instead of via constants. Example: `"address":{"literal":"4MQyMKvMbnCJG3aJ"}`.
-4. Allow every declaration to have both pointers and targets. Example: `"address":{"name":"myAddress", "value":"someAddress"}`.     
 
 #### Using Tx Builder in your own wallet
 

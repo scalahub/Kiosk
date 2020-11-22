@@ -1,6 +1,8 @@
 package kiosk.offchain.parser
 
-import kiosk.offchain.model._
+import kiosk.ergo.{KioskBox, KioskType}
+import kiosk.offchain.compiler.CompileResult
+import kiosk.offchain.compiler.model._
 import play.api.libs.json._
 
 object Parser {
@@ -59,6 +61,11 @@ object Parser {
   private implicit val formatOutput = Json.format[Output]
   private implicit val formatConstant = Json.format[Constant]
   private implicit val formatProtocol = Json.format[Protocol]
+  private implicit val writeKioskType = new Writes[KioskType[_]] {
+    override def writes(o: KioskType[_]): JsValue = JsString(o.hex)
+  }
+  private implicit val writesKioskBox = Json.writes[KioskBox]
+  implicit val writesCompileResult = Json.writes[CompileResult]
 
   def parse(string: String) = Json.parse(string).as[Protocol]
   def unparse(protocol: Protocol) = Json.toJson(protocol)

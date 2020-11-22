@@ -5,7 +5,7 @@ import java.util.UUID
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo
 import kiosk.ergo.{KioskBox, KioskCollByte, KioskErgoTree, KioskLong, KioskType, StringToBetterString}
-import kiosk.offchain.model.{Constant, DataType}
+import kiosk.offchain.compiler.model.{Constant, DataType}
 
 package object compiler {
   case class CompileResult(dataInputBoxIds: Seq[String], inputBoxIds: Seq[String], inputNanoErgs: Long, inputTokens: Seq[(String, Long)], outputs: Seq[KioskBox], fee: Option[Long])
@@ -42,7 +42,7 @@ package object compiler {
     override lazy val refs = Nil
     override lazy val refTypes = Nil
     override lazy val isLazy = true
-    override def getValue(dictionary: Dictionary): ergo.KioskType[_] = dictionary.getOnChainValue(name)
+    override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = dictionary.getOnChainValue(name)
     override lazy val possiblyOnChain: Boolean = false
   }
 

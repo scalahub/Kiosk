@@ -1,9 +1,8 @@
 package kiosk.offchain.compiler
 
 import kiosk.appkit.Client
-import kiosk.ergo
 import kiosk.ergo.KioskType
-import kiosk.offchain.model.DataType
+import kiosk.offchain.compiler.model.DataType
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -28,7 +27,7 @@ class Dictionary {
 
   def getDataInputBoxIds = onChainDataInputs.map(_.boxId.toString)
 
-  def getValue(name: String): ergo.KioskType[_] = dict(name).declaration.getValue(this)
+  private[compiler] def getRef(name: String) = dict(name).declaration
 
   private def resolve(name: String, `type`: DataType.Type, stack: Seq[String]): Unit = {
     require(`type` != DataType.Unknown)

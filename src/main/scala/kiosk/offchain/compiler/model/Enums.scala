@@ -1,4 +1,4 @@
-package kiosk.offchain.model
+package kiosk.offchain.compiler.model
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._

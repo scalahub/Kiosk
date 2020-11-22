@@ -1,18 +1,18 @@
 package kiosk.offchain.compiler
 
-import kiosk.offchain.model._
+import kiosk.offchain.compiler.model._
 
 object Compiler {
   def compile(protocol: Protocol) = {
-    val dictionary = new Dictionary
+    implicit val dictionary = new Dictionary
     // Step 1. validate that constants are properly encoded
-    optSeq(protocol.constants).map(_.getValue(dictionary))
+    optSeq(protocol.constants).map(_.getValue)
     // Step 2. load declarations (also does semantic validation)
-    Loader.load(protocol)(dictionary)
+    (new Loader).load(protocol)
     // Step 3. load on-chain declarations
-    OnChainLoader.load(protocol)(dictionary)
+    (new OnChainLoader).load(protocol)
     // Step 4. build outputs
-    val outputs = Builder.buildOutputs(protocol)(dictionary)
+    val outputs = (new Builder).buildOutputs(protocol)
     // Return final result
     CompileResult(
       dictionary.getDataInputBoxIds,
