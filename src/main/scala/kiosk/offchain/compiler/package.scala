@@ -38,9 +38,9 @@ package object compiler {
   }
 
   case class OnChain(name: String, var `type`: DataType.Type) extends Declaration {
-    override lazy val maybeId = Some(name)
-    override lazy val refs = Nil
-    override lazy val refTypes = Nil
+    override lazy val maybeTargetId = Some(name)
+    override lazy val pointerNames = Nil
+    override lazy val pointerTypes = Nil
     override lazy val isLazy = true
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = dictionary.getOnChainValue(name)
     override lazy val canPointToOnChain: Boolean = false

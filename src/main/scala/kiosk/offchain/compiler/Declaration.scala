@@ -6,21 +6,21 @@ import kiosk.offchain.compiler.model.DataType
 trait Declaration {
   var `type`: DataType.Type
 
-  protected val maybeId: Option[String] // the name of the object declared. Option because not every Declaration needs a name, only those that must be referenced in another Declaration
-  protected val refs: Seq[String] // names of the other Declarations referenced by this
-  protected val refTypes: Seq[DataType.Type] // types of the other Declarations referenced by this
+  protected val maybeTargetId: Option[String] // the name of the object declared. Option because not every Declaration needs a name, only those that must be referenced in another Declaration
+  protected val pointerNames: Seq[String] // names of the other Declarations referenced by this
+  protected val pointerTypes: Seq[DataType.Type] // types of the other Declarations referenced by this
 
   val isLazy: Boolean
 
   val canPointToOnChain: Boolean
 
-  lazy val id = maybeId.getOrElse(randId)
+  lazy val targetId = maybeTargetId.getOrElse(randId)
 
-  lazy val isOnChain = maybeId.isDefined && canPointToOnChain
+  lazy val isOnChain = maybeTargetId.isDefined && canPointToOnChain
 
   lazy val onChainVariable: Option[Variable] = if (isOnChain) Some(Variable(randId, `type`)) else None
 
-  lazy val references: Seq[Variable] = (refs zip refTypes).map { case (ref, refType) => new Variable(ref, refType) } ++ onChainVariable
+  lazy val pointers: Seq[Variable] = (pointerNames zip pointerTypes).map { case (pointerName, pointerType) => new Variable(pointerName, pointerType) } ++ onChainVariable
 
   def updateType(newType: DataType.Type) = `type` = newType
 
@@ -28,11 +28,11 @@ trait Declaration {
     if (isOnChain) {
       dictionary.getOnChainValue(onChainVariable.get.name)
     } else {
-      dictionary.getRef(references.head.name).getValue
+      dictionary.getRef(pointers.head.name).getValue
     }
   }
 
-  override def toString = s"${maybeId.getOrElse("unnamed")}: ${`type`}"
+  override def toString = s"${maybeTargetId.getOrElse("unnamed")}: ${`type`}"
 
-  if (refs.toSet.size != refs.size) throw new Exception(s"Refs for $id contain duplicates ${refs.reduceLeft(_ + ", " + _)}")
+  if (pointerNames.toSet.size != pointerNames.size) throw new Exception(s"Refs for $targetId contain duplicates ${pointerNames.reduceLeft(_ + ", " + _)}")
 }

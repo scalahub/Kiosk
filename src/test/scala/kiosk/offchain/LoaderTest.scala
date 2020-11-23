@@ -7,7 +7,7 @@ import kiosk.offchain.parser.Parser
 object LoaderTest {
   val myLong1 = Constant("myLong1", DataType.Long, "1234")
   val myInt = Constant("myInt", DataType.Int, "1234")
-  val myCollByte = Constant("myCollByte", DataType.CollByte, "ae57e4add0f181f5d1e8fd462969e4cc04f13b0da183676660d280ad0b64563f")
+  val myCollByte = Constant("myCollByte", DataType.CollByte, "506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7")
   val myTokenId = Constant("myTokenId", DataType.CollByte, "ae57e4add0f181f5d1e8fd462969e4cc04f13b0da183676660d280ad0b64563f")
   val myGroupElement = Constant("myGroupElement", DataType.GroupElement, "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67")
   val myErgoTree1 = Constant("myErgoTree1", DataType.ErgoTree, "10010101D17300")
@@ -37,7 +37,7 @@ object LoaderTest {
   val myRegister4 = Register(Some("myRegister4"), value = None, RegNum.R4, DataType.CollByte)
 
   val myToken0 = Token(
-    index = 1,
+    index = Some(1),
     id = Id(name = Some("myToken1ActualId"), value = None),
     amount = Long(
       name = Some("someLong1"),
@@ -47,7 +47,7 @@ object LoaderTest {
   )
 
   val myToken1 = Token(
-    index = 1,
+    index = Some(1),
     id = Id(name = Some("myToken1Id"), value = None),
     amount = Long(
       name = Some("someLong1"),
@@ -57,7 +57,7 @@ object LoaderTest {
   )
 
   val myToken2 = Token(
-    index = 1,
+    index = Some(1),
     id = Id(name = Some("unreferencedToken2Id"), value = None),
     amount = Long(
       name = None,
@@ -67,7 +67,7 @@ object LoaderTest {
   )
 
   val myToken3 = Token(
-    index = 1,
+    index = Some(1),
     id = Id(name = Some("randomName"), value = None),
     amount = Long(
       name = Some("someLong3"),
@@ -119,7 +119,7 @@ object LoaderTest {
     require(protocolToJsonToProtocol == protocol, "protocolToJsonToProtocol") // require both to be equal
 
     val str =
-      """{"constants":[{"name":"myLong1","type":"Long","value":"1234"},{"name":"myCollByte","type":"CollByte","value":"ae57e4add0f181f5d1e8fd462969e4cc04f13b0da183676660d280ad0b64563f"},{"name":"myInt","type":"Int","value":"1234"},{"name":"myTokenId","type":"CollByte","value":"ae57e4add0f181f5d1e8fd462969e4cc04f13b0da183676660d280ad0b64563f"},{"name":"myGroupElement","type":"GroupElement","value":"028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"},{"name":"myErgoTree1","type":"ErgoTree","value":"10010101D17300"},{"name":"myAddress","type":"Address","value":"9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"}],"dataInputs":[{"id":{"value":"myCollByte"},"address":{"name":"myAddressName"},"registers":[{"name":"myRegister3","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"id":{"name":"myToken1Id"},"amount":{"name":"someLong1"}}],"nanoErgs":{"name":"input1NanoErgs"}},{"address":{"value":"myAddress"},"registers":[{"name":"myRegister4","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"id":{"name":"unreferencedToken2Id"},"amount":{"value":"myLong1","filter":"Gt"}}],"nanoErgs":{"value":"input1NanoErgs","filter":"Ne"}}],"inputs":[{"address":{"value":"myAddress"},"registers":[{"name":"myRegister1","num":"R4","type":"CollByte"},{"name":"myRegister2","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"id":{"name":"randomName"},"amount":{"name":"someLong3"}}],"nanoErgs":{"value":"someLong1","filter":"Ge"}}],"outputs":[],"fee":10000,"binaryOps":[{"name":"myLong2","first":"myLong1","op":"Add","second":"myIntToLong"},{"name":"myLong3","first":"myLong2","op":"Max","second":"myLong1"},{"name":"myLong4","first":"myLong2","op":"Add","second":"myLong3"},{"name":"myLong5","first":"myLong4","op":"Add","second":"myLong2"},{"name":"myLong6","first":"myLong5","op":"Add","second":"myLong4"}],"unaryOps":[{"out":"myLong7","in":"myLong2","op":"Neg"},{"out":"myLong8","in":"myLong7","op":"Neg"}],"conversions":[{"to":"myErgoTree2","from":"myGroupElement","converter":"ProveDlog"},{"to":"myCollByte2","from":"myErgoTree2","converter":"ToCollByte"},{"to":"myIntToLong","from":"myInt","converter":"ToLong"}]}
+      """{"constants":[{"name":"myLong1","type":"Long","value":"1234"},{"name":"myCollByte","type":"CollByte","value":"506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7"},{"name":"myInt","type":"Int","value":"1234"},{"name":"myTokenId","type":"CollByte","value":"ae57e4add0f181f5d1e8fd462969e4cc04f13b0da183676660d280ad0b64563f"},{"name":"myGroupElement","type":"GroupElement","value":"028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"},{"name":"myErgoTree1","type":"ErgoTree","value":"10010101D17300"},{"name":"myAddress","type":"Address","value":"9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"}],"dataInputs":[{"id":{"value":"myCollByte"},"address":{"name":"myAddressName"},"registers":[{"name":"myRegister3","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"id":{"name":"myToken1Id"},"amount":{"name":"someLong1"}}],"nanoErgs":{"name":"input1NanoErgs"}},{"address":{"value":"myAddress"},"registers":[{"name":"myRegister4","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"id":{"name":"unreferencedToken2Id"},"amount":{"value":"myLong1","filter":"Gt"}}],"nanoErgs":{"value":"input1NanoErgs","filter":"Ne"}}],"inputs":[{"address":{"value":"myAddress"},"registers":[{"name":"myRegister1","num":"R4","type":"CollByte"},{"name":"myRegister2","num":"R4","type":"CollByte"}],"tokens":[{"index":1,"id":{"name":"randomName"},"amount":{"name":"someLong3"}}],"nanoErgs":{"value":"someLong1","filter":"Ge"}}],"outputs":[],"fee":10000,"binaryOps":[{"name":"myLong2","first":"myLong1","op":"Add","second":"myIntToLong"},{"name":"myLong3","first":"myLong2","op":"Max","second":"myLong1"},{"name":"myLong4","first":"myLong2","op":"Add","second":"myLong3"},{"name":"myLong5","first":"myLong4","op":"Add","second":"myLong2"},{"name":"myLong6","first":"myLong5","op":"Add","second":"myLong4"}],"unaryOps":[{"out":"myLong7","in":"myLong2","op":"Neg"},{"out":"myLong8","in":"myLong7","op":"Neg"}],"conversions":[{"to":"myErgoTree2","from":"myGroupElement","converter":"ProveDlog"},{"to":"myCollByte2","from":"myErgoTree2","converter":"ToCollByte"},{"to":"myIntToLong","from":"myInt","converter":"ToLong"}]}
         |""".stripMargin
     val strToProtocol = Parser.parse(str)
     require(strToProtocol == protocol, "strToProtocol")

@@ -47,7 +47,7 @@ class Dictionary {
   }
 
   private def add(declaration: Declaration): Unit = {
-    val name = declaration.id
+    val name = declaration.targetId
     val dictionaryObject = DictionaryObject(isUnresolved = declaration.isLazy, declaration)
     if (dict.contains(name)) throw new Exception(s"Variable $name already exists as ${dict(name).declaration}")
     else dict += name -> dictionaryObject
@@ -77,9 +77,9 @@ class Dictionary {
 
   private def validateRefs(declaration: Declaration) = {
     if (declaration.isLazy) {
-      addLazyRefs(declaration.id, declaration.references)
+      addLazyRefs(declaration.targetId, declaration.pointers)
     } else {
-      declaration.references.map(reference => resolve(reference.name, reference.`type`, Seq(declaration.toString)))
+      declaration.pointers.map(reference => resolve(reference.name, reference.`type`, Seq(declaration.toString)))
     }
   }
 

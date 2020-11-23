@@ -1,5 +1,6 @@
 package kiosk.offchain.compiler
 
+import kiosk.ergo.KioskCollByte
 import kiosk.offchain.compiler.model.{Input, Output, Protocol, RegNum, Register, Token}
 
 class Loader(implicit dictionary: Dictionary) {
@@ -21,19 +22,19 @@ class Loader(implicit dictionary: Dictionary) {
     dictionary.commit
   }
 
-  private def loadInput(input: Input, inputIndex: Int, isDataInput: Boolean): Unit = {
+  private def loadInput(input: Input, index: Int, isDataInput: Boolean): Unit = {
     input.id.foreach { id =>
-      id.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).boxId))
+      id.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, isDataInput, _(index).boxId))
       dictionary.addDeclarationLazily(id)
     }
     input.address.foreach { ergoTree =>
-      ergoTree.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).address))
+      ergoTree.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, isDataInput, _(index).address))
       dictionary.addDeclarationLazily(ergoTree)
     }
-    optSeq(input.registers).foreach(register => loadRegister(register, inputIndex, isDataInput))
-    optSeq(input.tokens).foreach(token => loadToken(token, inputIndex, isDataInput))
+    optSeq(input.registers).foreach(register => loadRegister(register, index, isDataInput))
+    optSeq(input.tokens).foreach(token => loadToken(token, index, isDataInput))
     input.nanoErgs.foreach { long =>
-      long.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).nanoErgs))
+      long.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, isDataInput, _(index).nanoErgs))
       dictionary.addDeclarationLazily(long)
     }
     dictionary.commit
@@ -45,9 +46,10 @@ class Loader(implicit dictionary: Dictionary) {
   }
 
   private def loadToken(token: Token, inputIndex: Int, isDataInput: Boolean): Unit = {
-    token.id.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).tokenIds(token.index)))
+    def getOnChainIndex = token.index.getOrElse(throw new Exception(s"token.id cannot be on-chain variable if token.index is empty: $token"))
+    token.id.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenIds(getOnChainIndex)))
     dictionary.addDeclarationLazily(token.id)
-    token.amount.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).tokenAmounts(token.index)))
+    token.amount.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenAmounts(getOnChainIndex)))
     dictionary.addDeclarationLazily(token.amount)
   }
 }

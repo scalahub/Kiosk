@@ -36,29 +36,29 @@ package object model {
   }
 
   case class Address(name: Option[String], value: Option[String]) extends Declaration {
-    override lazy val maybeId = name
-    override lazy val refs = value.toSeq
+    override lazy val maybeTargetId = name
+    override lazy val pointerNames = value.toSeq
     override var `type` = DataType.Address
-    override lazy val refTypes = refs.map(_ => DataType.Address)
+    override lazy val pointerTypes = pointerNames.map(_ => DataType.Address)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
     exactlyOne(this)("name", "value")(name, value)
   }
 
   case class Register(name: Option[String], value: Option[String], num: Num, var `type`: Type) extends Declaration {
-    override lazy val maybeId = name
-    override lazy val refs = value.toSeq
-    override lazy val refTypes = refs.map(_ => `type`)
+    override lazy val maybeTargetId = name
+    override lazy val pointerNames = value.toSeq
+    override lazy val pointerTypes = pointerNames.map(_ => `type`)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
     exactlyOne(this)("name", "value")(name, value)
   }
 
   case class Id(name: Option[String], value: Option[String]) extends Declaration {
-    override lazy val maybeId = name
-    override lazy val refs = value.toSeq
+    override lazy val maybeTargetId = name
+    override lazy val pointerNames = value.toSeq
     override var `type` = DataType.CollByte
-    override lazy val refTypes = refs.map(_ => DataType.CollByte)
+    override lazy val pointerTypes = pointerNames.map(_ => DataType.CollByte)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
     override def getValue(implicit dictionary: Dictionary): ergo.KioskCollByte = {
@@ -69,10 +69,10 @@ package object model {
   }
 
   case class Long(name: Option[String], value: Option[String], filter: Option[FilterOp.Op]) extends Declaration {
-    override lazy val maybeId = name
-    override lazy val refs = value.toSeq
+    override lazy val maybeTargetId = name
+    override lazy val pointerNames = value.toSeq
     override var `type` = DataType.Long
-    override lazy val refTypes = refs.map(_ => DataType.Long)
+    override lazy val pointerTypes = pointerNames.map(_ => DataType.Long)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
     lazy val filterOp = filter.getOrElse(FilterOp.Eq)
@@ -83,12 +83,14 @@ package object model {
     for { _ <- name; _ <- value } require(filter.isDefined, s"Filter must be defined if both name and values are defined")
   }
 
-  case class Token(index: Int, id: Id, amount: Long)
+  case class Token(index: Option[Int], id: Id, amount: Long) {
+    atLeastOne(this)("index", "id.value")(index, id.value)
+  }
 
   case class Constant(name: String, var `type`: DataType.Type, value: String) extends Declaration {
-    override lazy val maybeId = Some(name)
-    override lazy val refs = Nil
-    override lazy val refTypes = Nil
+    override lazy val maybeTargetId = Some(name)
+    override lazy val pointerNames = Nil
+    override lazy val pointerTypes = Nil
     override lazy val isLazy = true
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = DataType.getValue(value, `type`)
     override lazy val canPointToOnChain: Boolean = false
@@ -96,31 +98,31 @@ package object model {
   }
 
   case class Conversion(to: String, from: String, converter: UnaryConverter.Converter) extends Declaration {
-    override lazy val maybeId = Some(to)
-    override lazy val refs = Seq(from)
+    override lazy val maybeTargetId = Some(to)
+    override lazy val pointerNames = Seq(from)
     lazy val types = UnaryConverter.getFromTo(converter)
     override var `type` = types.to
-    override lazy val refTypes = Seq(types.from)
+    override lazy val pointerTypes = Seq(types.from)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = UnaryConverter.convert(converter, dictionary.getRef(from).getValue(dictionary))
   }
 
   case class BinaryOp(name: String, first: String, op: BinaryOperator.Operator, second: String) extends Declaration {
-    override lazy val maybeId = Some(name)
-    override lazy val refs = Seq(first, second)
+    override lazy val maybeTargetId = Some(name)
+    override lazy val pointerNames = Seq(first, second)
     override var `type` = DataType.Unknown
-    override lazy val refTypes = Seq(DataType.Unknown, DataType.Unknown)
+    override lazy val pointerTypes = Seq(DataType.Unknown, DataType.Unknown)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = BinaryOperator.operate(op, dictionary.getRef(first).getValue, dictionary.getRef(second).getValue)
   }
 
   case class UnaryOp(out: String, in: String, op: UnaryOperator.Operator) extends Declaration {
-    override lazy val maybeId = Some(out)
-    override lazy val refs = Seq(in)
+    override lazy val maybeTargetId = Some(out)
+    override lazy val pointerNames = Seq(in)
     override var `type` = DataType.Unknown
-    override lazy val refTypes = Seq(DataType.Unknown)
+    override lazy val pointerTypes = Seq(DataType.Unknown)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = UnaryOperator.operate(op, dictionary.getRef(in).getValue)

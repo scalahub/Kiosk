@@ -68,15 +68,24 @@ class Reader(implicit dictionary: Dictionary) {
   }
 
   private def filterByToken(boxes: Seq[OnChainBox], token: model.Token): Seq[OnChainBox] = {
-    val boxesById = token.id.value
+    val filteredById: Seq[OnChainBox] = token.id.value
       .map { _ =>
-        val requiredTokenId: KioskCollByte = token.id.getValue
-        boxes.filter(box => box.tokenIds(token.index).hex == requiredTokenId.hex)
+        val requiredTokenId: String = token.id.getValue.toString
+        boxes.filter(box => box.tokenIds.map(_.toString).contains(requiredTokenId))
       }
       .getOrElse(boxes)
 
-    token.amount.getFilterTarget
-      .map(target => boxesById.filter(box => FilterOp.matches(box.tokenAmounts(token.index), target, token.amount.filterOp)))
-      .getOrElse(boxesById)
+    token.index
+      .map { index =>
+        val validBoxes: Seq[OnChainBox] = filteredById.filter(_.tokenIds.size > index)
+
+        token.id.value
+          .map { _ =>
+            val requiredTokenId: String = token.id.getValue.toString
+            validBoxes.filter(_.tokenIds(index).toString == requiredTokenId)
+          }
+          .getOrElse(validBoxes)
+      }
+      .getOrElse(filteredById)
   }
 }

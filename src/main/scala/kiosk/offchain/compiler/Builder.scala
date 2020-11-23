@@ -34,7 +34,7 @@ class Builder(implicit dictionary: Dictionary) {
     val tokens: Seq[(String, scala.Long)] = optSeq(output.tokens)
       .map { token =>
         val tokenId: KioskCollByte = token.id.getValue.asInstanceOf[KioskCollByte]
-        val index: Int = token.index
+        val index: Int = token.index.getOrElse(throw new Exception("Token index must be defined in output"))
         val amount: KioskLong = token.amount.getValue.asInstanceOf[KioskLong]
         (index, (tokenId.toString, amount.value))
       }
