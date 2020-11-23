@@ -1,5 +1,0 @@
-ToDo
-- Require token/register to not exist at some index
-- Process token/register if it exists at some index otherwise ignore (and don't throw error)
-    - For example, to copy token from index 0 of input 0 (if it exists) to index 1 of output 0
-- Match multiple inputs for a single "Input" object

@@ -3,6 +3,7 @@ package kiosk.offchain.compiler
 import kiosk.ergo
 import kiosk.ergo.{KioskCollByte, KioskLong}
 import kiosk.offchain.compiler.model.DataType.Type
+import kiosk.offchain.compiler.model.InputMatcherOptions.Options
 import kiosk.offchain.compiler.model.RegNum.Num
 
 package object model {
@@ -18,8 +19,16 @@ package object model {
                       unaryOps: Option[Seq[UnaryOp]],
                       conversions: Option[Seq[Conversion]])
 
-  case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long]) {
+  case class Input(id: Option[Id],
+                   address: Option[Address],
+                   registers: Option[Seq[Register]],
+                   tokens: Option[Seq[Token]],
+                   nanoErgs: Option[Long],
+                   private val options: Option[Set[InputMatcherOptions.Options]]) {
     atLeastOne(this)("id", "address")(id, address)
+    private lazy val matchers: Set[Options] = options.getOrElse(Set.empty)
+    lazy val strict: Boolean = matchers.contains(InputMatcherOptions.Strict) // applies to token matching only
+    lazy val multi = matchers.contains(InputMatcherOptions.Multi) // ToDo
     for { boxId <- id; ergoTree <- address } exactlyOne(this)("id.name", "address.name")(boxId.name, ergoTree.name)
   }
 
@@ -29,6 +38,7 @@ package object model {
     require(nanoErgs.filter.isEmpty, s"Output declaration (nanoErgs) cannot have a filter: ${nanoErgs.filter}")
     optSeq(registers).foreach(register => require(register.name.isEmpty, s"Output declaration (register) cannot be named: ${register.name}"))
     optSeq(tokens).foreach { token =>
+      require(token.index.isDefined, s"Output declaration (token index) cannot be empty: ${token}")
       require(token.id.name.isEmpty, s"Output declaration (token Id) cannot be named: ${token.id.name}")
       require(token.amount.name.isEmpty, s"Output declaration (token amount) cannot be named: ${token.amount.name}")
       require(token.amount.filter.isEmpty, s"Output declaration (token amount) cannot have a filter: ${token.amount.filter}")
@@ -84,6 +94,7 @@ package object model {
   }
 
   case class Token(index: Option[Int], id: Id, amount: Long) {
+    index.map(int => require(int >= 0, s"Token index must be >= 0. $this"))
     atLeastOne(this)("index", "id.value")(index, id.value)
   }
 

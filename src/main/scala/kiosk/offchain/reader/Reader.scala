@@ -34,7 +34,7 @@ class Reader(implicit dictionary: Dictionary) {
 
     val filteredByRegisters = filterByRegisters(filteredBySelected, optSeq(input.registers))
 
-    val filteredByTokens = filterByTokens(filteredByRegisters, optSeq(input.tokens))
+    val filteredByTokens = filterByTokens(filteredByRegisters, optSeq(input.tokens), input.strict)
 
     val filteredByNanoErgs = for {
       nanoErgs <- input.nanoErgs
@@ -52,40 +52,34 @@ class Reader(implicit dictionary: Dictionary) {
     val index: Int = RegNum.getIndex(register.num)
     val filteredByType: Seq[OnChainBox] = boxes.filter(box => DataType.isValid(box.registers(index), register.`type`))
 
-    register.value
-      .map { _ =>
+    register.value match {
+      case Some(_) =>
         val expected: KioskType[_] = register.getValue
         filteredByType.filter { box =>
           val kioskType: KioskType[_] = box.registers(index)
           kioskType.typeName == expected.typeName && kioskType.hex == expected.hex
         }
-      }
-      .getOrElse(filteredByType)
+      case _ => filteredByType
+    }
   }
 
-  private def filterByTokens(boxes: Seq[OnChainBox], tokens: Seq[model.Token]): Seq[OnChainBox] = {
-    tokens.foldLeft(boxes)((boxesBeforeFilter, token) => filterByToken(boxesBeforeFilter, token))
+  private def filterByTokens(boxes: Seq[OnChainBox], tokens: Seq[model.Token], strict: Boolean): Seq[OnChainBox] = {
+    tokens.foldLeft(boxes.map(box => box -> Set.empty[String]))((before, token) => filterByToken(before, token)).collect {
+      case (box, matchedIds) if !strict || box.tokenIds.map(_.toString).toSet == matchedIds => box
+    }
   }
 
-  private def filterByToken(boxes: Seq[OnChainBox], token: model.Token): Seq[OnChainBox] = {
-    val filteredById: Seq[OnChainBox] = token.id.value
-      .map { _ =>
-        val requiredTokenId: String = token.id.getValue.toString
-        boxes.filter(box => box.tokenIds.map(_.toString).contains(requiredTokenId))
-      }
-      .getOrElse(boxes)
-
-    token.index
-      .map { index =>
-        val validBoxes: Seq[OnChainBox] = filteredById.filter(_.tokenIds.size > index)
-
-        token.id.value
-          .map { _ =>
-            val requiredTokenId: String = token.id.getValue.toString
-            validBoxes.filter(_.tokenIds(index).toString == requiredTokenId)
-          }
-          .getOrElse(validBoxes)
-      }
-      .getOrElse(filteredById)
+  private def filterByToken(boxes: Seq[(OnChainBox, Set[ID])], token: model.Token): Seq[(OnChainBox, Set[ID])] = {
+    (token.id.value, token.index) match {
+      case (Some(_), Some(index)) =>
+        val id: String = token.id.getValue.toString
+        boxes.filter(_._1.tokenIds(index).toString == id).map { case (box, matchedIds) => box -> (matchedIds + id) }
+      case (None, Some(index)) =>
+        boxes.filter(_._1.tokenIds.size > index).map { case (box, matchedId) => box -> (matchedId + box.tokenIds(index).toString) }
+      case (Some(_), None) =>
+        val id: String = token.id.getValue.toString
+        boxes.filter(_._1.tokenIds.map(_.toString).contains(id)).map { case (box, matchedIds) => box -> (matchedIds + id) }
+      case _ => ??? // should never happen
+    }
   }
 }

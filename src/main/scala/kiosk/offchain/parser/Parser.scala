@@ -2,7 +2,7 @@ package kiosk.offchain.parser
 
 import kiosk.ergo.{KioskBox, KioskType}
 import kiosk.offchain.compiler.{CompileResult, model}
-import kiosk.offchain.compiler.model._
+import kiosk.offchain.compiler.model.{InputMatcherOptions, _}
 import play.api.libs.json._
 
 object Parser {
@@ -23,6 +23,13 @@ object Parser {
         case _ => underlyingReads.reads(json)
       }
     }
+  }
+
+  private implicit val readsInputMatcherOptions = new Reads[InputMatcherOptions.Options] {
+    override def reads(json: JsValue): JsResult[InputMatcherOptions.Options] = JsSuccess(InputMatcherOptions.fromString(json.as[String]))
+  }
+  private implicit val writesInputMatcherOptions = new Writes[InputMatcherOptions.Options] {
+    override def writes(o: InputMatcherOptions.Options): JsValue = JsString(InputMatcherOptions.toString(o))
   }
 
   private implicit val readsUnaryConverter = new Reads[UnaryConverter.Converter] {

@@ -81,7 +81,8 @@ object LoaderTest {
     address = Some(Address(name = Some("myAddressName"), value = None)),
     registers = Some(Seq(myRegister3)),
     tokens = Some(Seq(myToken1)),
-    nanoErgs = Some(Long(name = Some("input1NanoErgs"), value = None, filter = None))
+    nanoErgs = Some(Long(name = Some("input1NanoErgs"), value = None, filter = None)),
+    options = None
   )
 
   val myInput2 = Input(
@@ -89,7 +90,8 @@ object LoaderTest {
     Some(Address(name = None, value = Some("myAddress"))),
     registers = Some(Seq(myRegister4)),
     tokens = Some(Seq(myToken2)),
-    nanoErgs = Some(Long(name = None, value = Some("input1NanoErgs"), filter = Some(FilterOp.Ne)))
+    nanoErgs = Some(Long(name = None, value = Some("input1NanoErgs"), filter = Some(FilterOp.Ne))),
+    options = None
   )
 
   val myInput3 = Input(
@@ -97,7 +99,8 @@ object LoaderTest {
     address = Some(Address(name = None, value = Some("myAddress"))),
     registers = Some(Seq(myRegister1, myRegister2)),
     tokens = Some(Seq(myToken3)),
-    nanoErgs = Some(Long(name = None, value = Some("someLong1"), filter = Some(FilterOp.Ge)))
+    nanoErgs = Some(Long(name = None, value = Some("someLong1"), filter = Some(FilterOp.Ge))),
+    options = None
   )
 
   val protocol = Protocol(

@@ -134,3 +134,8 @@ object UnaryConverter extends MyEnum { // input and output types are different
     }
   }
 }
+
+object InputMatcherOptions extends MyEnum {
+  type Options = Value
+  val Strict, Multi = Value
+}
