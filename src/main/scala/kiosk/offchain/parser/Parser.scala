@@ -3,9 +3,9 @@ package kiosk.offchain.parser
 import kiosk.ergo.{KioskBox, KioskType}
 import kiosk.offchain.compiler.{CompileResult, model}
 import kiosk.offchain.compiler.model._
+import play.api.libs.json._
 
 object Parser {
-  import play.api.libs.json._
   import scala.reflect.runtime.universe._
 
   def checkedReads[T](underlyingReads: Reads[T])(implicit typeTag: TypeTag[T]): Reads[T] = new Reads[T] {

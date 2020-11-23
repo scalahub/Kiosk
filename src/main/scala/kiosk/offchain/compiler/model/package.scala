@@ -41,7 +41,7 @@ package object model {
     override var `type` = DataType.Address
     override lazy val refTypes = refs.map(_ => DataType.Address)
     override lazy val isLazy = false
-    override lazy val possiblyOnChain: Boolean = true
+    override lazy val canPointToOnChain: Boolean = true
     exactlyOne(this)("name", "value")(name, value)
   }
 
@@ -50,7 +50,7 @@ package object model {
     override lazy val refs = value.toSeq
     override lazy val refTypes = refs.map(_ => `type`)
     override lazy val isLazy = false
-    override lazy val possiblyOnChain: Boolean = true
+    override lazy val canPointToOnChain: Boolean = true
     exactlyOne(this)("name", "value")(name, value)
   }
 
@@ -60,11 +60,10 @@ package object model {
     override var `type` = DataType.CollByte
     override lazy val refTypes = refs.map(_ => DataType.CollByte)
     override lazy val isLazy = false
-    override lazy val possiblyOnChain: Boolean = true
+    override lazy val canPointToOnChain: Boolean = true
     override def getValue(implicit dictionary: Dictionary): ergo.KioskCollByte = {
       val kioskCollByte = super.getValue.asInstanceOf[KioskCollByte]
-      if (kioskCollByte.arrayBytes.size != 32) throw new Exception(s"Id $this (${kioskCollByte.hex}) size (${kioskCollByte.arrayBytes.size}) != 32")
-      kioskCollByte
+      kioskCollByte.ensuring(kioskCollByte.arrayBytes.size == 32, s"Id $this (${kioskCollByte.hex}) size (${kioskCollByte.arrayBytes.size}) != 32")
     }
     exactlyOne(this)("name", "value")(name, value)
   }
@@ -75,7 +74,7 @@ package object model {
     override var `type` = DataType.Long
     override lazy val refTypes = refs.map(_ => DataType.Long)
     override lazy val isLazy = false
-    override lazy val possiblyOnChain: Boolean = true
+    override lazy val canPointToOnChain: Boolean = true
     lazy val filterOp = filter.getOrElse(FilterOp.Eq)
     def getFilterTarget(implicit dictionary: Dictionary): Option[KioskLong] = value.map(dictionary.getRef(_).getValue.asInstanceOf[KioskLong])
     if (filter.nonEmpty && value.isEmpty) throw new Exception(s"Value cannot be empty if filter is defined")
@@ -92,7 +91,7 @@ package object model {
     override lazy val refTypes = Nil
     override lazy val isLazy = true
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = DataType.getValue(value, `type`)
-    override lazy val possiblyOnChain: Boolean = false
+    override lazy val canPointToOnChain: Boolean = false
     require(`type` != DataType.Unknown, "Data type cannot be unknown")
   }
 
@@ -103,7 +102,7 @@ package object model {
     override var `type` = types.to
     override lazy val refTypes = Seq(types.from)
     override lazy val isLazy = true
-    override lazy val possiblyOnChain: Boolean = false
+    override lazy val canPointToOnChain: Boolean = false
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = UnaryConverter.convert(converter, dictionary.getRef(from).getValue(dictionary))
   }
 
@@ -113,7 +112,7 @@ package object model {
     override var `type` = DataType.Unknown
     override lazy val refTypes = Seq(DataType.Unknown, DataType.Unknown)
     override lazy val isLazy = true
-    override lazy val possiblyOnChain: Boolean = false
+    override lazy val canPointToOnChain: Boolean = false
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = BinaryOperator.operate(op, dictionary.getRef(first).getValue, dictionary.getRef(second).getValue)
   }
 
@@ -123,7 +122,7 @@ package object model {
     override var `type` = DataType.Unknown
     override lazy val refTypes = Seq(DataType.Unknown)
     override lazy val isLazy = true
-    override lazy val possiblyOnChain: Boolean = false
+    override lazy val canPointToOnChain: Boolean = false
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = UnaryOperator.operate(op, dictionary.getRef(in).getValue)
   }
 }

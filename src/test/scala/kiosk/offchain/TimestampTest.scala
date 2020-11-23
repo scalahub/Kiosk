@@ -136,6 +136,12 @@ object TimestampTest {
       |""".stripMargin
   def main(args: Array[String]): Unit = {
     val str2Protocol = Parser.parse(timestampScript)
-    compiler.Compiler.compile(str2Protocol)
+    val result = compiler.Compiler.compile(str2Protocol)
+    println("\nData inputs")
+    result.dataInputBoxIds foreach println
+    println("\nInputs")
+    result.inputBoxIds foreach println
+    println("\nOutputs")
+    result.outputs foreach println
   }
 }

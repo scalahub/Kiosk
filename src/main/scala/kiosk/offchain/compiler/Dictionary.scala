@@ -82,7 +82,13 @@ class Dictionary {
       declaration.references.map(reference => resolve(reference.name, reference.`type`, Seq(declaration.toString)))
     }
   }
-  def addOnChainBoxMapping(name: String, f: (Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]) = onChainBoxMap += name -> f
+
+  def addOnChainDeclaration(variable: Variable, isDataInput: Boolean, mapping: Seq[OnChainBox] => KioskType[_]) = {
+    addDeclaration(OnChain(variable.name, variable.`type`))
+    addOnChainBoxMapping(variable.name, (dataInput, input) => mapping(if (isDataInput) dataInput else input))
+  }
+
+  private def addOnChainBoxMapping(name: String, f: (Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]) = onChainBoxMap += name -> f
 
   def addInput(onChainBox: OnChainBox) = onChainInputs :+= onChainBox
 

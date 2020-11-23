@@ -126,7 +126,7 @@ object LoaderTest {
 
     implicit val dictionary = new Dictionary
     // Step 1. validate that constants are properly encoded
-    optSeq(protocol.constants).map(_.getValue)
+    optSeq(protocol.constants).map(_.getValue) foreach println
     // Step 2. load declarations (also does semantic validation)
     (new Loader).load(protocol)
   }

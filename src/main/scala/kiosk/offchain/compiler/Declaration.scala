@@ -11,18 +11,21 @@ trait Declaration {
   protected val refTypes: Seq[DataType.Type] // types of the other Declarations referenced by this
 
   val isLazy: Boolean
-  val possiblyOnChain: Boolean
+
+  val canPointToOnChain: Boolean
 
   lazy val id = maybeId.getOrElse(randId)
 
-  lazy val isOnChainVariable = maybeId.isDefined && possiblyOnChain
+  lazy val isOnChain = maybeId.isDefined && canPointToOnChain
 
-  lazy val onChainVariable: Option[Variable] = if (isOnChainVariable) Some(Variable(randId, `type`)) else None
-  lazy val references: Seq[Variable] = (refs zip refTypes).map { case (ref, refType) => Variable(ref, refType) } ++ onChainVariable
+  lazy val onChainVariable: Option[Variable] = if (isOnChain) Some(Variable(randId, `type`)) else None
+
+  lazy val references: Seq[Variable] = (refs zip refTypes).map { case (ref, refType) => new Variable(ref, refType) } ++ onChainVariable
 
   def updateType(newType: DataType.Type) = `type` = newType
+
   def getValue(implicit dictionary: Dictionary): KioskType[_] = {
-    if (isOnChainVariable) {
+    if (isOnChain) {
       dictionary.getOnChainValue(onChainVariable.get.name)
     } else {
       dictionary.getRef(references.head.name).getValue

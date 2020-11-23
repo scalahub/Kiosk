@@ -5,15 +5,15 @@ import kiosk.offchain.compiler.model.{Input, Output, Protocol, RegNum, Register,
 class Loader(implicit dictionary: Dictionary) {
   def load(p: Protocol): Unit = {
     (optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions)).foreach(dictionary.addDeclaration)
-    optSeq(p.dataInputs).zipWithIndex.foreach { case (input, index) => addDeclarations(input, index, true) }
-    p.inputs.zipWithIndex.foreach { case (input, index)             => addDeclarations(input, index, false) }
-    p.outputs.foreach(addDeclarations)
+    optSeq(p.dataInputs).zipWithIndex.foreach { case (input, index) => loadInput(input, index, true) }
+    p.inputs.zipWithIndex.foreach { case (input, index)             => loadInput(input, index, false) }
+    p.outputs.foreach(loadOutput)
   }
 
-  private def addDeclarations(output: Output): Unit = {
+  private def loadOutput(output: Output): Unit = {
     dictionary.addDeclarationLazily(output.address)
-    output.registers.toSeq.flatten.foreach(register => dictionary.addDeclarationLazily(register))
-    output.tokens.toSeq.flatten.foreach { outToken =>
+    optSeq(output.registers).foreach(register => dictionary.addDeclarationLazily(register))
+    optSeq(output.tokens).foreach { outToken =>
       dictionary.addDeclarationLazily(outToken.id)
       dictionary.addDeclarationLazily(outToken.amount)
     }
@@ -21,52 +21,33 @@ class Loader(implicit dictionary: Dictionary) {
     dictionary.commit
   }
 
-  private def addDeclarations(input: Input, inputIndex: Int, isDataInput: Boolean): Unit = {
+  private def loadInput(input: Input, inputIndex: Int, isDataInput: Boolean): Unit = {
     input.id.foreach { id =>
-      id.onChainVariable.map { variable =>
-        dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
-        dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).boxId)
-      }
+      id.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).boxId))
       dictionary.addDeclarationLazily(id)
     }
     input.address.foreach { ergoTree =>
-      ergoTree.onChainVariable.map { variable =>
-        dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
-        dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).address)
-      }
+      ergoTree.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).address))
       dictionary.addDeclarationLazily(ergoTree)
     }
-    input.registers.toSeq.flatten.foreach(register => addDeclarations(register, inputIndex, isDataInput))
-    input.tokens.toSeq.flatten.foreach(token => addDeclarations(token, inputIndex, isDataInput))
+    optSeq(input.registers).foreach(register => loadRegister(register, inputIndex, isDataInput))
+    optSeq(input.tokens).foreach(token => loadToken(token, inputIndex, isDataInput))
     input.nanoErgs.foreach { long =>
-      long.onChainVariable.map { variable =>
-        dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
-        dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).nanoErgs)
-      }
+      long.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).nanoErgs))
       dictionary.addDeclarationLazily(long)
     }
     dictionary.commit
   }
 
-  private def addDeclarations(register: Register, inputIndex: Int, isDataInput: Boolean): Unit = {
-    register.onChainVariable.map { variable =>
-      dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
-      dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).registers(RegNum.getIndex(register.num)))
-    }
+  private def loadRegister(register: Register, inputIndex: Int, isDataInput: Boolean): Unit = {
+    register.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).registers(RegNum.getIndex(register.num))))
     dictionary.addDeclarationLazily(register)
   }
 
-  private def addDeclarations(token: Token, inputIndex: Int, isDataInput: Boolean): Unit = {
-    token.id.onChainVariable.map { variable =>
-      dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
-      dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).tokenIds(token.index))
-    }
+  private def loadToken(token: Token, inputIndex: Int, isDataInput: Boolean): Unit = {
+    token.id.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).tokenIds(token.index)))
     dictionary.addDeclarationLazily(token.id)
-    token.amount.onChainVariable.map { variable =>
-      dictionary.addDeclaration(OnChainConstant(variable.name, variable.`type`))
-      dictionary.addOnChainBoxMapping(variable.name, (dataInputs, inputs) => (if (isDataInput) dataInputs else inputs)(inputIndex).tokenAmounts(token.index))
-    }
+    token.amount.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, _(inputIndex).tokenAmounts(token.index)))
     dictionary.addDeclarationLazily(token.amount)
   }
-
 }

@@ -3,11 +3,11 @@ package kiosk.wallet
 import kiosk.appkit.Client
 import kiosk.box.KioskBoxCreator
 import kiosk.encoding.EasyWebEncoder
-import kiosk.offchain.parser.Parser
 import kiosk.ergo
-import kiosk.ergo.DhtData
+import kiosk.ergo.{Amount, DhtData, ID}
 import kiosk.explorer.Explorer
 import kiosk.offchain.compiler
+import kiosk.offchain.parser.Parser
 import org.ergoplatform.ErgoAddressEncoder
 import org.ergoplatform.appkit.{ConstantsBuilder, InputBox}
 import org.sh.easyweb.Text
@@ -39,7 +39,14 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     }
   }
 
-  def balance = BigDecimal(Explorer.getUnspentBoxes(myAddress).map(_.value).sum) / BigDecimal(1000000000) + " Ergs"
+  def balance = {
+    val boxes = Explorer.getUnspentBoxes(myAddress)
+    val nanoErgs: Long = boxes.map(_.value).sum
+    val tokens: Map[ID, Amount] = boxes.flatMap(_.tokens).groupBy(_._1).map { case (k, v) => k -> v.map(_._2).sum }
+    val ergs: String = nanoErgs / BigDecimal(1000000000) + " Ergs"
+    val assets: Seq[String] = tokens.map { case (k, v) => k + " " + v }.toSeq
+    ergs +: assets
+  }
 
   private val randId = java.util.UUID.randomUUID().toString
 

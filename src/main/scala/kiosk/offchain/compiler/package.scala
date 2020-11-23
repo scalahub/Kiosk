@@ -37,13 +37,13 @@ package object compiler {
     }
   }
 
-  case class OnChainConstant(name: String, var `type`: DataType.Type) extends Declaration {
+  case class OnChain(name: String, var `type`: DataType.Type) extends Declaration {
     override lazy val maybeId = Some(name)
     override lazy val refs = Nil
     override lazy val refTypes = Nil
     override lazy val isLazy = true
     override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = dictionary.getOnChainValue(name)
-    override lazy val possiblyOnChain: Boolean = false
+    override lazy val canPointToOnChain: Boolean = false
   }
 
   def exactlyOne(obj: Any)(names: String*)(options: Option[_]*): Unit =
