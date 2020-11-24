@@ -10,7 +10,7 @@ That said, the only thing needed to use Tx Builder is the ability to write Json 
 
 #### Protocol
 
-The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L9-L19), 
+The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L10-L20), 
 which is a specification of the data-inputs, inputs and outputs of the transaction to be created.
 A **Protocol** is made up of the following items: 
 - Constants
@@ -51,7 +51,7 @@ A box declaration can contain exactly one of:
 - A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
 - A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
 
-The exception to this rule is the [**Long**](compiler/model/package.scala#L76-L89) declaration, which can have both fields, 
+The exception to this rule is the [**Long**](compiler/model/package.scala#L80-L94) declaration, which can have both fields, 
 provided that it also has a third field `filter` present. A [`filter`](compiler/model/Enums.scala#L16) can be any of `Ge, Le, Gt, Lt, Ne`. 
 Thus, a **Long** allows both of the following possibilities: 
 1. Either `name` or `value` as in other declarations.
@@ -91,9 +91,9 @@ The following rules apply for each input:
 - If both `boxId` and `address` declarations have been defined, then both cannot be targets or pointers at the same time.
 
 #### Token rules
-A [**Token**](compiler/model/package.scala#L91-L94) is defined as 
-`case class Token(index: Option[Int], id: Id, amount: Long)`. 
-The main rule to follow here is that if `index` is missing then `id` cannot be a target. 
+A [**Token**](compiler/model/package.scala#L96-L100) is defined as 
+`case class Token(index: Option[Int], id: Option[Id], amount: Option[Long])`. 
+The main rule to follow here is that if `index` is empty then `id` must be defined, and that too as a pointer (i.e., it must have a `value` field). 
 This is because the token index must be somehow determinable (either via an explicit `index` field or by matching the tokenId of a pointer.)
 
 To illustrate this, the following are some valid token definitions:
@@ -104,14 +104,13 @@ To illustrate this, the following are some valid token definitions:
    - Matches the token at index `0`
    - Creates a new target called `myTokenId` containing the matched tokenId.
    - Creates a new target called `myTokenAmount` containing the matched token amount.
-3. `{"index":0, "id":{"value":"otherTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
-   - Matches the token at index `0` if the tokenId is same as that of pointer `otherTokenId`.
-   - Creates a new target called `myTokenAmount` containing the matched token amount.
+3. `{"id":{"value":"otherTokenId"}`. 
+   - Matches the token at some index if the tokenId is same as that of pointer `otherTokenId`.
 4. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount"}}}`. 
    - Matches the token at some index if both conditions hold:
      - The tokenId is the same as that of pointer `otherTokenId`. 
      - The amount is the same as that of `otherTokenAmount`.
-5. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount", "filter":"Ge""}}}`. 
+5. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount", "filter":"Ge"}}`. 
    - Matches the token at some index if both conditions hold:
      - The tokenId is the same as that of pointer `otherTokenId`. 
      - The amount is >= the value returned by `otherTokenAmount`.
@@ -142,17 +141,6 @@ To ensure that the matched input has exactly those tokens defined in the search 
 For instance, to select a box with no tokens, skip `tokens` field (or set it to empty array) and add the `Strict` option. 
 
 This option applies to tokens only. 
-
-
-#### Skipping Mandatory Fields
-
-The fields `id` (of type [**Id**](compiler/model/package.scala#L62-L74)) and `amount` (of type **Long**) in **Token** are mandatory. 
-
-If any of these fields need to be treated as optional, then define that field with a `name` attribute (i.e., define it as a target) and ignore it.
-
-Thus, the declaration 
-`{"id":{"value":"otherTokenId"}, "amount":{"name":"myIgnoredTokenAmount"}}` is effectively the same as `{"id":{"value":"otherTokenId"}}` 
-if the field `myIgnoredTokenAmount` is never used.  
 
 #### Order of evaluation
 Declarations are evaluated in the following order:

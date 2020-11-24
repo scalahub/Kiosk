@@ -4,18 +4,18 @@ import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
 import kiosk.explorer.Explorer
 import kiosk.offchain.compiler.model._
-import kiosk.offchain.compiler.{Dictionary, OnChainBox, model, optSeq}
+import kiosk.offchain.compiler.{Dictionary, OnChainBox, model, optSeq, randId}
 import org.ergoplatform.ErgoAddress
 import sigmastate.Values
 
-class Reader(implicit dictionary: Dictionary) {
+class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
   def getBoxes(input: Input, alreadySelectedBoxIds: Seq[String]): Seq[OnChainBox] = {
     val boxById = for {
       id <- input.id
       _ <- id.value
     } yield {
       val boxId: String = id.getValue.toString
-      OnChainBox.fromKioskBox(Explorer.getBoxById(boxId))
+      OnChainBox.fromKioskBox(explorer.getBoxById(boxId))
     }
 
     val boxesByAddress = for {
@@ -25,7 +25,7 @@ class Reader(implicit dictionary: Dictionary) {
       val ergoTree: Values.ErgoTree = address.getValue.asInstanceOf[KioskErgoTree].value
       val ergoAddress: ErgoAddress = ScalaErgoConverters.getAddressFromErgoTree(ergoTree)
       val stringAddress: String = ScalaErgoConverters.getStringFromAddress(ergoAddress)
-      Explorer.getUnspentBoxes(stringAddress).map(OnChainBox.fromKioskBox)
+      explorer.getUnspentBoxes(stringAddress).map(OnChainBox.fromKioskBox)
     }
 
     val matchedBoxes = optSeq(boxesByAddress) ++ boxById
@@ -71,21 +71,28 @@ class Reader(implicit dictionary: Dictionary) {
 
   private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getFilterTarget.map(FilterOp.matches(tokenAmount, _, long.filterOp)).getOrElse(true)
 
-  private def filterByToken(boxes: Seq[TokenBox], token: model.Token): Seq[TokenBox] = (token.index, token.id.value) match {
-    case (Some(index), Some(_)) =>
-      val id: String = token.id.getValue.toString
-      boxes
-        .filter(box => box.onChainBox.tokenIds(index).toString == id && matches(box.onChainBox.tokenAmounts(index), token.amount))
-        .map(box => box.copy(ids = box.ids + id))
-    case (Some(index), None) =>
-      boxes
-        .filter(box => box.onChainBox.tokenIds.size > index && matches(box.onChainBox.tokenAmounts(index), token.amount))
-        .map(box => box.copy(ids = box.ids + box.onChainBox.tokenIds(index).toString))
-    case (None, Some(_)) =>
-      val id: String = token.id.getValue.toString
-      boxes
-        .filter(box => box.onChainBox.stringTokenIds.contains(id) && matches(box.onChainBox.tokenAmounts(box.onChainBox.stringTokenIds.indexOf(id)), token.amount))
-        .map(box => box.copy(ids = box.ids + id))
-    case _ => throw new Exception(s"At least one of token.index or token.id.value must be defined in $token")
+  private def dummyId = Id(name = Some(randId), value = None)
+  private def dummyLong = Long(name = Some(randId), value = None, filter = None)
+
+  private def filterByToken(boxes: Seq[TokenBox], token: model.Token): Seq[TokenBox] = {
+    val tokenId: Id = token.id.getOrElse(dummyId)
+    val amount: Long = token.amount.getOrElse(dummyLong)
+    (token.index, tokenId.value) match {
+      case (Some(index), Some(_)) =>
+        val id: String = tokenId.getValue.toString
+        boxes
+          .filter(box => box.onChainBox.tokenIds(index).toString == id && matches(box.onChainBox.tokenAmounts(index), amount))
+          .map(box => box.copy(ids = box.ids + id))
+      case (Some(index), None) =>
+        boxes
+          .filter(box => box.onChainBox.tokenIds.size > index && matches(box.onChainBox.tokenAmounts(index), amount))
+          .map(box => box.copy(ids = box.ids + box.onChainBox.tokenIds(index).toString))
+      case (None, Some(_)) =>
+        val id: String = tokenId.getValue.toString
+        boxes
+          .filter(box => box.onChainBox.stringTokenIds.contains(id) && matches(box.onChainBox.tokenAmounts(box.onChainBox.stringTokenIds.indexOf(id)), amount))
+          .map(box => box.copy(ids = box.ids + id))
+      case _ => throw new Exception(s"At least one of token.index or token.id.value must be defined in $token")
+    }
   }
 }

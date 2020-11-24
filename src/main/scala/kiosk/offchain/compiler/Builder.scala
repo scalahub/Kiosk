@@ -2,7 +2,7 @@ package kiosk.offchain.compiler
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo
-import kiosk.ergo.{KioskBox, KioskCollByte, KioskErgoTree, KioskLong}
+import kiosk.ergo.{KioskBox, KioskErgoTree}
 import kiosk.offchain.compiler.model.{DataType, Output, Protocol, RegNum}
 import org.ergoplatform.ErgoAddress
 
@@ -33,15 +33,14 @@ class Builder(implicit dictionary: Dictionary) {
 
     val tokens: Seq[(String, scala.Long)] = optSeq(output.tokens)
       .map { token =>
-        val tokenId: KioskCollByte = token.id.getValue.asInstanceOf[KioskCollByte]
         val index: Int = token.index.getOrElse(throw new Exception("Token index must be defined in output"))
-        val amount: KioskLong = token.amount.getValue.asInstanceOf[KioskLong]
-        (index, (tokenId.toString, amount.value))
+        val id = token.id.getOrElse(throw new Exception("Token id must be defined in output"))
+        val amount = token.amount.getOrElse(throw new Exception("Token amount must be defined in output"))
+        (index, (id.getValue.toString, amount.getValue.value))
       }
       .sortBy(_._1)
       .ensuring(noGaps(_), s"Token indices should start from 0 and must not have gaps")
       .map(_._2)
-    val nanoErgs: scala.Long = output.nanoErgs.getValue.asInstanceOf[KioskLong].value
-    KioskBox(address, nanoErgs, registers.toArray, tokens.toArray)
+    KioskBox(address, output.nanoErgs.getValue.value, registers.toArray, tokens.toArray)
   }
 }

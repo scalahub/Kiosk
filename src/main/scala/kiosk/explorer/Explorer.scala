@@ -6,7 +6,7 @@ import io.circe.Json
 
 import scala.util.Try
 
-object Explorer {
+class Explorer {
   private val baseUrl = "https://api.ergoplatform.com" // https://api.ergoplatform.com/api/v0/
   private val boxUrl = s"$baseUrl/transactions/boxes/"
   private val unspentUrl = s"$baseUrl/transactions/boxes/byAddress/unspent/"

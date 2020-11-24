@@ -1,6 +1,6 @@
 package kiosk.offchain.compiler
 
-import kiosk.offchain.compiler
+import kiosk.explorer.Explorer
 import kiosk.offchain.parser.Parser._
 import play.api.libs.json.Json
 
@@ -12,7 +12,7 @@ object CLI {
     else {
       val script = args(0)
       val source = Source.fromFile(script).mkString
-      val compileResult = compiler.Compiler.compile(parse(source))
+      val compileResult = new TxBuilder(new Explorer).compile(parse(source))
       println(Json.toJson(compileResult))
     }
   }

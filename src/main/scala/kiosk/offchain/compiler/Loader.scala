@@ -1,7 +1,6 @@
 package kiosk.offchain.compiler
 
-import kiosk.ergo.KioskCollByte
-import kiosk.offchain.compiler.model.{Input, Output, Protocol, RegNum, Register, Token}
+import kiosk.offchain.compiler.model._
 
 class Loader(implicit dictionary: Dictionary) {
   def load(p: Protocol): Unit = {
@@ -15,8 +14,8 @@ class Loader(implicit dictionary: Dictionary) {
     dictionary.addDeclarationLazily(output.address)
     optSeq(output.registers).foreach(register => dictionary.addDeclarationLazily(register))
     optSeq(output.tokens).foreach { outToken =>
-      dictionary.addDeclarationLazily(outToken.id)
-      dictionary.addDeclarationLazily(outToken.amount)
+      outToken.id.foreach(dictionary.addDeclarationLazily)
+      outToken.amount.foreach(dictionary.addDeclarationLazily)
     }
     dictionary.addDeclarationLazily(output.nanoErgs)
     dictionary.commit
@@ -47,13 +46,17 @@ class Loader(implicit dictionary: Dictionary) {
 
   private def loadToken(token: Token, inputIndex: Int, isDataInput: Boolean): Unit = {
     def noIndexError = throw new Exception(s"Either token.index or token.id.value must be defined in $token")
-    def getIndexForId = token.index.getOrElse(noIndexError)
-    def getIndexForAmount(inputs: Seq[OnChainBox]) = token.index.getOrElse(token.id.value.map(_ => inputs(inputIndex).stringTokenIds.indexOf(token.id.getValue.toString)).getOrElse(noIndexError))
-
-    token.id.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenIds(getIndexForId)))
-    dictionary.addDeclarationLazily(token.id)
-
-    token.amount.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenAmounts(getIndexForAmount(inputs))))
-    dictionary.addDeclarationLazily(token.amount)
+    def getIndexForAmount(inputs: Seq[OnChainBox]) = token.index.getOrElse {
+      val id = token.id.getOrElse(noIndexError)
+      id.value.map(_ => inputs(inputIndex).stringTokenIds.indexOf(id.getValue.toString)).getOrElse(noIndexError)
+    }
+    token.id.foreach { id =>
+      id.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenIds(token.index.getOrElse(noIndexError))))
+      dictionary.addDeclarationLazily(id)
+    }
+    token.amount.foreach { amount =>
+      amount.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenAmounts(getIndexForAmount(inputs))))
+      dictionary.addDeclarationLazily(amount)
+    }
   }
 }

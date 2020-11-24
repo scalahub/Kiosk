@@ -6,7 +6,7 @@ import kiosk.encoding.EasyWebEncoder
 import kiosk.ergo
 import kiosk.ergo.{Amount, DhtData, ID}
 import kiosk.explorer.Explorer
-import kiosk.offchain.compiler
+import kiosk.offchain.compiler.TxBuilder
 import kiosk.offchain.parser.Parser
 import org.ergoplatform.ErgoAddressEncoder
 import org.ergoplatform.appkit.{ConstantsBuilder, InputBox}
@@ -18,6 +18,7 @@ import sigmastate.interpreter.CryptoConstants
 import special.sigma.GroupElement
 
 class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
+  private val explorer = new Explorer
   EasyWebEncoder
   private val secretKey: BigInt = BigInt(Blake2b256($ergoBox.$ergoScript.$myEnv.$sessionSecret.getOrElse("none").getBytes("UTF-16")))
   private val defaultGenerator: GroupElement = CryptoConstants.dlogGroup.generator
@@ -40,7 +41,7 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
   }
 
   def balance = {
-    val boxes = Explorer.getUnspentBoxes(myAddress)
+    val boxes = explorer.getUnspentBoxes(myAddress)
     val nanoErgs: Long = boxes.map(_.value).sum
     val tokens: Map[ID, Amount] = boxes.flatMap(_.tokens).groupBy(_._1).map { case (k, v) => k -> v.map(_._2).sum }
     val ergs: String = nanoErgs / BigDecimal(1000000000) + " Ergs"
@@ -54,7 +55,7 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     val $INFO$ = "Using 0.001 Ergs as fee"
     val $ergs$ = "0.001"
     val nanoErgs = (ergs * BigDecimal(1000000000)).toBigInt().toLong
-    val unspentBoxes: Seq[ergo.KioskBox] = Explorer.getUnspentBoxes(myAddress).sortBy(-_.value)
+    val unspentBoxes: Seq[ergo.KioskBox] = explorer.getUnspentBoxes(myAddress).sortBy(-_.value)
     val boxName = randId
     $ergoBox.createBoxFromAddress(boxName, toAddress, Array(), Array(), Array(), nanoErgs)
     val inputs: Seq[String] = boxSelector(nanoErgs + defaultFee, unspentBoxes)
@@ -89,17 +90,18 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
     unspentBoxes.take(index).map(_.optBoxId.get)
   }
 
+  private val compiler = new TxBuilder(explorer)
   def txBuilder(script: Text, broadcast: Boolean) = {
     val $broadcast$ = "false"
 
-    val compileResults = compiler.Compiler.compile(Parser.parse(script.getText))
+    val compileResults = compiler.compile(Parser.parse(script.getText))
     val feeNanoErgs = compileResults.fee.getOrElse(defaultFee)
     val outputNanoErgs = compileResults.outputs.map(_.value).sum + feeNanoErgs
     val deficientNanoErgs = (outputNanoErgs - compileResults.inputNanoErgs).max(0)
 
     /* Currently we are not going to look for deficient tokens, just nanoErgs */
     val moreInputBoxIds = if (deficientNanoErgs > 0) {
-      val myBoxes: Seq[ergo.KioskBox] = Explorer.getUnspentBoxes(myAddress).filterNot(compileResults.inputBoxIds.contains).sortBy(-_.value)
+      val myBoxes: Seq[ergo.KioskBox] = explorer.getUnspentBoxes(myAddress).filterNot(compileResults.inputBoxIds.contains).sortBy(-_.value)
       boxSelector(deficientNanoErgs, myBoxes)
     } else Nil
     val inputBoxIds = compileResults.inputBoxIds ++ moreInputBoxIds

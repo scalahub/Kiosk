@@ -1,10 +1,11 @@
 package kiosk.offchain.compiler
 
+import kiosk.explorer.Explorer
 import kiosk.offchain.compiler.model.Protocol
 import kiosk.offchain.reader.Reader
 
-class OnChainLoader(implicit dictionary: Dictionary) {
-  val reader = new Reader
+class OnChainLoader(explorer: Explorer)(implicit dictionary: Dictionary) {
+  val reader = new Reader(explorer)
   def load(protocol: Protocol) = {
     optSeq(protocol.dataInputs).zipWithIndex.foreach { // fetch data-input boxes from explorer and load into dictionary
       case (dataInput, index) =>

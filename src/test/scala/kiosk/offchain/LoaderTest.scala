@@ -38,42 +38,26 @@ object LoaderTest {
 
   val myToken0 = Token(
     index = Some(1),
-    id = Id(name = Some("myToken1ActualId"), value = None),
-    amount = Long(
-      name = Some("someLong1"),
-      value = None,
-      filter = None
-    )
+    id = Some(Id(name = Some("myToken1ActualId"), value = None)),
+    amount = Some(Long(name = Some("someLong1"), value = None, filter = None))
   )
 
   val myToken1 = Token(
     index = Some(1),
-    id = Id(name = Some("myToken1Id"), value = None),
-    amount = Long(
-      name = Some("someLong1"),
-      value = None,
-      filter = None
-    )
+    id = Some(Id(name = Some("myToken1Id"), value = None)),
+    amount = Some(Long(name = Some("someLong1"), value = None, filter = None))
   )
 
   val myToken2 = Token(
     index = Some(1),
-    id = Id(name = Some("unreferencedToken2Id"), value = None),
-    amount = Long(
-      name = None,
-      value = Some("myLong1"),
-      filter = Some(FilterOp.Gt)
-    )
+    id = Some(Id(name = Some("unreferencedToken2Id"), value = None)),
+    amount = Some(Long(name = None, value = Some("myLong1"), filter = Some(FilterOp.Gt)))
   )
 
   val myToken3 = Token(
     index = Some(1),
-    id = Id(name = Some("randomName"), value = None),
-    amount = Long(
-      name = Some("someLong3"),
-      value = None,
-      filter = None
-    )
+    id = Some(Id(name = Some("randomName"), value = None)),
+    amount = Some(Long(name = Some("someLong3"), value = None, filter = None))
   )
 
   val myInput1 = Input(
@@ -120,7 +104,7 @@ object LoaderTest {
     val protocolToJsonToProtocol = Parser.parse(protocolToJson.toString) // convert back to protocol
     println(protocolToJson)
     require(protocolToJsonToProtocol == protocol, "protocolToJsonToProtocol") // require both to be equal
-    val str = scala.io.Source.fromFile("src/test/resources/TxBuilderLoaderTest.json").getLines.mkString
+    val str = scala.io.Source.fromFile("src/test/scala/kiosk/offchain/loader.json").getLines.mkString
     val strToProtocol = Parser.parse(str)
     require(strToProtocol == protocol, "strToProtocol")
 

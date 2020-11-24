@@ -34,9 +34,13 @@ package object model {
     optSeq(registers).foreach(register => require(register.name.isEmpty, s"Output declaration (register) cannot be named: ${register.name}"))
     optSeq(tokens).foreach { token =>
       require(token.index.isDefined, s"Output declaration (token index) cannot be empty: ${token}")
-      require(token.id.name.isEmpty, s"Output declaration (token Id) cannot be named: ${token.id.name}")
-      require(token.amount.name.isEmpty, s"Output declaration (token amount) cannot be named: ${token.amount.name}")
-      require(token.amount.filter.isEmpty, s"Output declaration (token amount) cannot have a filter: ${token.amount.filter}")
+      require(token.id.isDefined, s"Output declaration (token Id) cannot be empty: ${token.id}")
+      require(token.amount.isDefined, s"Output declaration (token amount) cannot be empty: ${token.amount}")
+      for { id <- token.id; amount <- token.amount } {
+        require(id.name.isEmpty, s"Output declaration (token Id) cannot be named: ${id.name}")
+        require(amount.name.isEmpty, s"Output declaration (token amount) cannot be named: ${amount.name}")
+        require(amount.filter.isEmpty, s"Output declaration (token amount) cannot have a filter: ${amount.filter}")
+      }
     }
   }
 
@@ -82,15 +86,17 @@ package object model {
     override lazy val canPointToOnChain: Boolean = true
     lazy val filterOp = filter.getOrElse(FilterOp.Eq)
     def getFilterTarget(implicit dictionary: Dictionary): Option[KioskLong] = value.map(dictionary.getRef(_).getValue.asInstanceOf[KioskLong])
+    override def getValue(implicit dictionary: Dictionary): ergo.KioskLong = super.getValue.asInstanceOf[KioskLong]
     if (filter.nonEmpty && value.isEmpty) throw new Exception(s"Value cannot be empty if filter is defined")
     if (filter.contains(FilterOp.Eq)) throw new Exception(s"Filter cannot be Eq")
     atLeastOne(this)("name", "value")(name, value)
     for { _ <- name; _ <- value } require(filter.isDefined, s"Filter must be defined if both name and values are defined")
   }
 
-  case class Token(index: Option[Int], id: Id, amount: Long) {
+  case class Token(index: Option[Int], id: Option[Id], amount: Option[Long]) {
     index.map(int => require(int >= 0, s"Token index must be >= 0. $this"))
-    atLeastOne(this)("index", "id.value")(index, id.value)
+    atLeastOne(this)("index", "id")(index, id)
+    id.foreach(someId => atLeastOne(someId)("index", "id.value")(index, someId.value))
   }
 
   case class Constant(name: String, var `type`: DataType.Type, value: String) extends Declaration {
