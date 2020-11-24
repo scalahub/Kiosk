@@ -100,18 +100,22 @@ To illustrate this, the following are some valid token definitions:
 1. `{"index":0, "id":{"name":"myTokenId"}, "amount":{"value":"otherTokenAmount"}}`.
    - Matches the token at index `0` if the amount is same as that of pointer `otherTokenAmount`. 
    - Creates a new target called `myTokenId` with the matched tokenId.
-2. `{"index":0, "id":{"value":"otherTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
+2. `{"index":0, "id":{"name":"myTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
+   - Matches the token at index `0`
+   - Creates a new target called `myTokenId` containing the matched tokenId.
+   - Creates a new target called `myTokenAmount` containing the matched token amount.
+3. `{"index":0, "id":{"value":"otherTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
    - Matches the token at index `0` if the tokenId is same as that of pointer `otherTokenId`.
    - Creates a new target called `myTokenAmount` containing the matched token amount.
-3. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount"}}}`. 
+4. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount"}}}`. 
    - Matches the token at some index if both conditions hold:
      - The tokenId is the same as that of pointer `otherTokenId`. 
      - The amount is the same as that of `otherTokenAmount`.
-4. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount", "filter":"Ge""}}}`. 
+5. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount", "filter":"Ge""}}}`. 
    - Matches the token at some index if both conditions hold:
      - The tokenId is the same as that of pointer `otherTokenId`. 
      - The amount is >= the value returned by `otherTokenAmount`.
-5. `{"id":{"value":"otherTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
+6. `{"id":{"value":"otherTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
    - Matches the token at some index if the tokenId is the same as that of pointer `otherTokenId`. 
    - Creates a new target called `myTokenAmount` containing the matched token amount.
 
@@ -134,7 +138,11 @@ To ensure that the matched input has exactly those tokens defined in the search 
   }
 ]
 ```
-Strict matching applies to tokens only.
+
+For instance, to select a box with no tokens, skip `tokens` field (or set it to empty array) and add the `Strict` option. 
+
+This option applies to tokens only. 
+
 
 #### Skipping Mandatory Fields
 
