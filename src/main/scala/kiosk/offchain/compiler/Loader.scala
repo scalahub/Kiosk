@@ -46,10 +46,14 @@ class Loader(implicit dictionary: Dictionary) {
   }
 
   private def loadToken(token: Token, inputIndex: Int, isDataInput: Boolean): Unit = {
-    def getOnChainIndex = token.index.getOrElse(throw new Exception(s"token.id cannot be on-chain variable if token.index is empty: $token"))
-    token.id.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenIds(getOnChainIndex)))
+    def noIndexError = throw new Exception(s"Either token.index or token.id.value must be defined in $token")
+    def getIndexForId = token.index.getOrElse(noIndexError)
+    def getIndexForAmount(inputs: Seq[OnChainBox]) = token.index.getOrElse(token.id.value.map(_ => inputs(inputIndex).stringTokenIds.indexOf(token.id.getValue.toString)).getOrElse(noIndexError))
+
+    token.id.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenIds(getIndexForId)))
     dictionary.addDeclarationLazily(token.id)
-    token.amount.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenAmounts(getOnChainIndex)))
+
+    token.amount.onChainVariable.map(dictionary.addOnChainDeclaration(_, isDataInput, inputs => inputs(inputIndex).tokenAmounts(getIndexForAmount(inputs))))
     dictionary.addDeclarationLazily(token.amount)
   }
 }

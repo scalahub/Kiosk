@@ -62,20 +62,30 @@ class Reader(implicit dictionary: Dictionary) {
     }
   }
 
+  private case class TokenBox(onChainBox: OnChainBox, ids: Set[ID])
+
   private def filterByTokens(boxes: Seq[OnChainBox], tokens: Seq[model.Token], strict: Boolean): Seq[OnChainBox] =
-    tokens.foldLeft(boxes.map(box => box -> Set.empty[String]))((before, token) => filterByToken(before, token)).collect {
-      case (box, matchedIds) if !strict || box.stringTokenIds.toSet == matchedIds => box
+    tokens.foldLeft(boxes.map(box => TokenBox(box, Set.empty[String])))((before, token) => filterByToken(before, token)).collect {
+      case TokenBox(box, ids) if !strict || box.stringTokenIds.toSet == ids => box
     }
 
-  private def filterByToken(boxes: Seq[(OnChainBox, Set[ID])], token: model.Token): Seq[(OnChainBox, Set[ID])] = (token.index, token.id.value) match {
+  private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getFilterTarget.map(FilterOp.matches(tokenAmount, _, long.filterOp)).getOrElse(true)
+
+  private def filterByToken(boxes: Seq[TokenBox], token: model.Token): Seq[TokenBox] = (token.index, token.id.value) match {
     case (Some(index), Some(_)) =>
       val id: String = token.id.getValue.toString
-      boxes.filter(_._1.tokenIds(index).toString == id).map { case (box, matchedIds) => box -> (matchedIds + id) }
+      boxes
+        .filter(box => box.onChainBox.tokenIds(index).toString == id && matches(box.onChainBox.tokenAmounts(index), token.amount))
+        .map(box => box.copy(ids = box.ids + id))
     case (Some(index), None) =>
-      boxes.filter(_._1.tokenIds.size > index).map { case (box, matchedId) => box -> (matchedId + box.tokenIds(index).toString) }
+      boxes
+        .filter(box => box.onChainBox.tokenIds.size > index && matches(box.onChainBox.tokenAmounts(index), token.amount))
+        .map(box => box.copy(ids = box.ids + box.onChainBox.tokenIds(index).toString))
     case (None, Some(_)) =>
       val id: String = token.id.getValue.toString
-      boxes.filter(_._1.stringTokenIds.contains(id)).map { case (box, matchedIds) => box -> (matchedIds + id) }
-    case _ => ??? // should never happen
+      boxes
+        .filter(box => box.onChainBox.stringTokenIds.contains(id) && matches(box.onChainBox.tokenAmounts(box.onChainBox.stringTokenIds.indexOf(id)), token.amount))
+        .map(box => box.copy(ids = box.ids + id))
+    case _ => throw new Exception(s"At least one of token.index or token.id.value must be defined in $token")
   }
 }

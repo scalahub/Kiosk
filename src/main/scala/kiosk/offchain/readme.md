@@ -66,8 +66,8 @@ The following are some example declarations:
 - The second references that address.
 - The third defines the (Long) value `actualNanoErgs` and references `someMinValue`.
   An error occurs if `actualNanoErgs < someMinValue`. 
- 
-#### Targets and  Pointers
+
+#### Targets and Pointers
 
 For clarity, we use the following terminology when describing box declarations:
 - A declaration that defines a variable is a "target".
@@ -89,6 +89,43 @@ For example, in `"address":{"name":"myAddress"}`, the address of the box will be
 The following rules apply for each input:
 - It must have at least one of `boxId` or `address` declarations defined.
 - If both `boxId` and `address` declarations have been defined, then both cannot be targets or pointers at the same time.
+
+#### Token rules
+A [**Token**](compiler/model/package.scala#L91-L94) is defined as 
+`case class Token(index: Option[Int], id: Id, amount: Long)`. The following give some examples of token definitions:
+1. `{"index":0, "id":{"name":"myTokenId"}, "amount":{"value":"otherTokenAmount"}}`.
+   - Matches the token at index `0` if the amount is same as that of pointer `otherTokenAmount`. 
+   - Creates a new target called `myTokenId` with the matched tokenId.
+2. `{"index":0, "id":{"value":"otherTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
+   - Matches the token at index `0` if the tokenId is same as that of pointer `otherTokenId`.
+   - Creates a new target called `myTokenAmount` containing the matched token amount.
+3. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount"}}}`. 
+   - Matches the token at some index if both conditions hold:
+     - The tokenId is the same as that of pointer `otherTokenId`. 
+     - The amount is the same as that of `otherTokenAmount`.
+4. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount", "filter":"Ge""}}}`. 
+   - Matches the token at some index if both conditions hold:
+     - The tokenId is the same as that of pointer `otherTokenId`. 
+     - The amount is >= the value returned by `otherTokenAmount`.
+5. `{"id":{"value":"otherTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
+   - Matches the token at some index if the tokenId is the same as that of pointer `otherTokenId`. 
+   - Creates a new target called `myTokenAmount` containing the matched token amount.
+
+The following is an invalid token definition:
+- `{"id":{"name":"myTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
+
+This is because if `id` is a target (i.e., has a `name` field) then `index` must be defined.
+
+#### Skipping Mandatory Fields
+
+Certain fields such as `id` (of type [**Id**](compiler/model/package.scala#L62-L74)) in **Token** are mandatory. 
+If this field needs to be treated as optional, then define the field with a `name` attribute (i.e., define it as a target) and ignore it.
+
+Thus, the declaration 
+`{"id":{"value":"otherTokenId"}, "amount":{"name":"myIgnoredTokenAmount"}}` is effectively the same as `{"id":{"value":"otherTokenId"}}` 
+if the field `myTokenAmount` is never used. 
+ 
+ 
 
 #### Order of evaluation
 Declarations are evaluated in the following order:
@@ -255,7 +292,7 @@ A future release will address one or more of the following issues:
 
 Tx Builder is written in Scala, and therefore supports any JVM language. The following shows how to use it from Scala.
 First include Kiosk in your project by doing the following in `build.sbt`:
-```sbt
+```Scala
 lazy val Kiosk = RootProject(uri("git://github.com/scalahub/Kiosk.git"))
 lazy val root = (project in file(".")).dependsOn(Kiosk)
 ```
