@@ -18,7 +18,7 @@ class Dictionary {
 
   def getInputTokens =
     onChainInputs
-      .flatMap(input => input.tokenIds.map(_.toString) zip input.tokenAmounts.map(_.value))
+      .flatMap(input => input.stringTokenIds zip input.tokenAmounts.map(_.value))
       .groupBy(_._1)
       .map { case (id, seq) => (id, seq.map(_._2).sum) }
       .toSeq

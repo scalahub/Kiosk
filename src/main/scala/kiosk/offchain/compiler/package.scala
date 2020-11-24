@@ -19,6 +19,7 @@ package object compiler {
   def randId = UUID.randomUUID.toString
 
   case class OnChainBox(boxId: KioskCollByte, address: KioskErgoTree, nanoErgs: KioskLong, tokenIds: Seq[KioskCollByte], tokenAmounts: Seq[KioskLong], registers: Seq[KioskType[_]]) {
+    lazy val stringTokenIds = tokenIds.map(_.toString)
     require(tokenIds.size == tokenAmounts.size, s"tokenIds.size (${tokenIds.size}) != tokenAmounts.size (${tokenAmounts.size})")
   }
 

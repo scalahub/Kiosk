@@ -3,7 +3,7 @@ package kiosk.offchain.compiler
 import kiosk.ergo
 import kiosk.ergo.{KioskCollByte, KioskLong}
 import kiosk.offchain.compiler.model.DataType.Type
-import kiosk.offchain.compiler.model.InputMatcherOptions.Options
+import kiosk.offchain.compiler.model.InputOptions.Options
 import kiosk.offchain.compiler.model.RegNum.Num
 
 package object model {
@@ -19,16 +19,11 @@ package object model {
                       unaryOps: Option[Seq[UnaryOp]],
                       conversions: Option[Seq[Conversion]])
 
-  case class Input(id: Option[Id],
-                   address: Option[Address],
-                   registers: Option[Seq[Register]],
-                   tokens: Option[Seq[Token]],
-                   nanoErgs: Option[Long],
-                   private val options: Option[Set[InputMatcherOptions.Options]]) {
+  case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], options: Option[Set[InputOptions.Options]]) {
     atLeastOne(this)("id", "address")(id, address)
-    private lazy val matchers: Set[Options] = options.getOrElse(Set.empty)
-    lazy val strict: Boolean = matchers.contains(InputMatcherOptions.Strict) // applies to token matching only
-    lazy val multi = matchers.contains(InputMatcherOptions.Multi) // ToDo
+    private lazy val inputOptions: Set[Options] = options.getOrElse(Set.empty)
+    lazy val strict: Boolean = inputOptions.contains(InputOptions.Strict) // applies to token matching only
+    lazy val multi = inputOptions.contains(InputOptions.Multi) // ToDo
     for { boxId <- id; ergoTree <- address } exactlyOne(this)("id.name", "address.name")(boxId.name, ergoTree.name)
   }
 
