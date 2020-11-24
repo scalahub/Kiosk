@@ -92,7 +92,11 @@ The following rules apply for each input:
 
 #### Token rules
 A [**Token**](compiler/model/package.scala#L91-L94) is defined as 
-`case class Token(index: Option[Int], id: Id, amount: Long)`. The following give some examples of token definitions:
+`case class Token(index: Option[Int], id: Id, amount: Long)`. 
+The main rule to follow here is that if `index` is missing then `id` cannot be a target. 
+This is because the token index must be somehow determinable (either via an explicit `index` field or by matching the tokenId of a pointer.)
+
+To illustrate this, the following are some valid token definitions:
 1. `{"index":0, "id":{"name":"myTokenId"}, "amount":{"value":"otherTokenAmount"}}`.
    - Matches the token at index `0` if the amount is same as that of pointer `otherTokenAmount`. 
    - Creates a new target called `myTokenId` with the matched tokenId.
@@ -116,16 +120,31 @@ The following is an invalid token definition:
 
 This is because if `id` is a target (i.e., has a `name` field) then `index` must be defined.
 
+#### Strict token matching 
+
+To ensure that the matched input has exactly those tokens defined in the search criteria and nothing more, use the `Strict` flag for that input definition:
+
+```Json
+"inputs": [ 
+  { 
+    "address": { ... },
+    "tokens": [ ... ],
+    "registers": [ ... ],
+    "options": ["Strict"]
+  }
+]
+```
+Strict matching applies to tokens only.
+
 #### Skipping Mandatory Fields
 
-Certain fields such as `id` (of type [**Id**](compiler/model/package.scala#L62-L74)) in **Token** are mandatory. 
-If this field needs to be treated as optional, then define the field with a `name` attribute (i.e., define it as a target) and ignore it.
+The fields `id` (of type [**Id**](compiler/model/package.scala#L62-L74)) and `amount` (of type **Long**) in **Token** are mandatory. 
+
+If any of these fields need to be treated as optional, then define that field with a `name` attribute (i.e., define it as a target) and ignore it.
 
 Thus, the declaration 
 `{"id":{"value":"otherTokenId"}, "amount":{"name":"myIgnoredTokenAmount"}}` is effectively the same as `{"id":{"value":"otherTokenId"}}` 
-if the field `myTokenAmount` is never used. 
- 
- 
+if the field `myIgnoredTokenAmount` is never used.  
 
 #### Order of evaluation
 Declarations are evaluated in the following order:
