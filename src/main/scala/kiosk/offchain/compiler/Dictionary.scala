@@ -6,7 +6,7 @@ import kiosk.offchain.compiler.model.DataType
 
 import scala.collection.mutable.{Map => MMap}
 
-class Dictionary {
+class Dictionary(currentHeight: Int) {
   private val dict = MMap[String, DictionaryObject]()
   private val lazyRefs = MMap[String, Seq[Variable]]()
 
@@ -96,7 +96,5 @@ class Dictionary {
 
   def getOnChainValue(name: String) = onChainBoxMap(name)(onChainDataInputs, onChainInputs)
 
-  addDeclaration(height(Client.usingClient { ctx =>
-    ctx.getHeight
-  }))
+  addDeclaration(height(currentHeight))
 }

@@ -5,7 +5,7 @@ import kiosk.offchain.compiler.model._
 
 class TxBuilder(explorer: Explorer) {
   def compile(protocol: Protocol) = {
-    implicit val dictionary = new Dictionary
+    implicit val dictionary = new Dictionary(explorer.getHeight)
     // Step 1. validate that constants are properly encoded
     optSeq(protocol.constants).map(_.getValue)
     // Step 2. load declarations (also does semantic validation)

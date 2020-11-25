@@ -64,10 +64,11 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
 
   private case class TokenBox(onChainBox: OnChainBox, ids: Set[ID])
 
-  private def filterByTokens(boxes: Seq[OnChainBox], tokens: Seq[model.Token], strict: Boolean): Seq[OnChainBox] =
+  private def filterByTokens(boxes: Seq[OnChainBox], tokens: Seq[model.Token], strict: Boolean): Seq[OnChainBox] = {
     tokens.foldLeft(boxes.map(box => TokenBox(box, Set.empty[String])))((before, token) => filterByToken(before, token)).collect {
       case TokenBox(box, ids) if !strict || box.stringTokenIds.toSet == ids => box
     }
+  }
 
   private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getFilterTarget.map(FilterOp.matches(tokenAmount, _, long.filterOp)).getOrElse(true)
 
@@ -86,7 +87,7 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
       case (Some(index), None) =>
         boxes
           .filter(box => box.onChainBox.tokenIds.size > index && matches(box.onChainBox.tokenAmounts(index), amount))
-          .map(box => box.copy(ids = box.ids + box.onChainBox.tokenIds(index).toString))
+          .map(box => box.copy(ids = box.ids ++ box.onChainBox.stringTokenIds.take(index + 1)))
       case (None, Some(_)) =>
         val id: String = tokenId.getValue.toString
         boxes
