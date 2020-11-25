@@ -18,7 +18,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-json" % "2.9.1",
   "com.squareup.okhttp3" % "mockwebserver" % "3.14.9" % Test,
   "org.scalatest" %% "scalatest" % "3.0.8" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.14.+" % Test
+  "org.scalacheck" %% "scalacheck" % "1.14.+" % Test,
+  "org.mockito" % "mockito-core" % "2.8.47" % Test
 )
 
 resolvers ++= Seq(
