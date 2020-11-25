@@ -9,17 +9,6 @@ trait FixedEpochPool {
   val env = new KioskScriptEnv()
   val scriptCreator = new KioskScriptCreator(env)
 
-  /*
-        <--------------livePeriod------------><---------prepPeriod-------->
- ... ------------------------------------------------------------------------------
-        ^                                     ^                           ^
-        |                                     |                           |
-        epoch start                           epoch end                   epoch preparation end
-                                              (epoch preparation start)   (next epoch start)
-
-
-   */
-
   // constants
   def livePeriod: Int // blocks
   def prepPeriod: Int // blocks

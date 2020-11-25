@@ -4,7 +4,7 @@ import kiosk.offchain.compiler.model._
 
 class Loader(implicit dictionary: Dictionary) {
   def load(p: Protocol): Unit = {
-    (optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions)).foreach(dictionary.addDeclaration)
+    (optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions) ++ optSeq(p.branches)).foreach(dictionary.addDeclaration)
     optSeq(p.dataInputs).zipWithIndex.foreach { case (input, index) => loadInput(input, index, true) }
     p.inputs.zipWithIndex.foreach { case (input, index)             => loadInput(input, index, false) }
     p.outputs.foreach(loadOutput)

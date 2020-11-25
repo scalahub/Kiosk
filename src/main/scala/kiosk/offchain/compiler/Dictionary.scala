@@ -27,7 +27,7 @@ class Dictionary(currentHeight: Int) {
 
   def getDataInputBoxIds = onChainDataInputs.map(_.boxId.toString)
 
-  private[compiler] def getRef(name: String) = dict(name).declaration
+  private[compiler] def getDeclaration(name: String) = dict(name).declaration
 
   private def resolve(name: String, `type`: DataType.Type, stack: Seq[String]): Unit = {
     require(`type` != DataType.Unknown)

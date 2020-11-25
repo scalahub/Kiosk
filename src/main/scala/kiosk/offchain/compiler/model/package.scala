@@ -1,7 +1,7 @@
 package kiosk.offchain.compiler
 
 import kiosk.ergo
-import kiosk.ergo.{KioskCollByte, KioskLong}
+import kiosk.ergo.{KioskCollByte, KioskErgoTree, KioskInt, KioskLong}
 import kiosk.offchain.compiler.model.DataType.Type
 import kiosk.offchain.compiler.model.InputOptions.Options
 import kiosk.offchain.compiler.model.RegNum.Num
@@ -17,7 +17,8 @@ package object model {
                       // operations
                       binaryOps: Option[Seq[BinaryOp]],
                       unaryOps: Option[Seq[UnaryOp]],
-                      conversions: Option[Seq[Conversion]])
+                      conversions: Option[Seq[Conversion]],
+                      branches: Option[Seq[Branch]])
 
   case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], options: Option[Set[InputOptions.Options]]) {
     atLeastOne(this)("id", "address")(id, address)
@@ -44,14 +45,18 @@ package object model {
     }
   }
 
-  case class Address(name: Option[String], value: Option[String]) extends Declaration {
+  case class Address(name: Option[String], value: Option[String], values: Option[Seq[String]]) extends Declaration {
     override lazy val maybeTargetId = name
-    override lazy val pointerNames = value.toSeq
+    override lazy val pointerNames: Seq[String] = value.toSeq ++ optSeq(values)
     override var `type` = DataType.Address
     override lazy val pointerTypes = pointerNames.map(_ => DataType.Address)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
-    exactlyOne(this)("name", "value")(name, value)
+    atLeastOne(this)("name", "value", "values")(name, value, values)
+    for { _ <- value; _ <- values } exactlyOne(this)("value", "values")(value, values)
+    values.map(valueSeq => require(valueSeq.nonEmpty, s"Values must contain at least one address in $this"))
+    override def getValue(implicit dictionary: Dictionary): KioskErgoTree = super.getValue.asInstanceOf[KioskErgoTree]
+    def getValues(implicit dictionary: Dictionary) = pointerNames.map(dictionary.getDeclaration(_).getValue.asInstanceOf[KioskErgoTree])
   }
 
   case class Register(name: Option[String], value: Option[String], num: Num, var `type`: Type) extends Declaration {
@@ -85,7 +90,7 @@ package object model {
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
     lazy val filterOp = filter.getOrElse(FilterOp.Eq)
-    def getFilterTarget(implicit dictionary: Dictionary): Option[KioskLong] = value.map(dictionary.getRef(_).getValue.asInstanceOf[KioskLong])
+    def getFilterTarget(implicit dictionary: Dictionary): Option[KioskLong] = value.map(dictionary.getDeclaration(_).getValue.asInstanceOf[KioskLong])
     override def getValue(implicit dictionary: Dictionary): ergo.KioskLong = super.getValue.asInstanceOf[KioskLong]
     if (filter.nonEmpty && value.isEmpty) throw new Exception(s"Value cannot be empty if filter is defined")
     if (filter.contains(FilterOp.Eq)) throw new Exception(s"Filter cannot be Eq")
@@ -117,7 +122,7 @@ package object model {
     override lazy val pointerTypes = Seq(types.from)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
-    override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = UnaryConverter.convert(converter, dictionary.getRef(from).getValue(dictionary))
+    override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = UnaryConverter.convert(converter, dictionary.getDeclaration(from).getValue(dictionary))
   }
 
   case class BinaryOp(name: String, first: String, op: BinaryOperator.Operator, second: String) extends Declaration {
@@ -127,7 +132,7 @@ package object model {
     override lazy val pointerTypes = Seq(DataType.Unknown, DataType.Unknown)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
-    override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = BinaryOperator.operate(op, dictionary.getRef(first).getValue, dictionary.getRef(second).getValue)
+    override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = BinaryOperator.operate(op, dictionary.getDeclaration(first).getValue, dictionary.getDeclaration(second).getValue)
   }
 
   case class UnaryOp(out: String, in: String, op: UnaryOperator.Operator) extends Declaration {
@@ -137,6 +142,28 @@ package object model {
     override lazy val pointerTypes = Seq(DataType.Unknown)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
-    override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = UnaryOperator.operate(op, dictionary.getRef(in).getValue)
+    override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = UnaryOperator.operate(op, dictionary.getDeclaration(in).getValue)
+  }
+
+  case class Condition(first: String, second: String, op: FilterOp.Op) {
+    def evaluate(implicit dictionary: Dictionary) = {
+      (dictionary.getDeclaration(first).getValue, dictionary.getDeclaration(second).getValue) match {
+        case (left: KioskLong, right: KioskLong) => FilterOp.matches(left.value, right.value, op)
+        case (left: KioskLong, right: KioskInt)  => FilterOp.matches(left.value, right.value, op)
+        case (left: KioskInt, right: KioskLong)  => FilterOp.matches(left.value, right.value, op)
+        case (left: KioskInt, right: KioskInt)   => FilterOp.matches(left.value, right.value, op)
+        case (left, right)                       => throw new Exception(s"Invalid types for condition: ${left.typeName},${right.typeName}")
+      }
+    }
+  }
+
+  case class Branch(name: String, ifTrue: String, ifFalse: String, condition: Condition) extends Declaration {
+    override protected lazy val maybeTargetId: Option[String] = Some(name)
+    override protected lazy val pointerNames: Seq[String] = Seq(ifTrue, ifFalse, condition.first, condition.second)
+    override var `type` = DataType.Unknown
+    override protected lazy val pointerTypes: Seq[Type] = Seq(DataType.Unknown, DataType.Unknown, DataType.Unknown, DataType.Unknown)
+    override lazy val isLazy: Boolean = true
+    override lazy val canPointToOnChain: Boolean = false
+    override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = (if (condition.evaluate) dictionary.getDeclaration(ifTrue) else dictionary.getDeclaration(ifFalse)).getValue
   }
 }

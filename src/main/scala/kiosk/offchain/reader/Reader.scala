@@ -18,14 +18,14 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
       OnChainBox.fromKioskBox(explorer.getBoxById(boxId))
     }
 
-    val boxesByAddress = for {
+    val boxesByAddress: Option[Seq[OnChainBox]] = for {
       address <- input.address
-      _ <- address.value
+      _ <- address.values.orElse(address.value)
     } yield {
-      val ergoTree: Values.ErgoTree = address.getValue.asInstanceOf[KioskErgoTree].value
-      val ergoAddress: ErgoAddress = ScalaErgoConverters.getAddressFromErgoTree(ergoTree)
-      val stringAddress: String = ScalaErgoConverters.getStringFromAddress(ergoAddress)
-      explorer.getUnspentBoxes(stringAddress).map(OnChainBox.fromKioskBox)
+      val ergoTrees: Seq[Values.ErgoTree] = address.getValues.map(_.value)
+      val ergoAddresses: Seq[ErgoAddress] = ergoTrees.map(ScalaErgoConverters.getAddressFromErgoTree)
+      val stringAddresses: Seq[String] = ergoAddresses.map(ScalaErgoConverters.getStringFromAddress)
+      stringAddresses.flatMap(explorer.getUnspentBoxes).map(OnChainBox.fromKioskBox)
     }
 
     val matchedBoxes = optSeq(boxesByAddress) ++ boxById
@@ -39,7 +39,7 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
     val filteredByNanoErgs = for {
       nanoErgs <- input.nanoErgs
       target <- nanoErgs.getFilterTarget
-    } yield filteredByTokens.filter(onChainBox => FilterOp.matches(onChainBox.nanoErgs, target, nanoErgs.filterOp))
+    } yield filteredByTokens.filter(onChainBox => FilterOp.matches(onChainBox.nanoErgs.value, target.value, nanoErgs.filterOp))
 
     filteredByNanoErgs.getOrElse(filteredByTokens)
   }
@@ -70,7 +70,7 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
     }
   }
 
-  private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getFilterTarget.map(FilterOp.matches(tokenAmount, _, long.filterOp)).getOrElse(true)
+  private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getFilterTarget.map(kioskLong => FilterOp.matches(tokenAmount.value, kioskLong.value, long.filterOp)).getOrElse(true)
 
   private def dummyId = Id(name = Some(randId), value = None)
   private def dummyLong = Long(name = Some(randId), value = None, filter = None)

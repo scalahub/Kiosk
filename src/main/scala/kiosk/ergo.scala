@@ -83,6 +83,7 @@ package object ergo {
     override val serialize: Array[Byte] = DefaultSerializer.serializeErgoTree(value)
     override val typeName: String = "ErgoTree"
     override def getErgoValue = ???
+    override def toString: ID = "<ergo tree>"
   }
 
   implicit def groupElementToKioskGroupElement(g: GroupElement) = KioskGroupElement(g)

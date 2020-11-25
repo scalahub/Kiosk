@@ -16,7 +16,7 @@ class Builder(implicit dictionary: Dictionary) {
   }
 
   private def createOutput(output: Output): KioskBox = {
-    val ergoTree = output.address.getValue.asInstanceOf[KioskErgoTree]
+    val ergoTree = output.address.getValue
     val ergoAddress: ErgoAddress = ScalaErgoConverters.getAddressFromErgoTree(ergoTree.value)
     val address: String = ScalaErgoConverters.getStringFromAddress(ergoAddress)
     val registers: Seq[ergo.KioskType[_]] = optSeq(output.registers)

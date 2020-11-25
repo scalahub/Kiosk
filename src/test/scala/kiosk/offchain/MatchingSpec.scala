@@ -158,8 +158,8 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TokenSp
       optBoxId = Some("43b0c3add1fde20244a3467798a777684f9234d1f56f31ad01a297c86c6d40c7"),
       spentTxId = None
     )
-
   }
+
   "Compilation for token.json" should {
     "select matched boxes" in new TokenMocks {
       tokenProtocol.inputs.size shouldBe 2
@@ -254,7 +254,7 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TokenSp
         fakeEmissionBoxLessTokens,
         fakeEmissionBoxExtraTokens)
 
-      the[Exception] thrownBy (txBuilder.compile(timestampProtocol)) should have message "No box matched for input at index 0"
+      the[Exception] thrownBy txBuilder.compile(timestampProtocol) should have message "No box matched for input at index 0"
     }
 
     "reject with no matched data inputs" in new TimestampMocks {
@@ -262,12 +262,8 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TokenSp
       timestampProtocol.inputs(0).options shouldBe Some(Set(Strict))
 
       when(explorer.getBoxById("506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7")) thenThrow new JsResultException(Nil)
-      when(explorer.getUnspentBoxes(
-        "2z93aPPTpVrZJHkQN54V7PatEfg3Ac1zKesFxUz8TGGZwPT4Rr5q6tBwsjEjounQU4KNZVqbFAUsCNipEKZmMdx2WTqFEyUURcZCW2CrSqKJ8YNtSVDGm7eHcrbPki9VRsyGpnpEQvirpz6GKZgghcTRDwyp1XtuXoG7XWPC4bT1U53LhiM3exE2iUDgDkme2e5hx9dMyBUi9TSNLNY1oPy2MjJ5seYmGuXCTRPLqrsi")) thenReturn Seq(
-        fakeEmissionBoxLessTokens,
-        fakeEmissionBoxExtraTokens)
 
-      the[Exception] thrownBy (txBuilder.compile(timestampProtocol)) should have message "JsResultException(errors:List())"
+      the[Exception] thrownBy txBuilder.compile(timestampProtocol) should have message "JsResultException(errors:List())"
     }
   }
 }

@@ -25,10 +25,10 @@ object Parser {
     }
   }
 
-  private implicit val readsInputMatcherOptions = new Reads[InputOptions.Options] {
+  private implicit val readsInputOptions = new Reads[InputOptions.Options] {
     override def reads(json: JsValue): JsResult[InputOptions.Options] = JsSuccess(InputOptions.fromString(json.as[String]))
   }
-  private implicit val writesInputMatcherOptions = new Writes[InputOptions.Options] {
+  private implicit val writesInputOptions = new Writes[InputOptions.Options] {
     override def writes(o: InputOptions.Options): JsValue = JsString(InputOptions.toString(o))
   }
 
@@ -96,8 +96,14 @@ object Parser {
   private implicit val writesOutput = Json.writes[Output]
   private implicit val readsConstant = checkedReads(Json.reads[model.Constant])
   private implicit val writesConstant = Json.writes[model.Constant]
+  private implicit val readsCondition = checkedReads(Json.reads[Condition])
+  private implicit val writesCondition = Json.writes[Condition]
+  private implicit val readsBranch = checkedReads(Json.reads[Branch])
+  private implicit val writesBranch = Json.writes[Branch]
+
   private implicit val readsProtocol = checkedReads(Json.reads[Protocol])
   private implicit val writesProtocol = Json.writes[Protocol]
+
   private implicit val writeKioskType = new Writes[KioskType[_]] {
     override def writes(o: KioskType[_]): JsValue = JsString(o.hex)
   }

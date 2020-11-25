@@ -14,8 +14,8 @@ abstract class MyEnum extends Enumeration {
 object FilterOp extends MyEnum {
   type Op = Value
   val Eq, Le, Ge, Lt, Gt, Ne = Value
-  def matches(actual: KioskLong, required: KioskLong, op: FilterOp.Op) = {
-    (actual.value, required.value, op) match {
+  def matches(actual: scala.Long, required: scala.Long, op: FilterOp.Op) = {
+    (actual, required, op) match {
       case (actual, required, Eq) if actual == required => true
       case (actual, required, Le) if actual <= required => true
       case (actual, required, Ge) if actual >= required => true
@@ -90,12 +90,14 @@ object BinaryOperator extends MyEnum { // input and output types are same
 
 object UnaryOperator extends MyEnum { // input and output types are same
   type Operator = Value
-  val Hash, Neg = Value
+  val Hash, Neg, Abs = Value
   def operate(operator: Operator, in: KioskType[_]): KioskType[_] = {
     (operator, in) match {
       case (Hash, KioskCollByte(a))    => KioskCollByte(Blake2b256(a))
       case (Neg, KioskGroupElement(g)) => KioskGroupElement(g.negate)
+      case (Abs, KioskLong(a))         => KioskLong(a.abs)
       case (Neg, KioskLong(a))         => KioskLong(-a)
+      case (Abs, KioskInt(a))          => KioskInt(a.abs)
       case (Neg, KioskInt(a))          => KioskInt(-a)
       case (op, someIn)                => throw new Exception(s"Invalid operation $op for ${someIn.typeName}")
     }
