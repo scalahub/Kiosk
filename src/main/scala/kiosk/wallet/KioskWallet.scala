@@ -20,7 +20,7 @@ import special.sigma.GroupElement
 class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
   private val explorer = new Explorer
   EasyWebEncoder
-  private val secretKey: BigInt = BigInt(Blake2b256($ergoBox.$ergoScript.$myEnv.$sessionSecret.getOrElse("none").getBytes("UTF-16")))
+  val secretKey: BigInt = BigInt(Blake2b256($ergoBox.$ergoScript.$myEnv.$sessionSecret.getOrElse("none").getBytes("UTF-16")))
   private val defaultGenerator: GroupElement = CryptoConstants.dlogGroup.generator
   private val publicKey: GroupElement = defaultGenerator.exp(secretKey.bigInteger)
   val myAddress: String = {

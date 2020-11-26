@@ -36,7 +36,6 @@ class ParsingSpec extends WordSpec with MockitoSugar with Matchers with TokenSpe
 
     "parse constants from timestamp.json correctly" in {
       val constants = timestampProtocol.constants.get
-      constants foreach println
       constants(0) shouldEqual Constant(name = "myBoxId", `type` = DataType.CollByte, value = "506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7")
       constants(1) shouldEqual Constant(
         name = "emissionAddress",
@@ -53,7 +52,6 @@ class ParsingSpec extends WordSpec with MockitoSugar with Matchers with TokenSpe
 
     "parse operations from timestamp.json correctly" in {
       val binaryOps = timestampProtocol.binaryOps.get
-      binaryOps foreach println
       binaryOps(0) shouldEqual BinaryOp(name = "balanceTokenAmount", first = "inputTokenAmount", Sub, second = "one")
     }
   }

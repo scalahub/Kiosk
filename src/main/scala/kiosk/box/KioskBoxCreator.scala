@@ -15,6 +15,7 @@ import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.Values.ErgoTree
 
 import scala.collection.mutable.{Map => MMap}
+import scala.util.Try
 
 // ToDo: Add context variable to each box created
 object KioskBoxCreator {
@@ -231,9 +232,13 @@ The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
       .sendChangeTo(getAddressFromString(changeAddress))
       .build()
 
-    val dlogProver = proveDlogSecrets.foldLeft(ctx.newProverBuilder()) {
+    val proveDlogSecretsBigInt = proveDlogSecrets.map { secret =>
+      Try(BigInt(secret, 10)).recover { case ex => BigInt(secret, 16) }.get
+    }
+
+    val dlogProver = proveDlogSecretsBigInt.foldLeft(ctx.newProverBuilder()) {
       case (oldProverBuilder, newDlogSecret) =>
-        oldProverBuilder.withDLogSecret(BigInt(newDlogSecret).bigInteger)
+        oldProverBuilder.withDLogSecret(newDlogSecret.bigInteger)
     }
 
     val dhtProver = dhtData.foldLeft(dlogProver) {
