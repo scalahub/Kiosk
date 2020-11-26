@@ -148,11 +148,13 @@ package object model {
   case class Condition(first: String, second: String, op: FilterOp.Op) {
     def evaluate(implicit dictionary: Dictionary) = {
       (dictionary.getDeclaration(first).getValue, dictionary.getDeclaration(second).getValue) match {
-        case (left: KioskLong, right: KioskLong) => FilterOp.matches(left.value, right.value, op)
-        case (left: KioskLong, right: KioskInt)  => FilterOp.matches(left.value, right.value, op)
-        case (left: KioskInt, right: KioskLong)  => FilterOp.matches(left.value, right.value, op)
-        case (left: KioskInt, right: KioskInt)   => FilterOp.matches(left.value, right.value, op)
-        case (left, right)                       => throw new Exception(s"Invalid types for condition: ${left.typeName},${right.typeName}")
+        case (left: KioskLong, right: KioskLong)                                   => FilterOp.matches(left.value, right.value, op)
+        case (left: KioskLong, right: KioskInt)                                    => FilterOp.matches(left.value, right.value, op)
+        case (left: KioskInt, right: KioskLong)                                    => FilterOp.matches(left.value, right.value, op)
+        case (left: KioskInt, right: KioskInt)                                     => FilterOp.matches(left.value, right.value, op)
+        case (left, right) if left.typeName == right.typeName && op == FilterOp.Eq => left.hex == right.hex
+        case (left, right) if left.typeName == right.typeName && op == FilterOp.Ne => left.hex != right.hex
+        case (left, right)                                                         => throw new Exception(s"Invalid types for $op: ${left.typeName},${right.typeName}")
       }
     }
   }
