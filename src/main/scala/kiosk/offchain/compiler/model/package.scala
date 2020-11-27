@@ -54,7 +54,7 @@ package object model {
     override lazy val canPointToOnChain: Boolean = true
     atLeastOne(this)("name", "value", "values")(name, value, values)
     for { _ <- value; _ <- values } exactlyOne(this)("value", "values")(value, values)
-    values.map(valueSeq => require(valueSeq.nonEmpty, s"Values must contain at least one address in $this"))
+    values.map(valueSeq => require(valueSeq.size > 1, s"Values must contain at least two addresses in $this"))
     override def getValue(implicit dictionary: Dictionary): KioskErgoTree = super.getValue.asInstanceOf[KioskErgoTree]
     def getValues(implicit dictionary: Dictionary) = pointerNames.map(dictionary.getDeclaration(_).getValue.asInstanceOf[KioskErgoTree])
   }

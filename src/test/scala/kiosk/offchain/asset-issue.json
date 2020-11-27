@@ -6,7 +6,7 @@
       "value": "9hz1B19M44TNpmVe8MS4xvXyycehh5uP5aCfj4a6iAowj88hkd2"
     },
     {
-      "name": "tokensToIssue",
+      "name": "numTokensToIssue",
       "type": "Long",
       "value": "10"
     },
@@ -41,7 +41,7 @@
             "value": "myBoxId"
           },
           "amount": {
-            "value": "tokensToIssue"
+            "value": "numTokensToIssue"
           }
         }
       ],

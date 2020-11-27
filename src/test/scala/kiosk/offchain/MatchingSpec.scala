@@ -9,7 +9,7 @@ import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.mockito._
 import play.api.libs.json.JsResultException
 
-class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TokenSpec with TimestampSpec {
+class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TraitTokenFilter with TraitTimestamp {
   val explorer = mock[Explorer]
   when(explorer.getHeight) thenReturn 12345
   val txBuilder = new TxBuilder(explorer)
@@ -160,7 +160,7 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TokenSp
     )
   }
 
-  "Compilation for token.json" should {
+  "Compilation for token-filter.json" should {
     "select matched boxes" in new TokenMocks {
       tokenProtocol.inputs.size shouldBe 2
       tokenProtocol.inputs(0).options shouldBe Some(Set(Strict))
