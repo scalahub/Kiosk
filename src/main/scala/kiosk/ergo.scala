@@ -82,7 +82,7 @@ package object ergo {
   case class KioskErgoTree(value: ErgoTree) extends KioskType[ErgoTree] {
     override val serialize: Array[Byte] = DefaultSerializer.serializeErgoTree(value)
     override val typeName: String = "ErgoTree"
-    override def getErgoValue = ???
+    override def getErgoValue = ??? // should never be needed
     override def toString: ID = "<ergo tree>"
   }
 

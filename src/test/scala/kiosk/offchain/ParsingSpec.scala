@@ -13,7 +13,7 @@ import play.api.libs.json.JsValue
 class ParsingSpec extends WordSpec with MockitoSugar with Matchers with TraitTokenFilter with TraitTimestamp with TraitDummyProtocol {
   "Protocol parser" should {
     "parse constants from token-filter.json correctly" in {
-      val constants = tokenProtocol.constants.get
+      val constants = tokenFilterProtocol.constants.get
       constants(0) shouldEqual Constant(
         name = "506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7",
         `type` = DataType.CollByte,
@@ -35,7 +35,7 @@ class ParsingSpec extends WordSpec with MockitoSugar with Matchers with TraitTok
     }
 
     "parse operations from token-filter.json correctly" in {
-      val binaryOps = tokenProtocol.binaryOps.get
+      val binaryOps = tokenFilterProtocol.binaryOps.get
       binaryOps(0) shouldEqual BinaryOp(name = "myTokenAmount+1234", first = "myTokenAmount", Add, second = "1234")
     }
 
