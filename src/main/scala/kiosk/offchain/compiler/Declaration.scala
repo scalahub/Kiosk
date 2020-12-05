@@ -27,6 +27,4 @@ trait Declaration {
   def getValue(implicit dictionary: Dictionary): KioskType[_] = if (isOnChain) dictionary.getOnChainValue(onChainVariable.get.name) else dictionary.getDeclaration(pointers.head.name).getValue
 
   override def toString = s"${maybeTargetId.getOrElse("unnamed")}: ${`type`}"
-
-  if (pointerNames.toSet.size != pointerNames.size) throw new Exception(s"Refs for $targetId contain duplicates ${pointerNames.reduceLeft(_ + ", " + _)}")
 }

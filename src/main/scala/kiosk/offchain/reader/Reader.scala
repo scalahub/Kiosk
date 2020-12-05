@@ -49,7 +49,7 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
 
   private def filterByRegister(boxes: Seq[OnChainBox], register: Register): Seq[OnChainBox] = {
     val index: Int = RegNum.getIndex(register.num)
-    val filteredByType: Seq[OnChainBox] = boxes.filter(box => DataType.isValid(box.registers(index), register.`type`))
+    val filteredByType: Seq[OnChainBox] = boxes.filter(box => box.registers.size > index && DataType.isValid(box.registers(index), register.`type`))
 
     register.value match {
       case Some(_) =>

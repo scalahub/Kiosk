@@ -8,6 +8,7 @@ scalaVersion := "2.12.10"
 
 lazy val EasyWeb = RootProject(uri("git://github.com/scalahub/EasyWeb.git"))
 
+
 libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.3",
   "org.bouncycastle" % "bcprov-jdk15on" % "1.+",
@@ -25,14 +26,11 @@ libraryDependencies ++= Seq(
 resolvers ++= Seq(
   "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/",
   "SonaType" at "https://oss.sonatype.org/content/groups/public",
-  "Typesafe maven releases" at "http://repo.typesafe.com/typesafe/maven-releases/",
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 )
 
 lazy val root = (project in file("."))
-  .dependsOn(
-    EasyWeb
-  )
+  .dependsOn(EasyWeb)
   .settings(
     updateOptions := updateOptions.value.withLatestSnapshots(false),
     mainClass in (Compile, run) := Some("kiosk.KioskWeb"),
