@@ -30,9 +30,13 @@ class Explorer {
     }
     val registers: Array[String] = (j \\ "additionalRegisters")
       .flatMap { r =>
-        r.asObject.get.toList.map {
-          case (key, value) => (key -> value.asString.get)
-        }
+        r.asObject
+          .map {
+            _.toList.map {
+              case (key, value) => key -> value.asString.get
+            }
+          }
+          .getOrElse(Nil)
       }
       .sortBy(_._1)
       .map(_._2)
@@ -45,7 +49,6 @@ class Explorer {
     KioskBox(address, value.toLong.get, regs, tokens, Some(id), spentTxId)
   }
 
-  def getUnspentBoxes(address: String): Seq[KioskBox] = {
+  def getUnspentBoxes(address: String): Seq[KioskBox] =
     Curl.get(unspentUrl + address).asArray.get.map(getBoxFromJson)
-  }
 }
