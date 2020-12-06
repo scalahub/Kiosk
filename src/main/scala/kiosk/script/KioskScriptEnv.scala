@@ -51,10 +51,11 @@ class KioskScriptEnv(val $sessionSecret: Option[String] = None) extends EasyMirr
     s"${kioskType.typeName}: ${kioskType.toString}"
   }
 
-  def setBigInt(name: String, bigInt: BigInt): Unit = {
+  def setBigInt(name: String, bigInt: String): Unit = {
+    val $INFO$ = "Give the bigInt either as hex or decimal encoded (decimal tried first)"
     val $name$ = "myBigInt"
     val $bigInt$ = "1234567890123456789012345678901234567890"
-    $addIfNotExist(name, KioskBigInt(bigInt))
+    $addIfNotExist(name, KioskBigInt(decodeBigInt(bigInt)))
   }
 
   def setLong(name: String, long: Long): Unit = {

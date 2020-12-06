@@ -7,18 +7,21 @@ import kiosk.offchain.compiler.model.InputOptions.Options
 import kiosk.offchain.compiler.model.RegNum.Num
 
 package object model {
-  case class Protocol(constants: Option[Seq[Constant]],
-                      // on-chain
-                      dataInputs: Option[Seq[Input]],
-                      inputs: Seq[Input],
-                      // to-create
-                      outputs: Seq[Output],
-                      fee: Option[scala.Long],
-                      // operations
-                      binaryOps: Option[Seq[BinaryOp]],
-                      unaryOps: Option[Seq[UnaryOp]],
-                      conversions: Option[Seq[Conversion]],
-                      branches: Option[Seq[Branch]])
+  case class Protocol(
+      constants: Option[Seq[Constant]],
+      // on-chain
+      boxes: Option[Seq[Input]], // for use in computation without having to add to data-inputs (or inputs)
+      dataInputs: Option[Seq[Input]],
+      inputs: Seq[Input],
+      // to-create
+      outputs: Seq[Output],
+      fee: Option[scala.Long],
+      // operations
+      binaryOps: Option[Seq[BinaryOp]],
+      unaryOps: Option[Seq[UnaryOp]],
+      conversions: Option[Seq[Conversion]],
+      branches: Option[Seq[Branch]]
+  )
 
   case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], options: Option[Set[InputOptions.Options]]) {
     atLeastOne(this)("id", "address")(id, address)
@@ -54,6 +57,7 @@ package object model {
     override lazy val canPointToOnChain: Boolean = true
     atLeastOne(this)("name", "value", "values")(name, value, values)
     for { _ <- value; _ <- values } exactlyOne(this)("value", "values")(value, values)
+    for { _ <- name; _ <- value } exactlyOne(this)("name", "value")(name, value)
     values.map(valueSeq => require(valueSeq.size > 1, s"Values must contain at least two addresses in $this"))
     override def getValue(implicit dictionary: Dictionary): KioskErgoTree = super.getValue.asInstanceOf[KioskErgoTree]
     def getValues(implicit dictionary: Dictionary) = pointerNames.map(dictionary.getDeclaration(_).getValue.asInstanceOf[KioskErgoTree])

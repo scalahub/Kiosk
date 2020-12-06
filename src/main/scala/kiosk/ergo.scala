@@ -13,6 +13,8 @@ import special.collection.Coll
 import special.sigma
 import special.sigma.GroupElement
 
+import scala.util.Try
+
 package object ergo {
   class BetterString(string: String) {
     def decodeHex = Hex.decodeHex(string)
@@ -123,6 +125,8 @@ package object ergo {
       jo
     }
   }
+
+  def decodeBigInt(encoded: String): BigInt = Try(BigInt(encoded, 10)).recover { case ex => BigInt(encoded, 16) }.get
 
   case class KioskBox(address: String, value: Long, registers: Array[KioskType[_]], tokens: Tokens, optBoxId: Option[String] = None, spentTxId: Option[String] = None) extends JsonFormatted {
     val keys = Array[String]("address", "value", "registers", "tokens", "boxId", "spentTxId")

@@ -7,6 +7,7 @@ import kiosk.ergo
 import kiosk.ergo.{KioskBox, KioskCollByte, KioskErgoTree, KioskLong, KioskType, StringToBetterString}
 import kiosk.offchain.compiler.model.{Constant, DataType}
 
+// ToDo: Multi inputs
 package object compiler {
   case class CompileResult(dataInputBoxIds: Seq[String], inputBoxIds: Seq[String], inputNanoErgs: Long, inputTokens: Seq[(String, Long)], outputs: Seq[KioskBox], fee: Option[Long])
 

@@ -29,9 +29,14 @@ object Encoders extends App {
     val kioskScript = ergoScript.$compile(fullMixScript).bytes.encodeHex
 
     // then compute using appkit
-    val appkitScript = ctx.compileContract(
-      ConstantsBuilder.empty(), fullMixScript
-    ).getErgoTree.bytes.encodeHex
+    val appkitScript = ctx
+      .compileContract(
+        ConstantsBuilder.empty(),
+        fullMixScript
+      )
+      .getErgoTree
+      .bytes
+      .encodeHex
 
     assert(appkitScript == kioskScript)
     println(s"Test passed: both scripts evaluated to ${appkitScript}")
@@ -57,12 +62,21 @@ object Encoders extends App {
 
     // then compute using appkit
     val g: GroupElement = CryptoConstants.dlogGroup.generator
-    val gXappkit:GroupElement = g.exp(x.bigInteger)
-    val appkitScript: String = ctx.compileContract(
-      ConstantsBuilder.create().item(
-        "gX", gXappkit
-      ).build(), fullMixScript
-    ).getErgoTree.bytes.encodeHex
+    val gXappkit: GroupElement = g.exp(x.bigInteger)
+    val appkitScript: String = ctx
+      .compileContract(
+        ConstantsBuilder
+          .create()
+          .item(
+            "gX",
+            gXappkit
+          )
+          .build(),
+        fullMixScript
+      )
+      .getErgoTree
+      .bytes
+      .encodeHex
     assert(appkitScript == kioskScript)
     println(s"Test passed: both scripts evaluated to ${appkitScript}")
   }
@@ -84,7 +98,7 @@ object Encoders extends App {
     val gX: String = ECC.$gX(x)
     env.setGroupElement("gX", gX)
     env.setCollByte("hash", hash)
-    env.setBigInt("bigInt", bigInt)
+    env.setBigInt("bigInt", bigInt.toString(10))
     env.setLong("long", long)
     env.setInt("int", int)
     val ergoScript: KioskScriptCreator = new KioskScriptCreator(env)
@@ -92,20 +106,37 @@ object Encoders extends App {
 
     // then compute using appkit
     val g: GroupElement = CryptoConstants.dlogGroup.generator
-    val gXappkit:GroupElement = g.exp(x.bigInteger)
-    val appkitScript: String = ctx.compileContract(
-      ConstantsBuilder.create().item(
-        "hash", hash
-      ).item(
-        "int", int
-      ).item(
-        "long", long
-      ).item(
-        "bigInt", SigmaDsl.BigInt(bigInt.bigInteger)
-      ).item(
-        "gX", gXappkit
-      ).build(), fullMixScript
-    ).getErgoTree.bytes.encodeHex
+    val gXappkit: GroupElement = g.exp(x.bigInteger)
+    val appkitScript: String = ctx
+      .compileContract(
+        ConstantsBuilder
+          .create()
+          .item(
+            "hash",
+            hash
+          )
+          .item(
+            "int",
+            int
+          )
+          .item(
+            "long",
+            long
+          )
+          .item(
+            "bigInt",
+            SigmaDsl.BigInt(bigInt.bigInteger)
+          )
+          .item(
+            "gX",
+            gXappkit
+          )
+          .build(),
+        fullMixScript
+      )
+      .getErgoTree
+      .bytes
+      .encodeHex
     assert(appkitScript == kioskScript)
     println(s"Test passed: both scripts evaluated to ${appkitScript}")
   }
@@ -126,11 +157,18 @@ object Encoders extends App {
     val kioskAddress = Pay2SAddress(kioskScript).toString
 
     // then compute using appkit
-    val appkitScript: Values.ErgoTree = ctx.compileContract(
-      ConstantsBuilder.create().item(
-        "hash", hash
-      ).build(), fullMixScript
-    ).getErgoTree
+    val appkitScript: Values.ErgoTree = ctx
+      .compileContract(
+        ConstantsBuilder
+          .create()
+          .item(
+            "hash",
+            hash
+          )
+          .build(),
+        fullMixScript
+      )
+      .getErgoTree
 
     val appkitAddress = addressEncoder.fromProposition(appkitScript).get.toString
     assert(kioskAddress == appkitAddress)

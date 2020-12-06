@@ -232,9 +232,7 @@ The default address 4MQyML64GnzMxZgm corresponds to the script {1 < 2}"""
       .sendChangeTo(getAddressFromString(changeAddress))
       .build()
 
-    val proveDlogSecretsBigInt = proveDlogSecrets.map { secret =>
-      Try(BigInt(secret, 10)).recover { case ex => BigInt(secret, 16) }.get
-    }
+    val proveDlogSecretsBigInt = proveDlogSecrets.map(decodeBigInt)
 
     val dlogProver = proveDlogSecretsBigInt.foldLeft(ctx.newProverBuilder()) {
       case (oldProverBuilder, newDlogSecret) =>

@@ -4,7 +4,7 @@ import kiosk.appkit.Client
 import kiosk.box.KioskBoxCreator
 import kiosk.encoding.EasyWebEncoder
 import kiosk.ergo
-import kiosk.ergo.{Amount, DhtData, ID}
+import kiosk.ergo.{Amount, DhtData, ID, KioskBigInt}
 import kiosk.explorer.Explorer
 import kiosk.offchain.compiler.TxBuilder
 import kiosk.offchain.parser.Parser
@@ -91,8 +91,23 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
   }
 
   private val compiler = new TxBuilder(explorer)
-  def txBuilder(script: Text, broadcast: Boolean) = {
+  def txBuilder(script: Text, additionalSecrets: Array[String], broadcast: Boolean) = {
+    val $INFO$ =
+      """This creates a transaction using the script specified in TxBuilder. 
+If there any lacking Ergs or tokens in the inputs, the wallet will attempt to add its own unspent boxes. 
+If some of the inputs need additional (proveDlog) secrets, they should be added to Env (as BigInts) and referenced in additionalSecrets"""
+
     val $broadcast$ = "false"
+
+    val envMap = $ergoBox.$ergoScript.$myEnv.$envMap
+    val additionalBigIntSecrets = additionalSecrets.map { additionalSecret =>
+      if (envMap.contains(additionalSecret)) {
+        $ergoBox.$ergoScript.$myEnv.$envMap(additionalSecret) match {
+          case kioskBigInt: KioskBigInt => kioskBigInt.bigInt.toString(10)
+          case any                      => throw new Exception(s"$additionalSecret must be of type BigInt. Found ${any.typeName}")
+        }
+      } else throw new Exception(s"Env does not contain (BigInt) variable $additionalSecret")
+    }
 
     val compileResults = compiler.compile(Parser.parse(script.getText))
     val feeNanoErgs = compileResults.fee.getOrElse(defaultFee)
@@ -114,7 +129,7 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
         boxesToCreate = compileResults.outputs.toArray,
         fee = feeNanoErgs,
         changeAddress = myAddress,
-        proveDlogSecrets = Array(secretKey.toString(10)),
+        proveDlogSecrets = Array(secretKey.toString(10)) ++ additionalBigIntSecrets,
         dhtData = Array[DhtData](),
         broadcast = broadcast
       ).toJson(false)

@@ -10,17 +10,19 @@ That said, the only thing needed to use Tx Builder is the ability to write Json 
 
 #### Protocol
 
-The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L10-L21), 
+The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L10-L24), 
 which is a specification of the data-inputs, inputs and outputs of the transaction to be created.
 A **Protocol** is made up of the following items: 
-- Constants
-- Data-input box definitions
-- Input box definitions 
-- Output box definitions
-- Unary operations
-- Binary operations
-- Conversions
-- Branches
+- Optional sequence of `Constant` declarations, using which we can encode arbitrary values into the script.
+- Optional sequence of computation box definition, `boxes`, each of which maps to zero or more boxes. 
+  These are for accessing arbitrary boxes without having to use them as data inputs (or inputs).
+- Optional sequence of box definitions, `dataInputs`, to be used as data-inputs in the transaction.
+- Mandatory sequence of box definitions, `inputs`, to be used as inputs to the transaction. 
+- Mandatory sequence of box definitions, `outputs`, defining the outputs of the transaction.
+- Optional sequence of `Unary` operations, used to convert between same types (example `Long` to `Long`).
+- Optional sequence of `Binary` operations, used to compose two objects into a third object (of same types).
+- Optional sequence of `Conversion` operations, used to convert between types (example `Address` to `ErgoTree`).
+- Optional sequence of `Branch` instructions, used for run-time control-flow.
 
 #### Declarations
 
@@ -52,7 +54,7 @@ A box declaration can contain exactly one of:
 - A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
 - A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
 
-The exception to this rule is the [**Long**](compiler/model/package.scala#L85-L99) declaration, which can have both fields, 
+The exception to this rule is the [**Long**](compiler/model/package.scala#L89-L103) declaration, which can have both fields, 
 provided that it also has a third field `filter` present. A [`filter`](compiler/model/Enums.scala#L16) can be any of `Ge, Le, Gt, Lt, Ne`. 
 Thus, a **Long** allows both of the following possibilities: 
 1. Either `name` or `value` as in other declarations.
@@ -92,7 +94,7 @@ The following rules apply for each input:
 - If both `boxId` and `address` declarations have been defined, then both cannot be targets or pointers at the same time.
 
 #### Token rules
-A [**Token**](compiler/model/package.scala#L101-L105) is defined as 
+A [**Token**](compiler/model/package.scala#L105-L109) is defined as 
 `case class Token(index: Option[Int], id: Option[Id], amount: Option[Long])`. 
 The main rule to follow here is that if `index` is empty then `id` must be defined, and that too as a pointer (i.e., it must have a `value` field). 
 This is because the token index must be somehow determinable (either via an explicit `index` field or by matching the tokenId of a pointer.)
@@ -128,7 +130,7 @@ This is because if `id` is a target (i.e., has a `name` field) then `index` must
 
 To ensure that the matched input has exactly those tokens defined in the search criteria and nothing more, use the `Strict` flag for that input definition:
 
-```Json
+```json
 "inputs": [ 
   { 
     "address": { ... },
@@ -141,14 +143,44 @@ To ensure that the matched input has exactly those tokens defined in the search 
 
 For instance, to select a box with no tokens, skip `tokens` field (or set it to empty array) and add the `Strict` option. 
 
-This option applies to tokens only. 
+This option applies to tokens only.
+
+#### Matching multiple addresses
+
+An [`Address`](compiler/model/package.scala#L51-L64) declaration takes an optional sequence, `values`, using which we can map a box to one of many addresses. 
+As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
+We can match such boxes as follows:
+
+```json
+"address": {
+  "values": [
+    "epochPreparationAddress",
+    "liveEpochAddress"
+  ]
+}
+```
+
+A `values` field must have at least two elements. If we need to match a single address, we must instead use the `value` field as in other declarations.
+
+We can use `name` to capture the actual matched address when multiple addresses are supplied via values `values`:
+
+```json
+"address": {
+  "name": "actualPoolAddress",
+  "values": [
+    "epochPreparationAddress",
+    "liveEpochAddress"
+  ]
+}
+```
 
 #### Order of evaluation
 Declarations are evaluated in the following order:
 - Constants
-- Data-inputs declarations (from low to high index) 
-- Inputs declarations (from low to high index) 
-- Outputs declarations
+- Computation boxes (`boxes`)  (from low to high index)
+- Data-input boxes (from low to high index) 
+- Input boxes (from low to high index) 
+- Output boxes
 - Binary Ops, Unary Ops and Conversions are "Lazy" (i.e., evaluated only if needed)
 
 #### Referencing rules

@@ -92,6 +92,7 @@ trait TraitDummyProtocol {
   import DummyDeclarations._
   val dummyProtocol = Protocol(
     constants,
+    boxes = None,
     dataInputs = Some(Seq(myInput1, myInput2)),
     inputs = Seq(myInput3),
     outputs = Nil,
