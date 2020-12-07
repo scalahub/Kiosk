@@ -7,13 +7,9 @@ import kiosk.offchain.compiler.model.{DataType, Output, Protocol, RegNum}
 import org.ergoplatform.ErgoAddress
 
 class Builder(implicit dictionary: Dictionary) {
-  def buildOutputs(protocol: Protocol) = {
-    protocol.outputs.map(createOutput)
-  }
+  def buildOutputs(protocol: Protocol) = protocol.outputs.map(createOutput).filter(_.value > 0)
 
-  private def noGaps(sorted: Seq[(Int, _)]): Boolean = {
-    sorted.map(_._1).zipWithIndex.forall { case (int, index) => int == index }
-  }
+  private def noGaps(sorted: Seq[(Int, _)]): Boolean = sorted.map(_._1).zipWithIndex.forall { case (int, index) => int == index }
 
   private def createOutput(output: Output): KioskBox = {
     val ergoTree = output.address.getValue
@@ -38,6 +34,7 @@ class Builder(implicit dictionary: Dictionary) {
         val amount = token.amount.getOrElse(throw new Exception("Token amount must be defined in output"))
         (index, (id.getValue.toString, amount.getValue.value))
       }
+      .filter(_._2._2 > 0)
       .sortBy(_._1)
       .ensuring(noGaps(_), s"Token indices should start from 0 and must not have gaps")
       .map(_._2)
