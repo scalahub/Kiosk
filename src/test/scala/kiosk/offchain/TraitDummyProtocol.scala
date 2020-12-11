@@ -1,9 +1,6 @@
 package kiosk.offchain
 
 import kiosk.offchain.compiler.model._
-import kiosk.offchain.compiler.{Dictionary, Loader, optSeq}
-import kiosk.offchain.parser.Parser
-import org.scalatest.{Matchers, WordSpec}
 
 trait TraitDummyProtocol {
   object DummyDeclarations {
@@ -92,7 +89,7 @@ trait TraitDummyProtocol {
   import DummyDeclarations._
   val dummyProtocol = Protocol(
     constants,
-    boxes = None,
+    auxInputs = None,
     dataInputs = Some(Seq(myInput1, myInput2)),
     inputs = Seq(myInput3),
     outputs = Nil,

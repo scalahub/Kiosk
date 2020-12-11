@@ -8,7 +8,6 @@ scalaVersion := "2.12.10"
 
 lazy val EasyWeb = RootProject(uri("git://github.com/scalahub/EasyWeb.git"))
 
-
 libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.3",
   "org.bouncycastle" % "bcprov-jdk15on" % "1.+",
@@ -20,7 +19,7 @@ libraryDependencies ++= Seq(
   "com.squareup.okhttp3" % "mockwebserver" % "3.14.9" % Test,
   "org.scalatest" %% "scalatest" % "3.0.8" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.+" % Test,
-  "org.mockito" % "mockito-core" % "2.8.47" % Test
+  "org.mockito" % "mockito-core" % "2.23.4" % Test
 )
 
 resolvers ++= Seq(

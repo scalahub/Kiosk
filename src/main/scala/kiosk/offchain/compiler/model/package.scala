@@ -7,27 +7,26 @@ import kiosk.offchain.compiler.model.InputOptions.Options
 import kiosk.offchain.compiler.model.RegNum.Num
 
 package object model {
-  case class Protocol(
-      constants: Option[Seq[Constant]],
-      // on-chain
-      boxes: Option[Seq[Input]], // for use in computation without having to add to data-inputs (or inputs)
-      dataInputs: Option[Seq[Input]],
-      inputs: Seq[Input],
-      // to-create
-      outputs: Seq[Output],
-      fee: Option[scala.Long],
-      // operations
-      binaryOps: Option[Seq[BinaryOp]],
-      unaryOps: Option[Seq[UnaryOp]],
-      conversions: Option[Seq[Conversion]],
-      branches: Option[Seq[Branch]]
-  )
+  case class Protocol(constants: Option[Seq[Constant]],
+                      // on-chain
+                      auxInputs: Option[Seq[Input]], // for use in computation without having to add to data-inputs (or inputs)
+                      dataInputs: Option[Seq[Input]],
+                      inputs: Seq[Input],
+                      // to-create
+                      outputs: Seq[Output],
+                      fee: Option[scala.Long],
+                      // operations
+                      binaryOps: Option[Seq[BinaryOp]],
+                      unaryOps: Option[Seq[UnaryOp]],
+                      conversions: Option[Seq[Conversion]],
+                      branches: Option[Seq[Branch]])
 
   case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], options: Option[Set[InputOptions.Options]]) {
     atLeastOne(this)("id", "address")(id, address)
     private lazy val inputOptions: Set[Options] = options.getOrElse(Set.empty)
     lazy val strict: Boolean = inputOptions.contains(InputOptions.Strict) // applies to token matching only
     lazy val multi = inputOptions.contains(InputOptions.Multi) // ToDo
+    lazy val optional = inputOptions.contains(InputOptions.Optional) // ToDo
     for { boxId <- id; ergoTree <- address } exactlyOne(this)("id.name", "address.name")(boxId.name, ergoTree.name)
   }
 
@@ -37,7 +36,7 @@ package object model {
     require(nanoErgs.filter.isEmpty, s"Output declaration (nanoErgs) cannot have a filter: ${nanoErgs.filter}")
     optSeq(registers).foreach(register => require(register.name.isEmpty, s"Output declaration (register) cannot be named: ${register.name}"))
     optSeq(tokens).foreach { token =>
-      require(token.index.isDefined, s"Output declaration (token index) cannot be empty: ${token}")
+      require(token.index.isDefined, s"Output declaration (token index) cannot be empty: $token")
       require(token.id.isDefined, s"Output declaration (token Id) cannot be empty: ${token.id}")
       require(token.amount.isDefined, s"Output declaration (token amount) cannot be empty: ${token.amount}")
       for { id <- token.id; amount <- token.amount } {
@@ -81,7 +80,7 @@ package object model {
     override lazy val canPointToOnChain: Boolean = true
     override def getValue(implicit dictionary: Dictionary): ergo.KioskCollByte = {
       val kioskCollByte = super.getValue.asInstanceOf[KioskCollByte]
-      kioskCollByte.ensuring(kioskCollByte.arrayBytes.size == 32, s"Id $this (${kioskCollByte.hex}) size (${kioskCollByte.arrayBytes.size}) != 32")
+      kioskCollByte.ensuring(kioskCollByte.arrayBytes.length == 32, s"Id $this (${kioskCollByte.hex}) size (${kioskCollByte.arrayBytes.length}) != 32")
     }
     exactlyOne(this)("name", "value")(name, value)
   }

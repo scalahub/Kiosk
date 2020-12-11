@@ -7,6 +7,14 @@ import kiosk.offchain.reader.Reader
 class OnChainLoader(explorer: Explorer)(implicit dictionary: Dictionary) {
   val reader = new Reader(explorer)
   def load(protocol: Protocol) = {
+    optSeq(protocol.auxInputs).zipWithIndex.foreach { // fetch aux-input boxes from explorer and load into dictionary
+      case (auxInput, index) =>
+        reader
+          .getBoxes(auxInput, dictionary.getAuxInputBoxIds)
+          .headOption
+          .map(dictionary.addAuxInput)
+          .getOrElse(throw new Exception(s"No box matched for aux-input at index $index"))
+    }
     optSeq(protocol.dataInputs).zipWithIndex.foreach { // fetch data-input boxes from explorer and load into dictionary
       case (dataInput, index) =>
         reader

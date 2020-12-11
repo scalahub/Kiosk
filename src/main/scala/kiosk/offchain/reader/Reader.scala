@@ -70,7 +70,7 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
     }
   }
 
-  private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getFilterTarget.map(kioskLong => FilterOp.matches(tokenAmount.value, kioskLong.value, long.filterOp)).getOrElse(true)
+  private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getFilterTarget.forall(kioskLong => FilterOp.matches(tokenAmount.value, kioskLong.value, long.filterOp))
 
   private def dummyId = Id(name = Some(randId), value = None)
   private def dummyLong = Long(name = Some(randId), value = None, filter = None)

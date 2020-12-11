@@ -91,6 +91,7 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
   }
 
   private val compiler = new TxBuilder(explorer)
+
   def txBuilder(script: Text, additionalSecrets: Array[String], broadcast: Boolean) = {
     val $INFO$ =
       """This creates a transaction using the script specified in TxBuilder. 

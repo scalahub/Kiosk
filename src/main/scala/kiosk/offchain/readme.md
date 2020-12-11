@@ -1,24 +1,38 @@
 # Tx Builder
 
-Tx Builder is a tool for developing the offchain part of an Ergo dApp. It allows one to specify the offchain component of 
-any Ergo application protocol in Json and build a transaction to participate in the protocol. 
-It is to be used in conjunction with KioskWallet. However, it can also be used as a stand-alone library for a different wallet. 
+#### What is it?
 
-Tx Builder is more verbose than, for example, Scala. As an example, the Scala code `c = a + b` must be written in Tx Builder as 
-`{"name":"c", "first":"a", "op":"Add", "second":"b"}`. 
+- A tool for developing the offchain part of an Ergo dApp
+- Enables one to create a transaction by specifying a **script** in Json. 
+- Built on top of Kiosk with an example implementation in [KioskWallet](../wallet/KioskWallet.scala#L95-L138).  
+- Can be used for many existing dApps, such as *Oracle-pools*, *Timestamping* and *Auctions*.
+
+#### How does it work?
+
+- Tx Builder allows us to define the input and data inputs of a transaction, along with some auxiliary boxes that are neither inputs nor data-inputs.  Auxiliary boxes are used only during computation.
+- Each such box is defined using a **box definition**. A box definition is a sequence of **instructions** to filter boxes. Currently, we can filter using tokens, registers and nanoErgs. 
+- Currently, boxes can be searched either by address or by box-id. With box-id, there can be at most one box, so we can unambiguously define a box. 
+  However, when matching with address, there can be multiple boxes. These are handled as follows: 
+  - The boxes are first filtered using the instructions. 
+  - The resulting boxes are then sorted by value in decreasing order
+  - The first box (if any) is selected as the matched box.
+- An error is thrown if no boxes match a definition.
+
+
+Tx Builder is more verbose than, for example, Scala. As an example, the Scala code `c = a + b` must be written in Tx Builder as
+`{"name":"c", "first":"a", "op":"Add", "second":"b"}`.
 That said, the only thing needed to use Tx Builder is the ability to write Json (and possibly use a pen and paper).
 
 #### Protocol
 
-The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L10-L24), 
-which is a specification of the data-inputs, inputs and outputs of the transaction to be created.
+The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L10-L24).
 A **Protocol** is made up of the following items: 
 - Optional sequence of `Constant` declarations, using which we can encode arbitrary values into the script.
-- Optional sequence of computation box definition, `boxes`, each of which maps to zero or more boxes. 
+- Optional sequence of box definitions, `auxInputs`. 
   These are for accessing arbitrary boxes without having to use them as data inputs (or inputs).
-- Optional sequence of box definitions, `dataInputs`, to be used as data-inputs in the transaction.
-- Mandatory sequence of box definitions, `inputs`, to be used as inputs to the transaction. 
-- Mandatory sequence of box definitions, `outputs`, defining the outputs of the transaction.
+- Optional sequence of box definitions, `dataInputs`, defining data-inputs of the transaction.
+- Mandatory sequence of box definitions, `inputs`, defining inputs of the transaction. 
+- Mandatory sequence of box definitions, `outputs`, defining outputs of the transaction.
 - Optional sequence of `Unary` operations, used to convert between same types (example `Long` to `Long`).
 - Optional sequence of `Binary` operations, used to compose two objects into a third object (of same types).
 - Optional sequence of `Conversion` operations, used to convert between types (example `Address` to `ErgoTree`).
@@ -145,9 +159,10 @@ For instance, to select a box with no tokens, skip `tokens` field (or set it to 
 
 This option applies to tokens only.
 
-#### Matching multiple addresses
+#### Matching multiple addresses in one definition
 
-An [`Address`](compiler/model/package.scala#L51-L64) declaration takes an optional sequence, `values`, using which we can map a box to one of many addresses. 
+An [`Address`](compiler/model/package.scala#L51-L64) declaration takes an optional sequence, `values`, 
+using which we can map one box definition to one of many addresses. 
 As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
 We can match such boxes as follows:
 
@@ -328,8 +343,6 @@ The following is an example of a script to timestamp a box using the dApp descri
 #### Development Status
 
 Tx Builder is in *experimental* status. Please use it at your own risk and definitely read the source before using it.
-This initial release (v0.1) should be good enough to use for many existing dApps, such as *Oracle-pools*, *Timestamping* and 
-*Auctions*.
 
 A future release will address one or more of the following issues:  
 1. Currently, each input (and data-input) definition matches at most one on-chain box. We would prefer one input definition to match multiple boxes. We call them **multi-inputs** definitions.

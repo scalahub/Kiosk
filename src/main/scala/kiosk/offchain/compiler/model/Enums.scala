@@ -139,5 +139,10 @@ object UnaryConverter extends MyEnum { // input and output types are different
 
 object InputOptions extends MyEnum {
   type Options = Value
-  val Strict, Multi = Value
+  val Strict, Multi, Optional = Value
+}
+
+object InputType extends MyEnum {
+  type Type = Value
+  val Aux, Data, Code /* code-input is the one being spent */ = Value
 }

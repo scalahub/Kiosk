@@ -1,8 +1,7 @@
 package kiosk.offchain.compiler
 
-import kiosk.appkit.Client
 import kiosk.ergo.KioskType
-import kiosk.offchain.compiler.model.DataType
+import kiosk.offchain.compiler.model.{DataType, InputType}
 
 import scala.collection.mutable.{Map => MMap}
 
@@ -10,9 +9,10 @@ class Dictionary(currentHeight: Int) {
   private val dict = MMap[String, DictionaryObject]()
   private val lazyRefs = MMap[String, Seq[Variable]]()
 
+  private var onChainAuxInputs = Seq[OnChainBox]()
   private var onChainInputs = Seq[OnChainBox]()
   private var onChainDataInputs = Seq[OnChainBox]()
-  private val onChainBoxMap: MMap[String, (Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]] = MMap()
+  private val onChainBoxMap: MMap[String, (Seq[OnChainBox], Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]] = MMap()
 
   def getInputNanoErgs = onChainInputs.map(_.nanoErgs.value).sum
 
@@ -26,6 +26,8 @@ class Dictionary(currentHeight: Int) {
   def getInputBoxIds = onChainInputs.map(_.boxId.toString)
 
   def getDataInputBoxIds = onChainDataInputs.map(_.boxId.toString)
+
+  def getAuxInputBoxIds = onChainAuxInputs.map(_.boxId.toString)
 
   private[compiler] def getDeclaration(name: String) = dict(name).declaration
 
@@ -60,7 +62,7 @@ class Dictionary(currentHeight: Int) {
 
   private var commitBuffer: Seq[() => Unit] = Nil
 
-  def commit = {
+  def commit() = {
     commitBuffer.foreach(_.apply)
     commitBuffer = Nil
   }
@@ -83,18 +85,26 @@ class Dictionary(currentHeight: Int) {
     }
   }
 
-  def addOnChainDeclaration(variable: Variable, isDataInput: Boolean, mapping: Seq[OnChainBox] => KioskType[_]) = {
-    addDeclaration(OnChain(variable.name, variable.`type`))
-    addOnChainBoxMapping(variable.name, (dataInput, input) => mapping(if (isDataInput) dataInput else input))
+  private def getBoxes(inputType: InputType.Type, auxInputs: Seq[OnChainBox], dataInputs: Seq[OnChainBox], inputs: Seq[OnChainBox]) = inputType match {
+    case InputType.Aux  => auxInputs
+    case InputType.Data => dataInputs
+    case InputType.Code => inputs
   }
 
-  private def addOnChainBoxMapping(name: String, f: (Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]) = onChainBoxMap += name -> f
+  def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Seq[OnChainBox] => KioskType[_]) = {
+    addDeclaration(OnChain(variable.name, variable.`type`))
+    addOnChainBoxMapping(variable.name, (aux, data, code) => mapping(getBoxes(inputType, aux, data, code)))
+  }
+
+  private def addOnChainBoxMapping(name: String, f: (Seq[OnChainBox], Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]) = onChainBoxMap += name -> f
 
   def addInput(onChainBox: OnChainBox) = onChainInputs :+= onChainBox
 
   def addDataInput(onChainBox: OnChainBox) = onChainDataInputs :+= onChainBox
 
-  def getOnChainValue(name: String) = onChainBoxMap(name)(onChainDataInputs, onChainInputs)
+  def addAuxInput(onChainBox: OnChainBox) = onChainAuxInputs :+= onChainBox
+
+  def getOnChainValue(name: String) = onChainBoxMap(name)(onChainAuxInputs, onChainDataInputs, onChainInputs)
 
   addDeclaration(height(currentHeight))
 }
