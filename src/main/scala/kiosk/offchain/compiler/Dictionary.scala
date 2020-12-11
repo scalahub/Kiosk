@@ -106,7 +106,6 @@ class Dictionary(currentHeight: Int) {
     case InputType.Code => inputs
   }
 
-//  def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Seq[OnChainBox] => KioskType[_]) = {
   def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Map[UUID, OnChainBox] => KioskType[_]) = {
     addDeclaration(OnChain(variable.name, variable.`type`))
     addOnChainBoxMapping(variable.name, (aux, data, code) => mapping(getBoxes(inputType, aux, data, code).toMap))
