@@ -2,7 +2,7 @@ package kiosk.offchain.compiler
 
 import kiosk.offchain.compiler.model._
 
-class Loader(implicit dictionary: Dictionary) {
+class OffChainLoader(implicit dictionary: Dictionary) {
   def load(p: Protocol): Unit = {
     (optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions) ++ optSeq(p.branches)).foreach(dictionary.addDeclaration)
     optSeq(p.auxInputs).zipWithIndex.foreach { case (input, index)  => loadInput(input, index, InputType.Aux) }

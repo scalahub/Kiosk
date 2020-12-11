@@ -9,7 +9,7 @@ class TxBuilder(explorer: Explorer) {
     // Step 1. validate that constants are properly encoded
     optSeq(protocol.constants).map(_.getValue)
     // Step 2. load declarations (also does semantic validation)
-    (new Loader).load(protocol)
+    (new OffChainLoader).load(protocol)
     // Step 3. load on-chain declarations
     new OnChainLoader(explorer).load(protocol)
     // Step 4. build outputs
