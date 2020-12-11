@@ -3,31 +3,46 @@ package kiosk.offchain.compiler
 import kiosk.ergo.KioskType
 import kiosk.offchain.compiler.model.{DataType, InputType}
 
+import java.util.UUID
 import scala.collection.mutable.{Map => MMap}
 
 class Dictionary(currentHeight: Int) {
   private val dict = MMap[String, DictionaryObject]()
   private val lazyRefs = MMap[String, Seq[Variable]]()
 
-  private var onChainAuxInputs = Seq[OnChainBox]()
-  private var onChainInputs = Seq[OnChainBox]()
-  private var onChainDataInputs = Seq[OnChainBox]()
-  private val onChainBoxMap: MMap[String, (Seq[OnChainBox], Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]] = MMap()
+  private var onChainAuxInputs = Seq[(UUID, OnChainBox)]()
+  private var onChainInputs = Seq[(UUID, OnChainBox)]()
+  private var onChainDataInputs = Seq[(UUID, OnChainBox)]()
+  private val onChainBoxMap: MMap[String, (Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)]) => KioskType[_]] = MMap()
 
-  def getInputNanoErgs = onChainInputs.map(_.nanoErgs.value).sum
+  def getInputNanoErgs =
+    onChainInputs
+      .map(_._2)
+      .map(_.nanoErgs.value)
+      .sum
 
   def getInputTokens =
     onChainInputs
+      .map(_._2)
       .flatMap(input => input.stringTokenIds zip input.tokenAmounts.map(_.value))
       .groupBy(_._1)
       .map { case (id, seq) => (id, seq.map(_._2).sum) }
       .toSeq
 
-  def getInputBoxIds = onChainInputs.map(_.boxId.toString)
+  def getInputBoxIds =
+    onChainInputs
+      .map(_._2)
+      .map(_.boxId.toString)
 
-  def getDataInputBoxIds = onChainDataInputs.map(_.boxId.toString)
+  def getDataInputBoxIds =
+    onChainDataInputs
+      .map(_._2)
+      .map(_.boxId.toString)
 
-  def getAuxInputBoxIds = onChainAuxInputs.map(_.boxId.toString)
+  def getAuxInputBoxIds =
+    onChainAuxInputs
+      .map(_._2)
+      .map(_.boxId.toString)
 
   private[compiler] def getDeclaration(name: String) = dict(name).declaration
 
@@ -85,24 +100,25 @@ class Dictionary(currentHeight: Int) {
     }
   }
 
-  private def getBoxes(inputType: InputType.Type, auxInputs: Seq[OnChainBox], dataInputs: Seq[OnChainBox], inputs: Seq[OnChainBox]) = inputType match {
+  private def getBoxes(inputType: InputType.Type, auxInputs: Seq[(UUID, OnChainBox)], dataInputs: Seq[(UUID, OnChainBox)], inputs: Seq[(UUID, OnChainBox)]) = inputType match {
     case InputType.Aux  => auxInputs
     case InputType.Data => dataInputs
     case InputType.Code => inputs
   }
 
-  def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Seq[OnChainBox] => KioskType[_]) = {
+//  def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Seq[OnChainBox] => KioskType[_]) = {
+  def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Map[UUID, OnChainBox] => KioskType[_]) = {
     addDeclaration(OnChain(variable.name, variable.`type`))
-    addOnChainBoxMapping(variable.name, (aux, data, code) => mapping(getBoxes(inputType, aux, data, code)))
+    addOnChainBoxMapping(variable.name, (aux, data, code) => mapping(getBoxes(inputType, aux, data, code).toMap))
   }
 
-  private def addOnChainBoxMapping(name: String, f: (Seq[OnChainBox], Seq[OnChainBox], Seq[OnChainBox]) => KioskType[_]) = onChainBoxMap += name -> f
+  private def addOnChainBoxMapping(name: String, f: (Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)]) => KioskType[_]) = onChainBoxMap += name -> f
 
-  def addInput(onChainBox: OnChainBox) = onChainInputs :+= onChainBox
+  def addInput(onChainBox: OnChainBox, uuid: UUID) = onChainInputs :+= (uuid -> onChainBox)
 
-  def addDataInput(onChainBox: OnChainBox) = onChainDataInputs :+= onChainBox
+  def addDataInput(onChainBox: OnChainBox, uuid: UUID) = onChainDataInputs :+= (uuid -> onChainBox)
 
-  def addAuxInput(onChainBox: OnChainBox) = onChainAuxInputs :+= onChainBox
+  def addAuxInput(onChainBox: OnChainBox, uuid: UUID) = onChainAuxInputs :+= (uuid -> onChainBox)
 
   def getOnChainValue(name: String) = onChainBoxMap(name)(onChainAuxInputs, onChainDataInputs, onChainInputs)
 

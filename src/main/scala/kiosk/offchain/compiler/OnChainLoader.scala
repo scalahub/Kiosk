@@ -7,28 +7,28 @@ import kiosk.offchain.reader.Reader
 class OnChainLoader(explorer: Explorer)(implicit dictionary: Dictionary) {
   val reader = new Reader(explorer)
   def load(protocol: Protocol) = {
-    optSeq(protocol.auxInputs).zipWithIndex.foreach { // fetch aux-input boxes from explorer and load into dictionary
-      case (auxInput, index) =>
+    optSeq(protocol.auxInputUuids).zipWithIndex.foreach { // fetch aux-input boxes from explorer and load into dictionary
+      case ((auxInput, uuid), index) =>
         reader
           .getBoxes(auxInput, dictionary.getAuxInputBoxIds)
           .headOption
-          .map(dictionary.addAuxInput)
+          .map(dictionary.addAuxInput(_, uuid))
           .getOrElse(throw new Exception(s"No box matched for aux-input at index $index"))
     }
-    optSeq(protocol.dataInputs).zipWithIndex.foreach { // fetch data-input boxes from explorer and load into dictionary
-      case (dataInput, index) =>
+    optSeq(protocol.dataInputUuids).zipWithIndex.foreach { // fetch data-input boxes from explorer and load into dictionary
+      case ((dataInput, uuid), index) =>
         reader
           .getBoxes(dataInput, dictionary.getDataInputBoxIds)
           .headOption
-          .map(dictionary.addDataInput)
+          .map(dictionary.addDataInput(_, uuid))
           .getOrElse(throw new Exception(s"No box matched for data-input at index $index"))
     }
-    protocol.inputs.zipWithIndex.foreach { // fetch input boxes from explorer and load into dictionary
-      case (input, index) =>
+    protocol.inputUuids.zipWithIndex.foreach { // fetch input boxes from explorer and load into dictionary
+      case ((input, uuid), index) =>
         reader
           .getBoxes(input, dictionary.getInputBoxIds)
           .headOption
-          .map(dictionary.addInput)
+          .map(dictionary.addInput(_, uuid))
           .getOrElse(throw new Exception(s"No box matched for input at index $index"))
     }
   }

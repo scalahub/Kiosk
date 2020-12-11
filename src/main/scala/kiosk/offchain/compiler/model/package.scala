@@ -6,6 +6,8 @@ import kiosk.offchain.compiler.model.DataType.Type
 import kiosk.offchain.compiler.model.InputOptions.Options
 import kiosk.offchain.compiler.model.RegNum.Num
 
+import java.util.UUID
+
 package object model {
   case class Protocol(constants: Option[Seq[Constant]],
                       // on-chain
@@ -19,7 +21,12 @@ package object model {
                       binaryOps: Option[Seq[BinaryOp]],
                       unaryOps: Option[Seq[UnaryOp]],
                       conversions: Option[Seq[Conversion]],
-                      branches: Option[Seq[Branch]])
+                      branches: Option[Seq[Branch]]) {
+    def withUuid(input: Input): (Input, UUID) = input -> UUID.randomUUID
+    private[compiler] lazy val auxInputUuids: Option[Seq[(Input, UUID)]] = auxInputs.map(_.map(withUuid))
+    private[compiler] lazy val dataInputUuids: Option[Seq[(Input, UUID)]] = dataInputs.map(_.map(withUuid))
+    private[compiler] lazy val inputUuids: Seq[(Input, UUID)] = inputs.map(withUuid)
+  }
 
   case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], options: Option[Set[InputOptions.Options]]) {
     atLeastOne(this)("id", "address")(id, address)
