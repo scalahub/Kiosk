@@ -2,7 +2,8 @@ package kiosk.offchain
 
 import kiosk.ergo.{KioskBox, KioskInt}
 import kiosk.explorer.Explorer
-import kiosk.offchain.compiler.TxBuilder
+import kiosk.offchain.compiler.{TxBuilder, model}
+import kiosk.offchain.compiler.model.{InputOptions, Output}
 import kiosk.offchain.compiler.model.InputOptions.Strict
 import org.mockito.Mockito.when
 import org.scalatest.{Matchers, WordSpec}
@@ -183,6 +184,37 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TraitTo
       when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox2LessTokens, fakeBox1ExactTokensWrongAmount)
       the[Exception] thrownBy new compiler.TxBuilder(explorer)
         .compile(tokenFilterProtocol.copy(inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = None)))) should have message "No box matched for input at index 1"
+    }
+
+    "accept if invalid amount and Optional flag" in new TokenMocks {
+      when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
+      when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox2LessTokens, fakeBox1ExactTokensWrongAmount)
+      val result = new compiler.TxBuilder(explorer)
+        .compile(
+          tokenFilterProtocol.copy(
+            inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = Some(Set(InputOptions.Optional))))
+          )
+        )
+      result.inputBoxIds shouldBe Seq("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")
+    }
+
+    "reject if invalid amount, Optional flag and contains a used target" in new TokenMocks {
+      when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
+      when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox2LessTokens, fakeBox1ExactTokensWrongAmount)
+      the[Exception] thrownBy new compiler.TxBuilder(explorer)
+        .compile(
+          tokenFilterProtocol.copy(
+            inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = Some(Set(InputOptions.Optional)))),
+            outputs = Seq(
+              Output(
+                address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"), values = None),
+                registers = None,
+                tokens = None,
+                nanoErgs = model.Long(name = None, value = Some("thirdTokenAmount"), filter = None)
+              )
+            )
+          )
+        ) should have message "No Code-input matched at Optional index 1 when getting target"
     }
 
     "reject boxes with extra tokens and Strict(0)" in new TokenMocks {

@@ -48,6 +48,8 @@ package object compiler {
     override lazy val canPointToOnChain: Boolean = false
   }
 
+  type T = (Option[_], String)
+
   def exactlyOne(obj: Any)(names: String*)(options: Option[_]*): Unit =
     if (options.count(_.isDefined) != 1) throw new Exception(s"Exactly one of {${names.toSeq.reduceLeft(_ + "," + _)}} must be defined in $obj")
 
@@ -55,4 +57,15 @@ package object compiler {
     if (options.count(_.isDefined) == 0) throw new Exception(s"At least one of {${names.toSeq.reduceLeft(_ + "," + _)}} must be defined in $obj")
 
   def optSeq[T](s: Option[Seq[T]]) = s.toSeq.flatten
+
+  def requireEmpty(data: T*) = {
+    data.foreach {
+      case (opt, message) => if (opt.isDefined) throw new Exception(s"$message cannot be defined: ${opt.get}")
+    }
+  }
+  def requireDefined(data: T*) = {
+    data.foreach {
+      case (opt, message) => if (opt.isEmpty) throw new Exception(s"$message cannot be empty")
+    }
+  }
 }

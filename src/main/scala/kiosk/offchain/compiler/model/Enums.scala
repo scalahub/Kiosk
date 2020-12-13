@@ -144,5 +144,5 @@ object InputOptions extends MyEnum {
 
 object InputType extends MyEnum {
   type Type = Value
-  val Aux, Data, Code /* code-input is the one being spent */ = Value
+  val Aux, Data, Code = Value
 }
