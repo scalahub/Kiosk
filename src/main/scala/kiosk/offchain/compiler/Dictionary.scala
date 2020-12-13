@@ -113,11 +113,11 @@ class Dictionary(currentHeight: Int) {
 
   private def addOnChainBoxMapping(name: String, f: (Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)]) => KioskType[_]) = onChainBoxMap += name -> f
 
-  def addInput(onChainBox: OnChainBox, uuid: UUID) = onChainInputs :+= (uuid -> onChainBox)
+  def addInput(onChainBox: OnChainBox, uuid: UUID) = onChainInputs :+= uuid -> onChainBox
 
-  def addDataInput(onChainBox: OnChainBox, uuid: UUID) = onChainDataInputs :+= (uuid -> onChainBox)
+  def addDataInput(onChainBox: OnChainBox, uuid: UUID) = onChainDataInputs :+= uuid -> onChainBox
 
-  def addAuxInput(onChainBox: OnChainBox, uuid: UUID) = onChainAuxInputs :+= (uuid -> onChainBox)
+  def addAuxInput(onChainBox: OnChainBox, uuid: UUID) = onChainAuxInputs :+= uuid -> onChainBox
 
   def getOnChainValue(name: String) = onChainBoxMap(name)(onChainAuxInputs, onChainDataInputs, onChainInputs)
 

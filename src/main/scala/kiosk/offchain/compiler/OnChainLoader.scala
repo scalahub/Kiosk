@@ -13,7 +13,7 @@ class OnChainLoader(explorer: Explorer)(implicit dictionary: Dictionary) {
           .getBoxes(auxInput, dictionary.getAuxInputBoxIds)
           .headOption
           .map(dictionary.addAuxInput(_, uuid))
-          .getOrElse(throw new Exception(s"No box matched for aux-input at index $index"))
+          .getOrElse(if (!auxInput.optional) throw new Exception(s"No box matched for aux-input at index $index"))
     }
     optSeq(protocol.dataInputUuids).zipWithIndex.foreach { // fetch data-input boxes from explorer and load into dictionary
       case ((dataInput, uuid), index) =>
@@ -21,7 +21,7 @@ class OnChainLoader(explorer: Explorer)(implicit dictionary: Dictionary) {
           .getBoxes(dataInput, dictionary.getDataInputBoxIds)
           .headOption
           .map(dictionary.addDataInput(_, uuid))
-          .getOrElse(throw new Exception(s"No box matched for data-input at index $index"))
+          .getOrElse(if (!dataInput.optional) throw new Exception(s"No box matched for data-input at index $index"))
     }
     protocol.inputUuids.zipWithIndex.foreach { // fetch input boxes from explorer and load into dictionary
       case ((input, uuid), index) =>
@@ -29,7 +29,7 @@ class OnChainLoader(explorer: Explorer)(implicit dictionary: Dictionary) {
           .getBoxes(input, dictionary.getInputBoxIds)
           .headOption
           .map(dictionary.addInput(_, uuid))
-          .getOrElse(throw new Exception(s"No box matched for input at index $index"))
+          .getOrElse(if (!input.optional) throw new Exception(s"No box matched for input at index $index"))
     }
   }
 }

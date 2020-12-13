@@ -33,25 +33,16 @@ package object model {
     private lazy val inputOptions: Set[Options] = options.getOrElse(Set.empty)
     lazy val strict: Boolean = inputOptions.contains(InputOptions.Strict) // applies to token matching only
     lazy val multi = inputOptions.contains(InputOptions.Multi) // ToDo
-    lazy val optional = inputOptions.contains(InputOptions.Optional) // ToDo
+    lazy val optional = inputOptions.contains(InputOptions.Optional)
     for { boxId <- id; ergoTree <- address } exactlyOne(this)("id.name", "address.name")(boxId.name, ergoTree.name)
   }
 
   case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long) {
-    require(address.name.isEmpty, s"Output declaration (address) cannot be named: ${address.name}")
-    require(nanoErgs.name.isEmpty, s"Output declaration (nanoErgs) cannot be named: ${nanoErgs.name}")
-    require(nanoErgs.filter.isEmpty, s"Output declaration (nanoErgs) cannot have a filter: ${nanoErgs.filter}")
-    optSeq(registers).foreach(register => require(register.name.isEmpty, s"Output declaration (register) cannot be named: ${register.name}"))
-    optSeq(tokens).foreach { token =>
-      require(token.index.isDefined, s"Output declaration (token index) cannot be empty: $token")
-      require(token.id.isDefined, s"Output declaration (token Id) cannot be empty: ${token.id}")
-      require(token.amount.isDefined, s"Output declaration (token amount) cannot be empty: ${token.amount}")
-      for { id <- token.id; amount <- token.amount } {
-        require(id.name.isEmpty, s"Output declaration (token Id) cannot be named: ${id.name}")
-        require(amount.name.isEmpty, s"Output declaration (token amount) cannot be named: ${amount.name}")
-        require(amount.filter.isEmpty, s"Output declaration (token amount) cannot have a filter: ${amount.filter}")
-      }
-    }
+    optSeq(tokens).foreach(token => requireDefined(token.index -> "token index", token.id -> "token.id", token.amount -> "token amount"))
+    optSeq(tokens).foreach(token =>
+      for { id <- token.id; amount <- token.amount } requireEmpty(id.name -> "Output token.id.name", amount.name -> "Output token.amount.name", amount.filter -> "Output token.amount.filter"))
+    requireEmpty(optSeq(registers).map(_.name -> "Output register.name"): _*)
+    requireEmpty(address.name -> "Output address.name", nanoErgs.name -> "Output nanoErgs.name", nanoErgs.filter -> "Output nanoErgs.filter")
   }
 
   case class Address(name: Option[String], value: Option[String], values: Option[Seq[String]]) extends Declaration {
