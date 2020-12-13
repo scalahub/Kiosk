@@ -37,6 +37,15 @@ package object model {
     lazy val multi = inputOptions.contains(InputOptions.Multi) // ToDo
     lazy val optional = inputOptions.contains(InputOptions.Optional)
     for { boxId <- id; ergoTree <- address } exactlyOne(this)("id.name", "address.name")(boxId.name, ergoTree.name)
+    if (optional) {
+      requireEmpty(optSeq(registers).map(_.name -> "Optional input register.name"): _*)
+      requireEmpty(
+        id.flatMap(_.name) -> "Optional input id.name",
+        address.flatMap(_.name) -> "Optional input address.name",
+        nanoErgs.flatMap(_.name) -> "Optional input nanoErgs.name"
+      )
+      requireEmpty(optSeq(tokens).flatMap(token => Seq(token.id.flatMap(_.name) -> "Optional input token.id.name", token.amount.flatMap(_.name) -> "Optional input token.amount.name")): _*)
+    }
   }
 
   case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long) {
