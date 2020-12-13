@@ -28,8 +28,6 @@ package object model {
     private[compiler] lazy val inputUuids: Seq[(Input, UUID)] = inputs.map(withUuid)
   }
 
-  trait Box {}
-
   case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], options: Option[Set[InputOptions.Options]]) {
     atLeastOne(this)("id", "address")(id, address)
     private lazy val inputOptions: Set[Options] = options.getOrElse(Set.empty)
