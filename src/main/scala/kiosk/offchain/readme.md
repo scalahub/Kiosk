@@ -68,7 +68,7 @@ A box declaration can contain exactly one of:
 - A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
 - A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
 
-The exception to this rule is the [**Long**](compiler/model/package.scala#L95-L109) declaration, which can have both fields, 
+The exception to this rule is the [**Long**](compiler/model/package.scala#L86-L100) declaration, which can have both fields, 
 provided that it also has a third field `filter` present. A [`filter`](compiler/model/Enums.scala#L16) can be any of `Ge, Le, Gt, Lt, Ne`. 
 Thus, a **Long** allows both of the following possibilities: 
 1. Either `name` or `value` as in other declarations.
@@ -108,7 +108,7 @@ The following rules apply for each input:
 - If both `boxId` and `address` declarations have been defined, then both cannot be targets or pointers at the same time.
 
 #### Token rules
-A [**Token**](compiler/model/package.scala#L111-L115) is defined as 
+A [**Token**](compiler/model/package.scala#L102-L106) is defined as 
 `case class Token(index: Option[Int], id: Option[Id], amount: Option[Long])`. 
 The main rule to follow here is that if `index` is empty then `id` must be defined, and that too as a pointer (i.e., it must have a `value` field). 
 This is because the token index must be somehow determinable (either via an explicit `index` field or by matching the tokenId of a pointer.)
@@ -161,7 +161,7 @@ This option applies to tokens only.
 
 #### Matching multiple addresses in one definition
 
-An [`Address`](compiler/model/package.scala#L57-L70) declaration takes an optional sequence, `values`, 
+An [`Address`](compiler/model/package.scala#L48-L61) declaration takes an optional sequence, `values`, 
 using which we can map one box definition to one of many addresses. 
 As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
 We can match such boxes as follows:
