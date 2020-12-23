@@ -9,27 +9,24 @@ class OnChainLoader(explorer: Explorer)(implicit dictionary: Dictionary) {
   def load(protocol: Protocol) = {
     optSeq(protocol.auxInputUuids).zipWithIndex.foreach { // fetch aux-input boxes from explorer and load into dictionary
       case ((auxInput, uuid), index) =>
-        reader
-          .getBoxes(auxInput, dictionary.getAuxInputBoxIds)
-          .headOption
-          .map(dictionary.addAuxInput(_, uuid))
-          .getOrElse(if (!auxInput.optional) throw new Exception(s"No box matched for aux-input at index $index"))
+        val boxes = reader.getBoxes(auxInput, dictionary.getAuxInputBoxIds)
+        val boxesToAdd = if (auxInput.multi) boxes else boxes.take(1)
+        if (!auxInput.optional && boxesToAdd.isEmpty) throw new Exception(s"No box matched for aux-input at index $index")
+        dictionary.addAuxInput(boxesToAdd, uuid)
     }
     optSeq(protocol.dataInputUuids).zipWithIndex.foreach { // fetch data-input boxes from explorer and load into dictionary
       case ((dataInput, uuid), index) =>
-        reader
-          .getBoxes(dataInput, dictionary.getDataInputBoxIds)
-          .headOption
-          .map(dictionary.addDataInput(_, uuid))
-          .getOrElse(if (!dataInput.optional) throw new Exception(s"No box matched for data-input at index $index"))
+        val boxes = reader.getBoxes(dataInput, dictionary.getDataInputBoxIds)
+        val boxesToAdd = if (dataInput.multi) boxes else boxes.take(1)
+        if (!dataInput.optional && boxesToAdd.isEmpty) throw new Exception(s"No box matched for data-input at index $index")
+        dictionary.addDataInput(boxesToAdd, uuid)
     }
     protocol.inputUuids.zipWithIndex.foreach { // fetch input boxes from explorer and load into dictionary
       case ((input, uuid), index) =>
-        reader
-          .getBoxes(input, dictionary.getInputBoxIds)
-          .headOption
-          .map(dictionary.addInput(_, uuid))
-          .getOrElse(if (!input.optional) throw new Exception(s"No box matched for input at index $index"))
+        val boxes = reader.getBoxes(input, dictionary.getDataInputBoxIds)
+        val boxesToAdd = if (input.multi) boxes else boxes.take(1)
+        if (!input.optional && boxesToAdd.isEmpty) throw new Exception(s"No box matched for input at index $index")
+        dictionary.addInput(boxesToAdd, uuid)
     }
   }
 }

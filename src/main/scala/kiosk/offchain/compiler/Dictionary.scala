@@ -10,20 +10,21 @@ class Dictionary(currentHeight: Int) {
   private val dict = MMap[String, DictionaryObject]()
   private val lazyRefs = MMap[String, Seq[Variable]]()
 
-  private var onChainAuxInputs = Seq[(UUID, OnChainBox)]()
-  private var onChainInputs = Seq[(UUID, OnChainBox)]()
-  private var onChainDataInputs = Seq[(UUID, OnChainBox)]()
-  private val onChainBoxMap: MMap[String, (Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)]) => KioskType[_]] = MMap()
+  private var onChainAuxInputs = Seq[(UUID, Multiple[OnChainBox])]()
+  private var onChainInputs = Seq[(UUID, Multiple[OnChainBox])]()
+  private var onChainDataInputs = Seq[(UUID, Multiple[OnChainBox])]()
+  type OnChainBoxMaps = (Seq[(UUID, Multiple[OnChainBox])], Seq[(UUID, Multiple[OnChainBox])], Seq[(UUID, Multiple[OnChainBox])])
+  private val onChainBoxMap: MMap[String, OnChainBoxMaps => Multiple[KioskType[_]]] = MMap()
 
   def getInputNanoErgs =
     onChainInputs
-      .map(_._2)
+      .flatMap(_._2.seq)
       .map(_.nanoErgs.value)
       .sum
 
   def getInputTokens =
     onChainInputs
-      .map(_._2)
+      .flatMap(_._2.seq)
       .flatMap(input => input.stringTokenIds zip input.tokenAmounts.map(_.value))
       .groupBy(_._1)
       .map { case (id, seq) => (id, seq.map(_._2).sum) }
@@ -31,17 +32,17 @@ class Dictionary(currentHeight: Int) {
 
   def getInputBoxIds =
     onChainInputs
-      .map(_._2)
+      .flatMap(_._2.seq)
       .map(_.boxId.toString)
 
   def getDataInputBoxIds =
     onChainDataInputs
-      .map(_._2)
+      .flatMap(_._2.seq)
       .map(_.boxId.toString)
 
   def getAuxInputBoxIds =
     onChainAuxInputs
-      .map(_._2)
+      .flatMap(_._2.seq)
       .map(_.boxId.toString)
 
   private[compiler] def getDeclaration(name: String) = dict(name).declaration
@@ -100,24 +101,26 @@ class Dictionary(currentHeight: Int) {
     }
   }
 
-  private def getBoxes(inputType: InputType.Type, auxInputs: Seq[(UUID, OnChainBox)], dataInputs: Seq[(UUID, OnChainBox)], inputs: Seq[(UUID, OnChainBox)]) = inputType match {
-    case InputType.Aux  => auxInputs
-    case InputType.Data => dataInputs
-    case InputType.Code => inputs
-  }
+  private def getBoxes(inputType: InputType.Type, auxInputs: Seq[(UUID, Multiple[OnChainBox])], dataInputs: Seq[(UUID, Multiple[OnChainBox])], inputs: Seq[(UUID, Multiple[OnChainBox])]) =
+    inputType match {
+      case InputType.Aux  => auxInputs
+      case InputType.Data => dataInputs
+      case InputType.Code => inputs
+    }
 
-  def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Map[UUID, OnChainBox] => KioskType[_]) = {
+  def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Map[UUID, Multiple[OnChainBox]] => Multiple[KioskType[_]]) = {
     addDeclaration(OnChain(variable.name, variable.`type`))
-    addOnChainBoxMapping(variable.name, (aux, data, code) => mapping(getBoxes(inputType, aux, data, code).toMap))
+    addOnChainBoxMapping(variable.name, { case (aux, data, code) => mapping(getBoxes(inputType, aux, data, code).toMap) })
   }
 
-  private def addOnChainBoxMapping(name: String, f: (Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)], Seq[(UUID, OnChainBox)]) => KioskType[_]) = onChainBoxMap += name -> f
+  private def addOnChainBoxMapping(name: String, f: OnChainBoxMaps => Multiple[KioskType[_]]): Unit =
+    onChainBoxMap += name -> f
 
-  def addInput(onChainBox: OnChainBox, uuid: UUID) = onChainInputs :+= uuid -> onChainBox
+  def addInput(onChainBoxes: Multiple[OnChainBox], uuid: UUID) = onChainInputs :+= uuid -> onChainBoxes
 
-  def addDataInput(onChainBox: OnChainBox, uuid: UUID) = onChainDataInputs :+= uuid -> onChainBox
+  def addDataInput(onChainBoxes: Multiple[OnChainBox], uuid: UUID) = onChainDataInputs :+= uuid -> onChainBoxes
 
-  def addAuxInput(onChainBox: OnChainBox, uuid: UUID) = onChainAuxInputs :+= uuid -> onChainBox
+  def addAuxInput(onChainBoxes: Multiple[OnChainBox], uuid: UUID) = onChainAuxInputs :+= uuid -> onChainBoxes
 
   def getOnChainValue(name: String) = onChainBoxMap(name)(onChainAuxInputs, onChainDataInputs, onChainInputs)
 

@@ -24,7 +24,8 @@ trait Declaration {
 
   def updateType(newType: DataType.Type) = `type` = newType
 
-  def getValue(implicit dictionary: Dictionary): KioskType[_] = if (isOnChain) dictionary.getOnChainValue(onChainVariable.get.name) else dictionary.getDeclaration(pointers.head.name).getValue
+  def getValues(implicit dictionary: Dictionary): Multiple[KioskType[_]] =
+    if (isOnChain) dictionary.getOnChainValue(onChainVariable.get.name) else dictionary.getDeclaration(pointers.head.name).getValues
 
   override def toString = s"${maybeTargetId.getOrElse("unnamed")}: ${`type`}"
 }

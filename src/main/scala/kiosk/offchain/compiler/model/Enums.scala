@@ -67,6 +67,7 @@ object BinaryOperator extends MyEnum { // input and output types are same
   type Operator = Value
   val Add, Sub, Mul, Div, Max, Min = Value
 
+  def operate(operator: Operator, firstSecond: (KioskType[_], KioskType[_])): KioskType[_] = operate(operator, firstSecond._1, firstSecond._2)
   def operate(operator: Operator, first: KioskType[_], second: KioskType[_]): KioskType[_] = {
     (operator, first, second) match {
       case (Add, KioskLong(a), KioskLong(b))                 => KioskLong(a + b)

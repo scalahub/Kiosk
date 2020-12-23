@@ -1,68 +1,62 @@
 package kiosk.offchain.reader
 
-import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
 import kiosk.explorer.Explorer
 import kiosk.offchain.compiler.model._
-import kiosk.offchain.compiler.{Dictionary, OnChainBox, model, optSeq, randId}
-import org.ergoplatform.ErgoAddress
-import sigmastate.Values
+import kiosk.offchain.compiler.{Dictionary, Multiple, OnChainBox, model, optSeq, randId, _}
 
 class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
-  def getBoxes(input: Input, alreadySelectedBoxIds: Seq[String]): Seq[OnChainBox] = {
-    val boxById = for {
+
+  def getBoxes(input: Input, alreadySelectedBoxIds: Seq[String]): Multiple[OnChainBox] = {
+
+    val boxesById: Option[Seq[OnChainBox]] = for {
       id <- input.id
       _ <- id.value
     } yield {
-      val boxId: String = id.getValue.toString
-      OnChainBox.fromKioskBox(explorer.getBoxById(boxId))
+      id.getValues.seq.map(boxId => OnChainBox.fromKioskBox(explorer.getBoxById(boxId.toString)))
     }
 
     val boxesByAddress: Option[Seq[OnChainBox]] = for {
       address <- input.address
       _ <- address.values.orElse(address.value)
     } yield {
-      val ergoTrees: Seq[Values.ErgoTree] = address.getValues.map(_.value)
-      val ergoAddresses: Seq[ErgoAddress] = ergoTrees.map(ScalaErgoConverters.getAddressFromErgoTree)
-      val stringAddresses: Seq[String] = ergoAddresses.map(ScalaErgoConverters.getStringFromAddress)
-      stringAddresses.flatMap(explorer.getUnspentBoxes).map(OnChainBox.fromKioskBox)
+      address.getTargets.map(tree2str).flatMap(explorer.getUnspentBoxes).map(OnChainBox.fromKioskBox)
     }
 
-    val matchedBoxes = optSeq(boxesByAddress) ++ boxById
+    val matchedBoxes: Seq[OnChainBox] = optSeq(boxesByAddress) ++ optSeq(boxesById)
 
-    val filteredBySelected = matchedBoxes.filterNot(box => alreadySelectedBoxIds.contains(box.boxId.toString))
+    val filteredBySelectedBoxIds: Seq[OnChainBox] = matchedBoxes.filterNot(onChainBox => alreadySelectedBoxIds.contains(onChainBox.stringBoxId))
 
-    val filteredByRegisters = filterByRegisters(filteredBySelected, optSeq(input.registers))
+    val filteredByRegisters: Seq[OnChainBox] = filterByRegisters(filteredBySelectedBoxIds, optSeq(input.registers))
 
-    val filteredByTokens = filterByTokens(filteredByRegisters, optSeq(input.tokens), input.strict)
+    val filteredByTokens: Seq[OnChainBox] = filterByTokens(filteredByRegisters, optSeq(input.tokens), input.strict)
 
-    val filteredByNanoErgs = for {
-      nanoErgs <- input.nanoErgs
-      target <- nanoErgs.getFilterTarget
-    } yield filteredByTokens.filter(onChainBox => FilterOp.matches(onChainBox.nanoErgs.value, target.value, nanoErgs.filterOp))
+    val filteredByNanoErgs: Seq[OnChainBox] = input.nanoErgs.fold(filteredByTokens) { nanoErgs =>
+      nanoErgs.getTargets.foldLeft(filteredByTokens) { (beforeFilter, target) =>
+        beforeFilter.filter(onChainBox => FilterOp.matches(onChainBox.nanoErgs.value, target.value, nanoErgs.filterOp))
+      }
+    }
 
-    filteredByNanoErgs.getOrElse(filteredByTokens)
+    Multiple(filteredByNanoErgs: _*)
   }
 
-  private def filterByRegisters(boxes: Seq[OnChainBox], registers: Seq[Register]): Seq[OnChainBox] =
-    registers.foldLeft(boxes)((boxesBeforeFilter, register) => filterByRegister(boxesBeforeFilter, register))
+  private def filterByRegisters(onChainBoxes: Seq[OnChainBox], registers: Seq[Register]): Seq[OnChainBox] =
+    registers.foldLeft(onChainBoxes)((boxesBeforeFilter, register) => filterByRegister(boxesBeforeFilter, register))
 
-  private def filterByRegister(boxes: Seq[OnChainBox], register: Register): Seq[OnChainBox] = {
+  private def filterByRegister(onChainBoxes: Seq[OnChainBox], register: Register): Seq[OnChainBox] = {
     val index: Int = RegNum.getIndex(register.num)
-    val filteredByType: Seq[OnChainBox] = boxes.filter(box => box.registers.size > index && DataType.isValid(box.registers(index), register.`type`))
+    val filteredByType: Seq[OnChainBox] = onChainBoxes.filter(onChainBox => onChainBox.registers.size > index && DataType.isValid(onChainBox.registers(index), register.`type`))
 
-    register.value match {
-      case Some(_) =>
-        val expected: KioskType[_] = register.getValue
-        filteredByType.filter { box =>
-          val kioskType: KioskType[_] = box.registers(index)
-          kioskType.typeName == expected.typeName && kioskType.hex == expected.hex
-        }
-      case _ => filteredByType
+    register.value.fold(filteredByType) { _ =>
+      val expected: Multiple[KioskType[_]] = register.getValues
+      filteredByType.filter { onChainBox =>
+        val actual: KioskType[_] = onChainBox.registers(index)
+        expected.exists(_.hex == actual.hex)
+      }
     }
   }
 
-  private case class TokenBox(onChainBox: OnChainBox, ids: Set[ID])
+  private case class TokenBox(onChainBox: OnChainBox, foundIds: Set[ID])
 
   private def filterByTokens(boxes: Seq[OnChainBox], tokens: Seq[model.Token], strict: Boolean): Seq[OnChainBox] = {
     tokens.foldLeft(boxes.map(box => TokenBox(box, Set.empty[String])))((before, token) => filterByToken(before, token)).collect {
@@ -70,29 +64,36 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
     }
   }
 
-  private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getFilterTarget.forall(kioskLong => FilterOp.matches(tokenAmount.value, kioskLong.value, long.filterOp))
+  private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getTargets.forall(kioskLong => FilterOp.matches(tokenAmount.value, kioskLong.value, long.filterOp))
 
   private def dummyId = Id(name = Some(randId), value = None)
   private def dummyLong = Long(name = Some(randId), value = None, filter = None)
 
-  private def filterByToken(boxes: Seq[TokenBox], token: model.Token): Seq[TokenBox] = {
+  private def filterByToken(tokenBoxes: Seq[TokenBox], token: model.Token): Seq[TokenBox] = {
     val tokenId: Id = token.id.getOrElse(dummyId)
     val amount: Long = token.amount.getOrElse(dummyLong)
     (token.index, tokenId.value) match {
       case (Some(index), Some(_)) =>
-        val id: String = tokenId.getValue.toString
-        boxes
-          .filter(box => box.onChainBox.tokenIds(index).toString == id && matches(box.onChainBox.tokenAmounts(index), amount))
-          .map(box => box.copy(ids = box.ids + id))
+        val expectedIds: Seq[String] = tokenId.getValues.map(_.toString).seq
+        tokenBoxes
+          .filter(tokenBox => expectedIds.contains(tokenBox.onChainBox.stringTokenIds(index)) && matches(tokenBox.onChainBox.tokenAmounts(index), amount))
+          .map(box => box.copy(foundIds = box.foundIds ++ box.onChainBox.stringTokenIds.take(index + 1)))
       case (Some(index), None) =>
-        boxes
+        tokenBoxes
           .filter(box => box.onChainBox.tokenIds.size > index && matches(box.onChainBox.tokenAmounts(index), amount))
-          .map(box => box.copy(ids = box.ids ++ box.onChainBox.stringTokenIds.take(index + 1)))
+          .map(box => box.copy(foundIds = box.foundIds ++ box.onChainBox.stringTokenIds.take(index + 1)))
       case (None, Some(_)) =>
-        val id: String = tokenId.getValue.toString
-        boxes
-          .filter(box => box.onChainBox.stringTokenIds.contains(id) && matches(box.onChainBox.tokenAmounts(box.onChainBox.stringTokenIds.indexOf(id)), amount))
-          .map(box => box.copy(ids = box.ids + id))
+        val expectedIds: Seq[String] = tokenId.getValues.map(_.toString).seq
+        def findToken(tokenBox: TokenBox) = {
+          tokenBox -> tokenBox.onChainBox.stringTokenIds.indices.find {
+            case index => expectedIds.contains(tokenBox.onChainBox.stringTokenIds(index)) && matches(tokenBox.onChainBox.tokenAmounts(index), amount)
+          }
+        }
+
+        tokenBoxes
+          .map(findToken)
+          .collect { case (tokenBox, Some(index)) => tokenBox -> index }
+          .map { case (tokenBox, index) => tokenBox.copy(foundIds = tokenBox.foundIds ++ tokenBox.onChainBox.stringTokenIds.take(index + 1)) }
       case _ => throw new Exception(s"At least one of token.index or token.id.value must be defined in $token")
     }
   }
