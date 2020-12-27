@@ -1,6 +1,7 @@
 package kiosk.offchain
 
 import kiosk.encoding.ScalaErgoConverters
+import kiosk.ergo
 import kiosk.ergo.{KioskErgoTree, KioskGroupElement}
 import kiosk.offchain.compiler.model.BinaryOperator._
 import kiosk.offchain.compiler.model.{BinaryOp, Constant, DataType}
@@ -85,14 +86,14 @@ class ParsingSpec extends WordSpec with MockitoSugar with Matchers with TraitTok
       constants(5) shouldEqual Constant("myErgoTree1", DataType.ErgoTree, "10010101D17300")
       constants(6) shouldEqual Constant("myAddress", DataType.Address, "9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")
 
-      val values = constants.map(_.getValue)
-      values(0).value shouldEqual 1234L
-      values(1).toString shouldEqual "506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7"
-      values(2).value shouldEqual 1234
-      values(3).toString shouldEqual "ae57e4add0f181f5d1e8fd462969e4cc04f13b0da183676660d280ad0b64563f"
-      values(4) shouldEqual KioskGroupElement(ScalaErgoConverters.stringToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
-      values(5) shouldEqual KioskErgoTree(ScalaErgoConverters.stringToErgoTree("10010101D17300"))
-      values(6) shouldEqual KioskErgoTree(ScalaErgoConverters.getAddressFromString("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK").script)
+      val values: Seq[compiler.Multiple[ergo.KioskType[_]]] = constants.map(_.getValues)
+      values(0).seq.head.value shouldEqual 1234L
+      values(1).seq.head.toString shouldEqual "506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7"
+      values(2).seq.head.value shouldEqual 1234
+      values(3).seq.head.toString shouldEqual "ae57e4add0f181f5d1e8fd462969e4cc04f13b0da183676660d280ad0b64563f"
+      values(4).seq.head shouldEqual KioskGroupElement(ScalaErgoConverters.stringToGroupElement("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"))
+      values(5).seq.head shouldEqual KioskErgoTree(ScalaErgoConverters.stringToErgoTree("10010101D17300"))
+      values(6).seq.head shouldEqual KioskErgoTree(ScalaErgoConverters.getAddressFromString("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK").script)
     }
   }
 }

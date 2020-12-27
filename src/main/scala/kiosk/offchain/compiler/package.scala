@@ -1,14 +1,17 @@
 package kiosk.offchain
 
-import java.util.UUID
-
 import kiosk.encoding.ScalaErgoConverters
-import kiosk.ergo
+import kiosk.encoding.ScalaErgoConverters.{getAddressFromErgoTree => tree2addr, getStringFromAddress => addr2Str}
 import kiosk.ergo.{KioskBox, KioskCollByte, KioskErgoTree, KioskLong, KioskType, StringToBetterString}
 import kiosk.offchain.compiler.model.{Constant, DataType}
 
-// ToDo: Multi inputs
+import java.util.UUID
+import scala.util.Try
+
 package object compiler {
+
+  def tree2str(ergoTree: KioskErgoTree): String = addr2Str(tree2addr(ergoTree.value))
+
   case class CompileResult(dataInputBoxIds: Seq[String], inputBoxIds: Seq[String], inputNanoErgs: Long, inputTokens: Seq[(String, Long)], outputs: Seq[KioskBox], fee: Option[Long])
 
   case class DictionaryObject(isUnresolved: Boolean, declaration: Declaration)
@@ -21,7 +24,61 @@ package object compiler {
 
   case class OnChainBox(boxId: KioskCollByte, address: KioskErgoTree, nanoErgs: KioskLong, tokenIds: Seq[KioskCollByte], tokenAmounts: Seq[KioskLong], registers: Seq[KioskType[_]]) {
     lazy val stringTokenIds = tokenIds.map(_.toString)
+    lazy val stringBoxId = boxId.toString
     require(tokenIds.size == tokenAmounts.size, s"tokenIds.size (${tokenIds.size}) != tokenAmounts.size (${tokenAmounts.size})")
+  }
+
+  case class Multiple[+T](seq: T*) {
+
+    def exists(f: T => Boolean): Boolean = seq.exists(f)
+
+    def take(i: Int): Multiple[T] = seq.take(i)
+
+    def isEmpty = seq.isEmpty
+
+    def map[U](f: T => U): Multiple[U] = seq.map(f)
+
+    def foreach[U](f: T => Unit): Unit = seq.foreach(f)
+
+    def forall[U](f: T => Boolean): Boolean = seq.forall(f)
+
+    def filter[U](f: T => Boolean): Multiple[T] = seq.filter(f)
+
+    def length: Int = seq.length
+
+    def head = seq.head
+
+    private implicit def seq2Multiple[T](seq: Seq[T]): Multiple[T] = Multiple(seq: _*)
+
+    def zip[U](that: Multiple[U]): Multiple[(T, U)] = {
+      (this.seq.length, that.seq.length) match {
+        case (1, _)                                         => that.seq.map(this.seq.head -> _)
+        case (_, 1)                                         => this.seq.map(_ -> that.seq.head)
+        case (firstLen, secondLen) if firstLen == secondLen => this.seq zip that.seq
+        case (firstLen, secondLen)                          => throw new Exception(s"Wrong number of elements in multi-pairs: first has $firstLen and second has $secondLen")
+      }
+    }
+
+  }
+
+  object Multiple {
+    def sequence[T](seq: Seq[Multiple[T]]): Multiple[Seq[T]] = {
+      seq.foldLeft(Multiple[Seq[T]](Nil)) {
+        case (left, right) =>
+          (left zip right).map {
+            case (left, right) => left :+ right
+          }
+      }
+    }
+  }
+
+  def noGapsInIndices(sorted: Seq[(Int, _)]): Boolean = sorted.map(_._1).zipWithIndex.forall { case (int, index) => int == index }
+
+  def getMultiPairs(first: String, second: String)(implicit dictionary: Dictionary) = {
+    Try(dictionary.getDeclaration(first).getValues zip dictionary.getDeclaration(second).getValues).fold(
+      ex => throw new Exception(s"Error pairing $first and $second").initCause(ex),
+      pairs => pairs
+    )
   }
 
   object OnChainBox {
@@ -44,9 +101,11 @@ package object compiler {
     override lazy val pointerNames = Nil
     override lazy val pointerTypes = Nil
     override lazy val isLazy = true
-    override def getValue(implicit dictionary: Dictionary): ergo.KioskType[_] = dictionary.getOnChainValue(name)
+    override def getValues(implicit dictionary: Dictionary) = dictionary.getOnChainValue(name)
     override lazy val canPointToOnChain: Boolean = false
   }
+
+  def to[T](kioskTypes: Multiple[KioskType[_]]): Multiple[T] = kioskTypes.map(_.asInstanceOf[T])
 
   type T = (Option[_], String)
 
