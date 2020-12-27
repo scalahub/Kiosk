@@ -3,8 +3,8 @@ package kiosk.offchain
 import kiosk.ergo.{KioskBox, KioskInt}
 import kiosk.explorer.Explorer
 import kiosk.offchain.compiler.{TxBuilder, model}
-import kiosk.offchain.compiler.model.{InputOptions, Output}
-import kiosk.offchain.compiler.model.InputOptions.Strict
+import kiosk.offchain.compiler.model.{MatchingOptions, Output}
+import kiosk.offchain.compiler.model.MatchingOptions.Strict
 import org.mockito.Mockito.when
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.mockito._
@@ -179,43 +179,68 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TraitTo
       result.inputBoxIds shouldBe Seq("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea", "af0e35e1cf5a8890d70cef498c996dcd3e7658cfadd37695425032d4f8327d8a")
     }
 
-    "reject if invalid amount" in new TokenMocks {
+    "reject if invalid amount in non-Optional input" in new TokenMocks {
       when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
       when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox2LessTokens, fakeBox1ExactTokensWrongAmount)
       the[Exception] thrownBy new compiler.TxBuilder(explorer)
         .compile(tokenFilterProtocol.copy(inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = None)))) should have message "No box matched for input at index 1"
     }
 
-    "accept if invalid amount and Optional flag" in new TokenMocks {
+    "accept if invalid amount in Optional input" in new TokenMocks {
       when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
       when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox2LessTokens, fakeBox1ExactTokensWrongAmount)
       val result = new compiler.TxBuilder(explorer)
         .compile(
           tokenFilterProtocol.copy(
-            inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = Some(Set(InputOptions.Optional))))
+            inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = Some(Set(MatchingOptions.Optional))))
           )
         )
       result.inputBoxIds shouldBe Seq("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")
     }
 
-    "reject if invalid amount, Optional flag and contains a used target" in new TokenMocks {
+    "reject if invalid amount in Optional input containing a target used in a non-Optional output" in new TokenMocks {
       when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
       when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox2LessTokens, fakeBox1ExactTokensWrongAmount)
       the[Exception] thrownBy new compiler.TxBuilder(explorer)
         .compile(
           tokenFilterProtocol.copy(
-            inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = Some(Set(InputOptions.Optional)))),
+            inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = Some(Set(MatchingOptions.Optional)))),
             outputs = Seq(
               Output(
                 address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"), values = None),
                 registers = None,
                 tokens = None,
-                nanoErgs = model.Long(name = None, value = Some("thirdTokenAmount"), filter = None)
+                nanoErgs = model.Long(name = None, value = Some("thirdTokenAmount"), filter = None),
+                options = None
               )
             )
           )
-        ) should have message "No Code-input matched at Optional index 1 when getting target"
+        ) should have message "Output declaration generated zero boxes (use 'Optional' flag to prevent this error): Output(unnamed: Address,None,None,unnamed: Long,None)"
     }
+
+    "accept if invalid amount in Optional input containing a target used in an Optional output" in new TokenMocks {
+      when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
+      when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox2LessTokens, fakeBox1ExactTokensWrongAmount)
+      val result = new compiler.TxBuilder(explorer)
+        .compile(
+          tokenFilterProtocol.copy(
+            inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = Some(Set(MatchingOptions.Optional)))),
+            outputs = Seq(
+              Output(
+                address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"), values = None),
+                registers = None,
+                tokens = None,
+                nanoErgs = model.Long(name = None, value = Some("thirdTokenAmount"), filter = None),
+                options = Some(Set(MatchingOptions.Optional))
+              )
+            )
+          )
+        )
+      result.inputBoxIds shouldBe Seq("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")
+      result.outputs shouldBe Nil
+    }
+
+    // ToDo: Add more tests for 'Multi' option in outputs
 
     "reject boxes with extra tokens and Strict(0)" in new TokenMocks {
       when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExtraTokens

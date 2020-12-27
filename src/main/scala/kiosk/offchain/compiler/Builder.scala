@@ -50,8 +50,11 @@ class Builder(implicit dictionary: Dictionary) {
 
     val nanoErgs: Multiple[ergo.KioskLong] = output.nanoErgs.getValues.ensuring(_.forall(_.value > 0), s"One or more outputs will have non-positive nano-Ergs: $output")
 
-    (addresses zip nanoErgs zip registers zip tokens).seq map {
+    val generatedOutputs = (addresses zip nanoErgs zip registers zip tokens).seq map {
       case (((outputAddress, outputNanoErgs), outputRegisters), outputTokens) => KioskBox(outputAddress, outputNanoErgs.value, outputRegisters.toArray, outputTokens.toArray)
     }
+    val outputsToReturn = if (output.multi) generatedOutputs else generatedOutputs.take(1)
+
+    if (output.optional || outputsToReturn.nonEmpty) outputsToReturn else throw new Exception(s"Output declaration generated zero boxes (use 'Optional' flag to prevent this error): $output")
   }
 }

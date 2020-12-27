@@ -138,7 +138,7 @@ object UnaryConverter extends MyEnum { // input and output types are different
   }
 }
 
-object InputOptions extends MyEnum {
+object MatchingOptions extends MyEnum {
   type Options = Value
   val Strict, Multi, Optional = Value
 }

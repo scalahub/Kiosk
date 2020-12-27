@@ -74,7 +74,7 @@ trait TraitDummyProtocol {
       registers = Some(Seq(myRegister4)),
       tokens = Some(Seq(myToken2)),
       nanoErgs = Some(Long(name = None, value = Some("input1NanoErgs"), filter = Some(FilterOp.Ne))),
-      options = Some(Set(InputOptions.Strict))
+      options = Some(Set(MatchingOptions.Strict))
     )
 
     val myInput3 = Input(
@@ -83,7 +83,7 @@ trait TraitDummyProtocol {
       registers = Some(Seq(myRegister1, myRegister2)),
       tokens = Some(Seq(myToken3)),
       nanoErgs = Some(Long(name = None, value = Some("someLong1"), filter = Some(FilterOp.Ge))),
-      options = Some(Set(InputOptions.Strict))
+      options = Some(Set(MatchingOptions.Strict))
     )
   }
   import DummyDeclarations._

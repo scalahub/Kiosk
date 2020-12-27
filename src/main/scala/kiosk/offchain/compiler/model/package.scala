@@ -1,9 +1,8 @@
 package kiosk.offchain.compiler
 
-import kiosk.ergo
 import kiosk.ergo.{KioskCollByte, KioskErgoTree, KioskInt, KioskLong}
 import kiosk.offchain.compiler.model.DataType.Type
-import kiosk.offchain.compiler.model.InputOptions.Options
+import kiosk.offchain.compiler.model.MatchingOptions.Options
 import kiosk.offchain.compiler.model.RegNum.Num
 
 import java.util.UUID
@@ -29,21 +28,25 @@ package object model {
     private[compiler] lazy val inputUuids: Seq[(Input, UUID)] = inputs.map(withUuid)
   }
 
-  case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], options: Option[Set[InputOptions.Options]]) {
+  case class Input(id: Option[Id], address: Option[Address], registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Option[Long], options: Option[Set[MatchingOptions.Options]]) {
     atLeastOne(this)("id", "address")(id, address)
     private lazy val inputOptions: Set[Options] = options.getOrElse(Set.empty)
-    lazy val strict: Boolean = inputOptions.contains(InputOptions.Strict) // applies to token matching only
-    lazy val multi = inputOptions.contains(InputOptions.Multi) // ToDo
-    lazy val optional = inputOptions.contains(InputOptions.Optional)
+    lazy val strict: Boolean = inputOptions.contains(MatchingOptions.Strict) // applies to token matching only
+    lazy val multi = inputOptions.contains(MatchingOptions.Multi)
+    lazy val optional = inputOptions.contains(MatchingOptions.Optional)
     for { boxId <- id; ergoTree <- address } exactlyOne(this)("id.name", "address.name")(boxId.name, ergoTree.name)
   }
 
-  case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long) {
+  case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long, options: Option[Set[MatchingOptions.Options]]) {
     optSeq(tokens).foreach(token => requireDefined(token.index -> "token index", token.id -> "token.id", token.amount -> "token amount"))
     optSeq(tokens).foreach(token =>
       for { id <- token.id; amount <- token.amount } requireEmpty(id.name -> "Output token.id.name", amount.name -> "Output token.amount.name", amount.filter -> "Output token.amount.filter"))
     requireEmpty(optSeq(registers).map(_.name -> "Output register.name"): _*)
     requireEmpty(address.name -> "Output address.name", nanoErgs.name -> "Output nanoErgs.name", nanoErgs.filter -> "Output nanoErgs.filter")
+    private lazy val outputOptions: Set[Options] = options.getOrElse(Set.empty)
+    lazy val multi = outputOptions.contains(MatchingOptions.Multi)
+    lazy val optional = outputOptions.contains(MatchingOptions.Optional)
+    options.fold()(optionSet => if (optionSet.contains(MatchingOptions.Strict)) throw new Exception(s"'Strict' option not allowed in output"))
   }
 
   case class Address(name: Option[String], value: Option[String], values: Option[Seq[String]]) extends Declaration {

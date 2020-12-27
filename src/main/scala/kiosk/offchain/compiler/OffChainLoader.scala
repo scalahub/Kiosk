@@ -25,7 +25,7 @@ class OffChainLoader(implicit dictionary: Dictionary) {
   }
 
   private def noBoxError(implicit inputType: InputType.Type, inputIndex: Int) =
-    throw new Exception(s"No $inputType-input matched at ${InputOptions.Optional} index $inputIndex when getting target")
+    throw new Exception(s"No $inputType-input matched at ${MatchingOptions.Optional} index $inputIndex when getting target")
 
   private def getInput(mapping: Map[UUID, Multiple[OnChainBox]])(implicit uuid: UUID, inputType: InputType.Type, index: Int) = mapping.get(uuid).getOrElse(noBoxError)
 
