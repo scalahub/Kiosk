@@ -28,33 +28,31 @@ package object compiler {
     require(tokenIds.size == tokenAmounts.size, s"tokenIds.size (${tokenIds.size}) != tokenAmounts.size (${tokenAmounts.size})")
   }
 
-  case class Multiple[+T](seq: T*) {
+  case class Multiple[+This](seq: This*) {
 
-    def exists(f: T => Boolean): Boolean = seq.exists(f)
+    def exists(f: This => Boolean): Boolean = seq.exists(f)
 
-    def take(i: Int): Multiple[T] = seq.take(i)
+    def take(i: Int): Multiple[This] = seq.take(i)
 
     def isEmpty = seq.isEmpty
 
-    def map[U](f: T => U): Multiple[U] = seq.map(f)
+    def map[That](thisToThat: This => That): Multiple[That] = seq.map(thisToThat)
 
-    def foreach[U](f: T => Unit): Unit = seq.foreach(f)
+    def foreach(thisToUnit: This => Unit): Unit = seq.foreach(thisToUnit)
 
-    def forall[U](f: T => Boolean): Boolean = seq.forall(f)
+    def forall(thisToBoolean: This => Boolean): Boolean = seq.forall(thisToBoolean)
 
-    def filter[U](f: T => Boolean): Multiple[T] = seq.filter(f)
+    def filter(thisToBoolean: This => Boolean): Multiple[This] = seq.filter(thisToBoolean)
 
     def length: Int = seq.length
 
     def head = seq.head
 
-    private implicit def seq2Multiple[T](seq: Seq[T]): Multiple[T] = Multiple(seq: _*)
-
-    def zip[U](that: Multiple[U]): Multiple[(T, U)] = {
-      (this.seq.length, that.seq.length) match {
-        case (1, _)                                         => that.seq.map(this.seq.head -> _)
-        case (_, 1)                                         => this.seq.map(_ -> that.seq.head)
-        case (firstLen, secondLen) if firstLen == secondLen => this.seq zip that.seq
+    def zip[That](those: Multiple[That]): Multiple[(This, That)] = {
+      (this.seq.length, those.seq.length) match {
+        case (1, _)                                         => those.seq.map(this.seq.head -> _)
+        case (_, 1)                                         => this.seq.map(_ -> those.seq.head)
+        case (firstLen, secondLen) if firstLen == secondLen => this.seq zip those.seq
         case (firstLen, secondLen)                          => throw new Exception(s"Wrong number of elements in multi-pairs: first has $firstLen and second has $secondLen")
       }
     }
@@ -62,6 +60,8 @@ package object compiler {
   }
 
   object Multiple {
+    private implicit def seq2Multiple[T](seq: Seq[T]): Multiple[T] = Multiple(seq: _*)
+
     def sequence[T](seq: Seq[Multiple[T]]): Multiple[Seq[T]] = {
       seq.foldLeft(Multiple[Seq[T]](Nil)) {
         case (left, right) =>
