@@ -1,6 +1,6 @@
 package kiosk.offchain.compiler
 
-import kiosk.ergo.{KioskCollByte, KioskErgoTree, KioskInt, KioskLong}
+import kiosk.ergo.{KioskCollByte, KioskErgoTree, KioskInt, KioskLong, KioskType}
 import kiosk.offchain.compiler.model.DataType.Type
 import kiosk.offchain.compiler.model.MatchingOptions.Options
 import kiosk.offchain.compiler.model.RegNum.Num
@@ -80,7 +80,7 @@ package object model {
     override lazy val pointerTypes = pointerNames.map(_ => DataType.CollByte)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
-    override def getValues(implicit dictionary: Dictionary) = {
+    override def getValues(implicit dictionary: Dictionary): Multiple[KioskCollByte] = {
       val kioskCollBytes = to[KioskCollByte](super.getValues)
       kioskCollBytes.foreach(kioskCollByte => require(kioskCollByte.arrayBytes.length == 32, s"Id $this (${kioskCollByte.hex}) size (${kioskCollByte.arrayBytes.length}) != 32"))
       kioskCollBytes
@@ -96,8 +96,8 @@ package object model {
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
     lazy val filterOp = filter.getOrElse(FilterOp.Eq)
-    def getTargets(implicit dictionary: Dictionary) = value.map(pointer => to[KioskLong](dictionary.getDeclaration(pointer).getValues).seq).getOrElse(Nil)
-    override def getValues(implicit dictionary: Dictionary) = to[KioskLong](super.getValues)
+    def getTargets(implicit dictionary: Dictionary): Seq[KioskLong] = value.fold(Seq[KioskLong]())(pointer => to[KioskLong](dictionary.getDeclaration(pointer).getValues).seq)
+    override def getValues(implicit dictionary: Dictionary): Multiple[KioskLong] = to[KioskLong](super.getValues)
     if (filter.nonEmpty && value.isEmpty) throw new Exception(s"Value cannot be empty if filter is defined")
     if (filter.contains(FilterOp.Eq)) throw new Exception(s"Filter cannot be Eq")
     atLeastOne(this)("name", "value")(name, value)
@@ -115,7 +115,7 @@ package object model {
     override lazy val pointerNames = Nil
     override lazy val pointerTypes = Nil
     override lazy val isLazy = true
-    override def getValues(implicit dictionary: Dictionary) = Multiple(DataType.getValue(value, `type`))
+    override def getValues(implicit dictionary: Dictionary): Multiple[KioskType[_]] = Multiple(DataType.getValue(value, `type`))
     override lazy val canPointToOnChain: Boolean = false
     require(`type` != DataType.Unknown, "Data type cannot be unknown")
   }
@@ -128,7 +128,7 @@ package object model {
     override lazy val pointerTypes = Seq(types.from)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
-    override def getValues(implicit dictionary: Dictionary) = dictionary.getDeclaration(from).getValues(dictionary).map(UnaryConverter.convert(converter, _))
+    override def getValues(implicit dictionary: Dictionary): Multiple[KioskType[_]] = dictionary.getDeclaration(from).getValues(dictionary).map(UnaryConverter.convert(converter, _))
   }
 
   case class BinaryOp(name: String, first: String, op: BinaryOperator.Operator, second: String) extends Declaration {
@@ -138,7 +138,7 @@ package object model {
     override lazy val pointerTypes = Seq(DataType.Unknown, DataType.Unknown)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
-    override def getValues(implicit dictionary: Dictionary) = {
+    override def getValues(implicit dictionary: Dictionary): Multiple[KioskType[_]] = {
       Try(getMultiPairs(first, second)).fold(ex => throw new Exception(s"Error evaluating binary op $op ($name)").initCause(ex), pairs => pairs).map(BinaryOperator.operate(op, _))
     }
   }
@@ -150,7 +150,7 @@ package object model {
     override lazy val pointerTypes = Seq(DataType.Unknown)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
-    override def getValues(implicit dictionary: Dictionary) = dictionary.getDeclaration(in).getValues.map(UnaryOperator.operate(op, _))
+    override def getValues(implicit dictionary: Dictionary): Multiple[KioskType[_]] = dictionary.getDeclaration(in).getValues.map(UnaryOperator.operate(op, _))
   }
 
   case class Condition(first: String, second: String, op: FilterOp.Op) {
@@ -174,6 +174,6 @@ package object model {
     override protected lazy val pointerTypes: Seq[Type] = Seq(DataType.Unknown, DataType.Unknown, DataType.Unknown, DataType.Unknown)
     override lazy val isLazy: Boolean = true
     override lazy val canPointToOnChain: Boolean = false
-    override def getValues(implicit dictionary: Dictionary) = (if (condition.evaluate) dictionary.getDeclaration(ifTrue) else dictionary.getDeclaration(ifFalse)).getValues
+    override def getValues(implicit dictionary: Dictionary): Multiple[KioskType[_]] = (if (condition.evaluate) dictionary.getDeclaration(ifTrue) else dictionary.getDeclaration(ifFalse)).getValues
   }
 }

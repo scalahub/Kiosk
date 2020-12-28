@@ -4,7 +4,7 @@ import kiosk.ergo.{KioskBox, KioskInt}
 import kiosk.explorer.Explorer
 import kiosk.offchain.compiler.{TxBuilder, model}
 import kiosk.offchain.compiler.model.{MatchingOptions, Output}
-import kiosk.offchain.compiler.model.MatchingOptions.Strict
+import kiosk.offchain.compiler.model.MatchingOptions.{Strict, Optional}
 import org.mockito.Mockito.when
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.mockito._
@@ -231,7 +231,7 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TraitTo
                 registers = None,
                 tokens = None,
                 nanoErgs = model.Long(name = None, value = Some("thirdTokenAmount"), filter = None),
-                options = Some(Set(MatchingOptions.Optional))
+                options = Some(Set(Optional))
               )
             )
           )
@@ -240,7 +240,24 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TraitTo
       result.outputs shouldBe Nil
     }
 
-    // ToDo: Add more tests for 'Multi' option in outputs
+    "reject if output contains the Strict option" in new TokenMocks {
+      the[Exception] thrownBy new compiler.TxBuilder(explorer)
+        .compile(
+          tokenFilterProtocol.copy(
+            outputs = Seq(
+              Output(
+                address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"), values = None),
+                registers = None,
+                tokens = None,
+                nanoErgs = model.Long(name = None, value = Some("thirdTokenAmount"), filter = None),
+                options = Some(Set(Strict))
+              )
+            )
+          )
+        ) should have message "'Strict' option not allowed in output"
+    }
+
+    // ToDo: Add tests for 'Multi' option in outputs
 
     "reject boxes with extra tokens and Strict(0)" in new TokenMocks {
       when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExtraTokens

@@ -340,14 +340,6 @@ The following is an example of a script to timestamp a box using the dApp descri
 }
 ```
 
-#### Development Status
-
-Tx Builder is in *experimental* status. Please use it at your own risk and definitely read the source before using it.
-
-Features in development (in order of priority):  
-1. Currently, each input (and data-input) definition matches at most one on-chain box. We would prefer one input definition to match multiple boxes. We call them **multi-inputs** definitions.
-2. There should be a meaningful way of mixing single and multi-input targets and pointers.
-3. Allow literals to be directly used in declarations instead of via constants. Example: `"address":{"literal":"4MQyMKvMbnCJG3aJ"}`.
 #### Using Tx Builder in your own wallet
 
 Tx Builder is written in Scala, and therefore supports any JVM language. The following shows how to use it from Scala.

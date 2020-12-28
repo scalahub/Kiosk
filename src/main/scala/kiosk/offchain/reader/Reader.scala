@@ -12,16 +12,12 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
     val boxesById: Option[Seq[OnChainBox]] = for {
       id <- input.id
       _ <- id.value
-    } yield {
-      id.getValues.seq.map(boxId => OnChainBox.fromKioskBox(explorer.getBoxById(boxId.toString)))
-    }
+    } yield id.getValues.seq.map(boxId => OnChainBox.fromKioskBox(explorer.getBoxById(boxId.toString)))
 
     val boxesByAddress: Option[Seq[OnChainBox]] = for {
       address <- input.address
       _ <- address.values.orElse(address.value)
-    } yield {
-      address.getTargets.map(tree2str).flatMap(explorer.getUnspentBoxes).map(OnChainBox.fromKioskBox)
-    }
+    } yield address.getTargets.map(tree2str).flatMap(explorer.getUnspentBoxes).map(OnChainBox.fromKioskBox)
 
     val matchedBoxes: Seq[OnChainBox] = optSeq(boxesByAddress) ++ optSeq(boxesById)
 
@@ -32,9 +28,10 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
     val filteredByTokens: Seq[OnChainBox] = filterByTokens(filteredByRegisters, optSeq(input.tokens), input.strict)
 
     val filteredByNanoErgs: Seq[OnChainBox] = input.nanoErgs.fold(filteredByTokens) { nanoErgs =>
-      nanoErgs.getTargets.foldLeft(filteredByTokens) { (beforeFilter, target) =>
-        beforeFilter.filter(onChainBox => FilterOp.matches(onChainBox.nanoErgs.value, target.value, nanoErgs.filterOp))
-      }
+      val targets = nanoErgs.getTargets
+      if (targets.isEmpty) filteredByTokens
+      else
+        filteredByTokens.filter(onChainBox => targets.exists(target => FilterOp.matches(onChainBox.nanoErgs.value, target.value, nanoErgs.filterOp)))
     }
 
     Multiple(filteredByNanoErgs: _*)
@@ -64,7 +61,10 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
     }
   }
 
-  private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = long.getTargets.forall(kioskLong => FilterOp.matches(tokenAmount.value, kioskLong.value, long.filterOp))
+  private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = {
+    val targets = long.getTargets
+    targets.isEmpty || targets.exists(kioskLong => FilterOp.matches(tokenAmount.value, kioskLong.value, long.filterOp))
+  }
 
   private def dummyId = Id(name = Some(randId), value = None)
   private def dummyLong = Long(name = Some(randId), value = None, filter = None)
