@@ -6,6 +6,7 @@ import org.json.JSONObject
 import org.sh.utils.json.JSONUtil.JsonFormatted
 import sigmastate.SGroupElement
 import sigmastate.Values.{ByteArrayConstant, CollectionConstant, ErgoTree}
+import sigmastate.basics.SecP256K1
 import sigmastate.eval.SigmaDsl
 import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
 import sigmastate.serialization.ValueSerializer
@@ -79,7 +80,10 @@ package object ergo {
     override def toString: String = value.getEncoded.toArray.encodeHex
     override val typeName: String = "GroupElement"
     override def getErgoValue = ErgoValue.of(value)
+    def +(that: KioskGroupElement) = KioskGroupElement(value.multiply(that.value))
   }
+
+  lazy val PointAtInfinity = KioskGroupElement(SigmaDsl.GroupElement(SecP256K1.identity))
 
   case class KioskErgoTree(value: ErgoTree) extends KioskType[ErgoTree] {
     override val serialize: Array[Byte] = DefaultSerializer.serializeErgoTree(value)

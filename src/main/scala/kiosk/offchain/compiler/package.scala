@@ -74,15 +74,15 @@ package object compiler {
 
   def noGapsInIndices(sorted: Seq[(Int, _)]): Boolean = sorted.map(_._1).zipWithIndex.forall { case (int, index) => int == index }
 
-  def getMultiPairs(first: String, second: String)(implicit dictionary: Dictionary) = {
-    Try(dictionary.getDeclaration(first).getValues zip dictionary.getDeclaration(second).getValues).fold(
+  def getMultiPairs(first: String, second: String)(implicit dictionary: Dictionary): Multiple[(KioskType[_], KioskType[_])] = {
+    Try(dictionary.getDeclaration(first).getValue zip dictionary.getDeclaration(second).getValue).fold(
       ex => throw new Exception(s"Error pairing $first and $second").initCause(ex),
       pairs => pairs
     )
   }
 
   object OnChainBox {
-    def fromKioskBox(kioskBox: KioskBox) = {
+    def fromKioskBox(kioskBox: KioskBox): OnChainBox = {
       kioskBox.spentTxId.map(_ => throw new Exception(s"Box id ${kioskBox.optBoxId.get} has been spent"))
       val address = KioskErgoTree(ScalaErgoConverters.getAddressFromString(kioskBox.address).script)
       val nanoErgs = KioskLong(kioskBox.value)
@@ -101,7 +101,7 @@ package object compiler {
     override lazy val pointerNames = Nil
     override lazy val pointerTypes = Nil
     override lazy val isLazy = true
-    override def getValues(implicit dictionary: Dictionary) = dictionary.getOnChainValue(name)
+    override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = dictionary.getOnChainValue(name)
     override lazy val canPointToOnChain: Boolean = false
   }
 
@@ -115,14 +115,14 @@ package object compiler {
   def atLeastOne(obj: Any)(names: String*)(options: Option[_]*): Unit =
     if (options.count(_.isDefined) == 0) throw new Exception(s"At least one of {${names.toSeq.reduceLeft(_ + "," + _)}} must be defined in $obj")
 
-  def optSeq[T](s: Option[Seq[T]]) = s.toSeq.flatten
+  def optSeq[T](s: Option[Seq[T]]): Seq[T] = s.toSeq.flatten
 
-  def requireEmpty(data: T*) = {
+  def requireEmpty(data: T*): Unit = {
     data.foreach {
       case (opt, message) => if (opt.isDefined) throw new Exception(s"$message cannot be defined: ${opt.get}")
     }
   }
-  def requireDefined(data: T*) = {
+  def requireDefined(data: T*): Unit = {
     data.foreach {
       case (opt, message) => if (opt.isEmpty) throw new Exception(s"$message cannot be empty")
     }

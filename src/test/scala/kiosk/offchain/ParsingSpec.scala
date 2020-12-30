@@ -86,7 +86,7 @@ class ParsingSpec extends WordSpec with MockitoSugar with Matchers with TraitTok
       constants(5) shouldEqual Constant("myErgoTree1", DataType.ErgoTree, "10010101D17300")
       constants(6) shouldEqual Constant("myAddress", DataType.Address, "9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")
 
-      val values: Seq[compiler.Multiple[ergo.KioskType[_]]] = constants.map(_.getValues)
+      val values: Seq[compiler.Multiple[ergo.KioskType[_]]] = constants.map(_.getValue)
       values(0).seq.head.value shouldEqual 1234L
       values(1).seq.head.toString shouldEqual "506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7"
       values(2).seq.head.value shouldEqual 1234

@@ -12,7 +12,7 @@ class Builder(implicit dictionary: Dictionary) {
     type OutputAddress = String
     type OutputToken = (String, Long)
 
-    val addresses: Multiple[OutputAddress] = output.address.getValues.map(tree2str)
+    val addresses: Multiple[OutputAddress] = output.address.getValue.map(tree2str)
 
     val registers: Multiple[Seq[OutputRegister]] = Multiple.sequence(
       optSeq(output.registers)
@@ -20,7 +20,7 @@ class Builder(implicit dictionary: Dictionary) {
           val index: Int = RegNum.getIndex(register.num)
           val regType: DataType.Type = register.`type`
 
-          val values: Multiple[KioskType[_]] = register.getValues
+          val values: Multiple[KioskType[_]] = register.getValue
           values.foreach(value => require(DataType.isValid(value, regType), s"Invalid type ${value.typeName} for register ${register.num}. Expected $regType"))
           (index, values)
         }
@@ -35,7 +35,7 @@ class Builder(implicit dictionary: Dictionary) {
           val index: Int = token.index.getOrElse(throw new Exception("Token index must be defined in output"))
           val id: model.Id = token.id.getOrElse(throw new Exception("Token id must be defined in output"))
           val amount: model.Long = token.amount.getOrElse(throw new Exception("Token amount must be defined in output"))
-          (index, id.getValues.map(_.toString) zip amount.getValues.map(_.value))
+          (index, id.getValue.map(_.toString) zip amount.getValue.map(_.value))
         }
         .filter {
           case (_, multipleToken) =>
@@ -48,7 +48,7 @@ class Builder(implicit dictionary: Dictionary) {
         .map(_._2)
     )
 
-    val nanoErgs: Multiple[ergo.KioskLong] = output.nanoErgs.getValues.ensuring(_.forall(_.value > 0), s"One or more outputs will have non-positive nano-Ergs: $output")
+    val nanoErgs: Multiple[ergo.KioskLong] = output.nanoErgs.getValue.ensuring(_.forall(_.value > 0), s"One or more outputs will have non-positive nano-Ergs: $output")
 
     val generatedOutputs = (addresses zip nanoErgs zip registers zip tokens).seq map {
       case (((outputAddress, outputNanoErgs), outputRegisters), outputTokens) => KioskBox(outputAddress, outputNanoErgs.value, outputRegisters.toArray, outputTokens.toArray)

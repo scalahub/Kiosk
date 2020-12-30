@@ -1,7 +1,9 @@
 package kiosk.offchain.compiler.model
 
+import kiosk.offchain.compiler._
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
+import kiosk.offchain.compiler.Multiple
 import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import scorex.crypto.hash.Blake2b256
 
@@ -91,8 +93,15 @@ object BinaryOperator extends MyEnum { // input and output types are same
 
 object UnaryOperator extends MyEnum { // input and output types are same
   type Operator = Value
-  val Hash, Neg, Abs = Value
-  def operate(operator: Operator, in: KioskType[_]): KioskType[_] = {
+  val Hash, Neg, Abs, Sum, Avg, Min, Max = Value
+  val aggregates: Set[Operator] = Set(Sum, Avg, Min, Max)
+
+  def operate(operator: Operator, values: Multiple[KioskType[_]], `type`: DataType.Type): Multiple[KioskType[_]] = {
+    if (aggregates.contains(operator)) operateAggregate(operator, values, `type`)
+    else values.map(operateSingle(operator, _))
+  }
+
+  private def operateSingle(operator: Operator, in: KioskType[_]): KioskType[_] = {
     (operator, in) match {
       case (Hash, KioskCollByte(a))    => KioskCollByte(Blake2b256(a))
       case (Neg, KioskGroupElement(g)) => KioskGroupElement(g.negate)
@@ -101,6 +110,24 @@ object UnaryOperator extends MyEnum { // input and output types are same
       case (Abs, KioskInt(a))          => KioskInt(a.abs)
       case (Neg, KioskInt(a))          => KioskInt(-a)
       case (op, someIn)                => throw new Exception(s"Invalid operation $op for ${someIn.typeName}")
+    }
+  }
+
+  private def operateAggregate(aggregate: Operator, values: Multiple[KioskType[_]], `type`: DataType.Type): Multiple[KioskType[_]] = {
+    def requiringNonEmpty(f: => Multiple[KioskType[_]]): Multiple[KioskType[_]] = {
+      if (values.isEmpty) throw new Exception(s"Empty sequence found when evaluating aggregate $aggregate for type ${`type`}") else f
+    }
+    (`type`, aggregate) match {
+      case (DataType.Int, Sum)          => Multiple(KioskInt(to[KioskInt](values).seq.map(_.value).sum))
+      case (DataType.Int, Avg)          => requiringNonEmpty(Multiple(KioskInt(to[KioskInt](values).seq.map(_.value).sum / values.length)))
+      case (DataType.Int, Min)          => requiringNonEmpty(Multiple(KioskInt(to[KioskInt](values).seq.map(_.value).min)))
+      case (DataType.Int, Max)          => requiringNonEmpty(Multiple(KioskInt(to[KioskInt](values).seq.map(_.value).max)))
+      case (DataType.Long, Sum)         => Multiple(KioskLong(to[KioskLong](values).seq.map(_.value).sum))
+      case (DataType.Long, Avg)         => requiringNonEmpty(Multiple(KioskLong(to[KioskLong](values).seq.map(_.value).sum / values.length)))
+      case (DataType.Long, Min)         => requiringNonEmpty(Multiple(KioskLong(to[KioskLong](values).seq.map(_.value).min)))
+      case (DataType.Long, Max)         => requiringNonEmpty(Multiple(KioskLong(to[KioskLong](values).seq.map(_.value).max)))
+      case (DataType.GroupElement, Sum) => Multiple(to[KioskGroupElement](values).seq.foldLeft(PointAtInfinity)(_ + _))
+      case _                            => throw new Exception(s"Invalid aggregate $aggregate for data type ${`type`}")
     }
   }
 }

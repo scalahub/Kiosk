@@ -27,7 +27,7 @@ class OffChainLoader(implicit dictionary: Dictionary) {
   private def noBoxError(implicit inputType: InputType.Type, inputIndex: Int) =
     throw new Exception(s"No $inputType-input matched at ${MatchingOptions.Optional} index $inputIndex when getting target")
 
-  private def getInput(mapping: Map[UUID, Multiple[OnChainBox]])(implicit uuid: UUID, inputType: InputType.Type, index: Int) = mapping.get(uuid).getOrElse(noBoxError)
+  private def getInput(mapping: Map[UUID, Multiple[OnChainBox]])(implicit uuid: UUID, inputType: InputType.Type, index: Int): Multiple[OnChainBox] = mapping.getOrElse(uuid, noBoxError)
 
   private def loadInput(input: Input)(implicit inputUuid: UUID, inputIndex: Int, inputType: InputType.Type): Unit = {
     input.id.foreach { id =>
@@ -48,7 +48,7 @@ class OffChainLoader(implicit dictionary: Dictionary) {
   }
 
   private def loadRegister(register: Register)(implicit inputUuid: UUID, inputIndex: Int, inputType: InputType.Type): Unit = {
-    register.onChainVariable.map(dictionary.addOnChainDeclaration(_, inputType, getInput(_).map(_.registers(RegNum.getIndex(register.num)))))
+    register.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, inputType, getInput(_).map(_.registers(RegNum.getIndex(register.num)))))
     dictionary.addDeclarationLazily(register)
   }
 
@@ -58,15 +58,16 @@ class OffChainLoader(implicit dictionary: Dictionary) {
       val onChainBoxes = inputs(inputUuid)
       token.index.fold {
         val id = token.id.getOrElse(noIndexError)
-        id.value.fold(noIndexError)(_ => onChainBoxes.map(_.stringTokenIds.indexOf(id.getValues.toString)))
+        id.value.fold(noIndexError)(_ => onChainBoxes.map(_.stringTokenIds.indexOf(id.getValue.toString)))
       }(int => onChainBoxes.map(_ => int))
     }
     token.id.foreach { id =>
-      id.onChainVariable.map(dictionary.addOnChainDeclaration(_, inputType, getInput(_).map(_.tokenIds(token.index.getOrElse(noIndexError)))))
+      id.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, inputType, getInput(_).map(_.tokenIds(token.index.getOrElse(noIndexError)))))
       dictionary.addDeclarationLazily(id)
     }
     token.amount.foreach { amount =>
-      amount.onChainVariable.map(dictionary.addOnChainDeclaration(_, inputType, inputs => (getInput(inputs) zip getIndicesForAmount(inputs)) map { case (input, index) => input.tokenAmounts(index) }))
+      amount.onChainVariable.foreach(
+        dictionary.addOnChainDeclaration(_, inputType, inputs => (getInput(inputs) zip getIndicesForAmount(inputs)) map { case (input, index) => input.tokenAmounts(index) }))
       dictionary.addDeclarationLazily(amount)
     }
   }

@@ -16,13 +16,13 @@ class Dictionary(currentHeight: Int) {
   type OnChainBoxMaps = (Seq[(UUID, Multiple[OnChainBox])], Seq[(UUID, Multiple[OnChainBox])], Seq[(UUID, Multiple[OnChainBox])])
   private val onChainBoxMap: MMap[String, OnChainBoxMaps => Multiple[KioskType[_]]] = MMap()
 
-  def getInputNanoErgs =
+  def getInputNanoErgs: Long =
     onChainInputs
       .flatMap(_._2.seq)
       .map(_.nanoErgs.value)
       .sum
 
-  def getInputTokens =
+  def getInputTokens: Seq[(String, Long)] =
     onChainInputs
       .flatMap(_._2.seq)
       .flatMap(input => input.stringTokenIds zip input.tokenAmounts.map(_.value))
@@ -30,17 +30,17 @@ class Dictionary(currentHeight: Int) {
       .map { case (id, seq) => (id, seq.map(_._2).sum) }
       .toSeq
 
-  def getInputBoxIds =
+  def getInputBoxIds: Seq[String] =
     onChainInputs
       .flatMap(_._2.seq)
       .map(_.boxId.toString)
 
-  def getDataInputBoxIds =
+  def getDataInputBoxIds: Seq[String] =
     onChainDataInputs
       .flatMap(_._2.seq)
       .map(_.boxId.toString)
 
-  def getAuxInputBoxIds =
+  def getAuxInputBoxIds: Seq[String] =
     onChainAuxInputs
       .flatMap(_._2.seq)
       .map(_.boxId.toString)
@@ -71,7 +71,7 @@ class Dictionary(currentHeight: Int) {
     else dict += name -> dictionaryObject
   }
 
-  private def addLazyRefs(name: String, refs: Seq[Variable]) = {
+  private def addLazyRefs(name: String, refs: Seq[Variable]): Unit = {
     if (lazyRefs.contains(name)) throw new Exception(s"References for $name already exist as ${lazyRefs(name)}")
     else lazyRefs += name -> refs
   }
@@ -83,21 +83,21 @@ class Dictionary(currentHeight: Int) {
     commitBuffer = Nil
   }
 
-  def addDeclarationLazily(declaration: Declaration) = {
+  def addDeclarationLazily(declaration: Declaration): Unit = {
     validateRefs(declaration)
     commitBuffer :+= (() => add(declaration))
   }
 
-  def addDeclaration(declaration: Declaration) = {
+  def addDeclaration(declaration: Declaration): Unit = {
     validateRefs(declaration)
     add(declaration)
   }
 
-  private def validateRefs(declaration: Declaration) = {
+  private def validateRefs(declaration: Declaration): Unit = {
     if (declaration.isLazy) {
       addLazyRefs(declaration.targetId, declaration.pointers)
     } else {
-      declaration.pointers.map(reference => resolve(reference.name, reference.`type`, Seq(declaration.toString)))
+      declaration.pointers.foreach(reference => resolve(reference.name, reference.`type`, Seq(declaration.toString)))
     }
   }
 
@@ -108,7 +108,7 @@ class Dictionary(currentHeight: Int) {
       case InputType.Code => inputs
     }
 
-  def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Map[UUID, Multiple[OnChainBox]] => Multiple[KioskType[_]]) = {
+  def addOnChainDeclaration(variable: Variable, inputType: InputType.Type, mapping: Map[UUID, Multiple[OnChainBox]] => Multiple[KioskType[_]]): Unit = {
     addDeclaration(OnChain(variable.name, variable.`type`))
     addOnChainBoxMapping(variable.name, { case (aux, data, code) => mapping(getBoxes(inputType, aux, data, code).toMap) })
   }
@@ -116,13 +116,13 @@ class Dictionary(currentHeight: Int) {
   private def addOnChainBoxMapping(name: String, f: OnChainBoxMaps => Multiple[KioskType[_]]): Unit =
     onChainBoxMap += name -> f
 
-  def addInput(onChainBoxes: Multiple[OnChainBox], uuid: UUID) = onChainInputs :+= uuid -> onChainBoxes
+  def addInput(onChainBoxes: Multiple[OnChainBox], uuid: UUID): Unit = onChainInputs :+= uuid -> onChainBoxes
 
-  def addDataInput(onChainBoxes: Multiple[OnChainBox], uuid: UUID) = onChainDataInputs :+= uuid -> onChainBoxes
+  def addDataInput(onChainBoxes: Multiple[OnChainBox], uuid: UUID): Unit = onChainDataInputs :+= uuid -> onChainBoxes
 
-  def addAuxInput(onChainBoxes: Multiple[OnChainBox], uuid: UUID) = onChainAuxInputs :+= uuid -> onChainBoxes
+  def addAuxInput(onChainBoxes: Multiple[OnChainBox], uuid: UUID): Unit = onChainAuxInputs :+= uuid -> onChainBoxes
 
-  def getOnChainValue(name: String) = onChainBoxMap(name)(onChainAuxInputs, onChainDataInputs, onChainInputs)
+  def getOnChainValue(name: String): Multiple[KioskType[_]] = onChainBoxMap(name)(onChainAuxInputs, onChainDataInputs, onChainInputs)
 
   addDeclaration(height(currentHeight))
 }
