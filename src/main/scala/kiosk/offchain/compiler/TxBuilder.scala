@@ -12,7 +12,9 @@ class TxBuilder(explorer: Explorer) {
     (new OffChainLoader).load(protocol)
     // Step 3. load on-chain declarations
     new OnChainLoader(explorer).load(protocol)
-    // Step 4. build outputs
+    // Step 4. validate post-conditions
+    optSeq(protocol.postConditions).foreach(_.validate)
+    // Step 5. build outputs
     val outputs = (new Builder).buildOutputs(protocol)
     // Return final result
     CompileResult(

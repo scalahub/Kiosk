@@ -2,9 +2,9 @@ package kiosk.offchain
 
 import kiosk.ergo.{KioskBox, KioskInt}
 import kiosk.explorer.Explorer
+import kiosk.offchain.compiler.model.MatchingOptions.{Optional, Strict}
+import kiosk.offchain.compiler.model.{FilterOp, MatchingOptions, Output}
 import kiosk.offchain.compiler.{TxBuilder, model}
-import kiosk.offchain.compiler.model.{MatchingOptions, Output}
-import kiosk.offchain.compiler.model.MatchingOptions.{Strict, Optional}
 import org.mockito.Mockito.when
 import org.scalatest.{Matchers, WordSpec}
 import org.scalatestplus.mockito._
@@ -259,30 +259,70 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TraitTo
 
     // ToDo: Add tests for 'Multi' option in outputs
 
-    "reject boxes with extra tokens and Strict(0)" in new TokenMocks {
+    "reject boxes with extra tokens and Strict for input 0" in new TokenMocks {
       when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExtraTokens
       when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox1ExactTokens, fakeBox2LessTokens)
       the[Exception] thrownBy new compiler.TxBuilder(explorer).compile(tokenFilterProtocol) should have message "No box matched for input at index 0"
     }
 
-    "select boxes with extra tokens and no Strict(0)" in new TokenMocks {
+    "select boxes with extra tokens and no Strict for input 0" in new TokenMocks {
       when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExtraTokens
       when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox1ExactTokens, fakeBox2LessTokens)
       val result = new compiler.TxBuilder(explorer).compile(tokenFilterProtocol.copy(inputs = Seq(tokenFilterProtocol.inputs(0).copy(options = None), tokenFilterProtocol.inputs(1))))
       result.inputBoxIds shouldBe Seq("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea", "af0e35e1cf5a8890d70cef498c996dcd3e7658cfadd37695425032d4f8327d8a")
     }
 
-    "reject boxes with extra tokens and Strict(1)" in new TokenMocks {
+    "reject boxes with extra tokens and Strict for input 1" in new TokenMocks {
       when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
       when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox2LessTokens, fakeBox1ExtraTokens)
       the[Exception] thrownBy new compiler.TxBuilder(explorer).compile(tokenFilterProtocol) should have message "No box matched for input at index 1"
     }
 
-    "select boxes with extra tokens and no Strict(1)" in new TokenMocks {
+    "select boxes with extra tokens and no Strict for input 1" in new TokenMocks {
       when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
       when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox2LessTokens, fakeBox1ExtraTokens)
       val result = new compiler.TxBuilder(explorer).compile(tokenFilterProtocol.copy(inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = None))))
       result.inputBoxIds shouldBe Seq("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea", "af0e35e1cf5a8890d70cef498c996dcd3e7658cfadd37695425032d4f8327d8a")
+    }
+
+    "select boxes with exact tokens in both inputs and Strict option for both inputs" in new TokenMocks {
+      when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
+      when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox1ExactTokens, fakeBox2ExactTokens)
+      val result = new compiler.TxBuilder(explorer).compile(tokenFilterProtocol)
+      result.inputBoxIds shouldBe Seq("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea", "af0e35e1cf5a8890d70cef498c996dcd3e7658cfadd37695425032d4f8327d8a")
+    }
+
+    "reject if post-condition fails" in new TokenMocks {
+      when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
+      when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox1ExactTokens, fakeBox2ExactTokens)
+      the[Exception] thrownBy new compiler.TxBuilder(explorer)
+        .compile(
+          tokenFilterProtocol.copy(
+            postConditions = tokenFilterProtocol.postConditions.map(_.map(_.copy(op = FilterOp.Eq)))
+          )
+        ) should have message "Failed post-condition: myTokenAmount: (123) Eq thirdTokenAmount (12)"
+    }
+
+    "reject if post-condition contains undefined pointer" in new TokenMocks {
+      when(explorer.getBoxById("dbea46d988e86b1e60181b69936a3b927c3a4871aa6ed5258d3e4df155750bea")) thenReturn fakeBox0ExactTokens
+      when(explorer.getUnspentBoxes("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")) thenReturn Seq(fakeBox1ExactTokens, fakeBox2ExactTokens)
+
+      val firstException = the[Exception] thrownBy new compiler.TxBuilder(explorer)
+        .compile(
+          tokenFilterProtocol.copy(
+            postConditions = Some(Seq(tokenFilterProtocol.postConditions.get(0).copy(first = "undefined")))
+          )
+        )
+
+      val secondException = firstException.getCause
+
+      val thirdException = secondException.getCause
+
+      firstException should have message "Error evaluating condition Gt"
+
+      secondException should have message "Error pairing undefined and thirdTokenAmount"
+
+      thirdException should have message "key not found: undefined"
     }
   }
 

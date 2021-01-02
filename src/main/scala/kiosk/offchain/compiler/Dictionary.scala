@@ -83,7 +83,7 @@ class Dictionary(currentHeight: Int) {
     commitBuffer = Nil
   }
 
-  def addDeclarationLazily(declaration: Declaration): Unit = {
+  def addDeclarationLater(declaration: Declaration): Unit = {
     validateRefs(declaration)
     commitBuffer :+= (() => add(declaration))
   }

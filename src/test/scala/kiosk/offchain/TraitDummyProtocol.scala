@@ -97,6 +97,7 @@ trait TraitDummyProtocol {
     binaryOps,
     unaryOps,
     conversions,
-    None
+    branches = None,
+    postConditions = None
   )
 }

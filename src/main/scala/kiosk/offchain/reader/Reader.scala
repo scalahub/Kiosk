@@ -62,7 +62,7 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
   }
 
   private def matches(tokenAmount: KioskLong, long: model.Long): Boolean = {
-    val targets = long.getTargets
+    val targets: Seq[KioskLong] = long.getTargets
     targets.isEmpty || targets.exists(kioskLong => FilterOp.matches(tokenAmount.value, kioskLong.value, long.filterOp))
   }
 

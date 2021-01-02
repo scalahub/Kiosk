@@ -136,7 +136,7 @@ case class FromTo(from: DataType.Type, to: DataType.Type)
 
 object UnaryConverter extends MyEnum { // input and output types are different
   type Converter = Value
-  val ProveDlog, ToCollByte, ToLong, ToInt, ToAddress, ToErgoTree = Value
+  val ProveDlog, ToCollByte, ToLong, ToInt, ToAddress, ToErgoTree, Count = Value
   def getFromTo(converter: Converter) = {
     converter match {
       case ProveDlog  => FromTo(from = DataType.GroupElement, to = DataType.ErgoTree)
@@ -145,10 +145,11 @@ object UnaryConverter extends MyEnum { // input and output types are different
       case ToInt      => FromTo(from = DataType.Long, to = DataType.Int)
       case ToAddress  => FromTo(from = DataType.ErgoTree, to = DataType.Address)
       case ToErgoTree => FromTo(from = DataType.Address, to = DataType.ErgoTree)
+      case Count      => FromTo(from = DataType.Unknown, to = DataType.Int)
     }
   }
 
-  def convert(converter: Converter, fromValue: KioskType[_]) = {
+  private def convertSingle(converter: Converter, fromValue: KioskType[_]): KioskType[_] = {
     converter match {
       case ProveDlog =>
         val g = fromValue.asInstanceOf[KioskGroupElement]
@@ -161,6 +162,13 @@ object UnaryConverter extends MyEnum { // input and output types are different
       case ToInt      => KioskInt(fromValue.asInstanceOf[KioskLong].value.toInt)
       case ToAddress  => fromValue.ensuring(_.isInstanceOf[KioskErgoTree])
       case ToErgoTree => fromValue.ensuring(_.isInstanceOf[KioskErgoTree])
+    }
+  }
+
+  def convertMulti(converter: Converter, fromValues: Multiple[KioskType[_]]): Multiple[KioskType[_]] = {
+    converter match {
+      case Count => Multiple(KioskInt(fromValues.seq.size))
+      case _     => fromValues.map(convertSingle(converter, _))
     }
   }
 }

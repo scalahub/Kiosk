@@ -21,7 +21,8 @@ package object model {
                       binaryOps: Option[Seq[BinaryOp]],
                       unaryOps: Option[Seq[UnaryOp]],
                       conversions: Option[Seq[Conversion]],
-                      branches: Option[Seq[Branch]]) {
+                      branches: Option[Seq[Branch]],
+                      postConditions: Option[Seq[PostCondition]]) {
     def withUuid(input: Input): (Input, UUID) = input -> UUID.randomUUID
     private[compiler] lazy val auxInputUuids: Option[Seq[(Input, UUID)]] = auxInputs.map(_.map(withUuid))
     private[compiler] lazy val dataInputUuids: Option[Seq[(Input, UUID)]] = dataInputs.map(_.map(withUuid))
@@ -128,7 +129,7 @@ package object model {
     override lazy val pointerTypes = Seq(types.from)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
-    override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = dictionary.getDeclaration(from).getValue(dictionary).map(UnaryConverter.convert(converter, _))
+    override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = UnaryConverter.convertMulti(converter, dictionary.getDeclaration(from).getValue(dictionary))
   }
 
   case class BinaryOp(name: String, first: String, op: BinaryOperator.Operator, second: String) extends Declaration {
@@ -154,26 +155,51 @@ package object model {
   }
 
   case class Condition(first: String, second: String, op: FilterOp.Op) {
-    def evaluate(implicit dictionary: Dictionary) = {
-      Try(getMultiPairs(first, second)).fold(ex => throw new Exception(s"Error evaluating condition $op").initCause(ex), pairs => pairs).forall {
-        case (left: KioskLong, right: KioskLong)                                   => FilterOp.matches(left.value, right.value, op)
-        case (left: KioskLong, right: KioskInt)                                    => FilterOp.matches(left.value, right.value, op)
-        case (left: KioskInt, right: KioskLong)                                    => FilterOp.matches(left.value, right.value, op)
-        case (left: KioskInt, right: KioskInt)                                     => FilterOp.matches(left.value, right.value, op)
-        case (left, right) if left.typeName == right.typeName && op == FilterOp.Eq => left.hex == right.hex
-        case (left, right) if left.typeName == right.typeName && op == FilterOp.Ne => left.hex != right.hex
-        case (left, right)                                                         => throw new Exception(s"Invalid types for $op: ${left.typeName},${right.typeName}")
-      }
+    lazy val pointerNames = Seq(first, second)
+    def evaluate(implicit dictionary: Dictionary): Boolean = evaluateWithResult._1
+
+    def evaluateWithResult(implicit dictionary: Dictionary): (Boolean, Seq[KioskType[_]], Seq[KioskType[_]]) = {
+      Try(getMultiPairs(first, second))
+        .fold(ex => throw new Exception(s"Error evaluating condition $op").initCause(ex), pairs => pairs)
+        .seq
+        .foldLeft((true, Seq[KioskType[_]](), Seq[KioskType[_]]())) {
+          case ((booleanBefore, firsts, seconds), (thisFirst, thisSecond)) =>
+            val thisBoolean = (thisFirst, thisSecond) match {
+              case (left: KioskLong, right: KioskLong)                                   => FilterOp.matches(left.value, right.value, op)
+              case (left: KioskLong, right: KioskInt)                                    => FilterOp.matches(left.value, right.value, op)
+              case (left: KioskInt, right: KioskLong)                                    => FilterOp.matches(left.value, right.value, op)
+              case (left: KioskInt, right: KioskInt)                                     => FilterOp.matches(left.value, right.value, op)
+              case (left, right) if left.typeName == right.typeName && op == FilterOp.Eq => left.hex == right.hex
+              case (left, right) if left.typeName == right.typeName && op == FilterOp.Ne => left.hex != right.hex
+              case (left, right)                                                         => throw new Exception(s"Invalid types for $op: ${left.typeName},${right.typeName}")
+            }
+            (booleanBefore && thisBoolean, firsts :+ thisFirst, seconds :+ thisSecond)
+        }
     }
   }
 
   case class Branch(name: String, ifTrue: String, ifFalse: String, condition: Condition) extends Declaration {
     override protected lazy val maybeTargetId: Option[String] = Some(name)
-    override protected lazy val pointerNames: Seq[String] = Seq(ifTrue, ifFalse, condition.first, condition.second)
+    override protected lazy val pointerNames: Seq[String] = Seq(ifTrue, ifFalse) ++ condition.pointerNames
     override var `type` = DataType.Unknown
-    override protected lazy val pointerTypes: Seq[Type] = Seq(DataType.Unknown, DataType.Unknown, DataType.Unknown, DataType.Unknown)
+    override protected lazy val pointerTypes: Seq[Type] = pointerNames.map(_ => DataType.Unknown)
     override lazy val isLazy: Boolean = true
     override lazy val canPointToOnChain: Boolean = false
     override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = (if (condition.evaluate) dictionary.getDeclaration(ifTrue) else dictionary.getDeclaration(ifFalse)).getValue
+  }
+
+  case class PostCondition(first: String, second: String, op: FilterOp.Op) extends Declaration {
+    override protected lazy val maybeTargetId: Option[String] = None
+    private lazy val condition = Condition(first, second, op)
+    override protected lazy val pointerNames: Seq[String] = condition.pointerNames
+    override var `type` = DataType.Unknown
+    override protected lazy val pointerTypes: Seq[Type] = pointerNames.map(_ => DataType.Unknown)
+    override lazy val isLazy: Boolean = true
+    override lazy val canPointToOnChain: Boolean = false
+    def validate(implicit dictionary: Dictionary): Unit = {
+      val (result, firsts, seconds) = condition.evaluateWithResult
+      if (!result) throw new Exception(s"Failed post-condition: $first: (${firsts.mkString(",")}) $op $second (${seconds.mkString(",")})")
+    }
+    override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = throw new Exception("Cannot call getValue on post-condition")
   }
 }

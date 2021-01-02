@@ -100,6 +100,8 @@ object Parser {
   private implicit val writesCondition = Json.writes[Condition]
   private implicit val readsBranch = checkedReads(Json.reads[Branch])
   private implicit val writesBranch = Json.writes[Branch]
+  private implicit val readsPostCondition = checkedReads(Json.reads[PostCondition])
+  private implicit val writesPostCondition = Json.writes[PostCondition]
 
   private implicit val readsProtocol = checkedReads(Json.reads[Protocol])
   private implicit val writesProtocol = Json.writes[Protocol]

@@ -132,5 +132,12 @@
       "op": "Add",
       "second": "1234"
     }
+  ],
+  "postConditions": [
+    {
+      "first": "myTokenAmount",
+      "second": "thirdTokenAmount",
+      "op": "Gt"
+    }
   ]
 }

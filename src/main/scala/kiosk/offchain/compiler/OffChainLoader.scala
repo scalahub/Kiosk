@@ -6,7 +6,7 @@ import java.util.UUID
 
 class OffChainLoader(implicit dictionary: Dictionary) {
   def load(p: Protocol): Unit = {
-    (optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions) ++ optSeq(p.branches)).foreach(dictionary.addDeclaration)
+    (optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions) ++ optSeq(p.branches) ++ optSeq(p.postConditions)).foreach(dictionary.addDeclaration)
     optSeq(p.auxInputUuids).zipWithIndex.foreach { case ((input, uuid), index)  => loadInput(input)(uuid, index, InputType.Aux) }
     optSeq(p.dataInputUuids).zipWithIndex.foreach { case ((input, uuid), index) => loadInput(input)(uuid, index, InputType.Data) }
     p.inputUuids.zipWithIndex.foreach { case ((input, uuid), index)             => loadInput(input)(uuid, index, InputType.Code) }
@@ -14,13 +14,13 @@ class OffChainLoader(implicit dictionary: Dictionary) {
   }
 
   private def loadOutput(output: Output): Unit = {
-    dictionary.addDeclarationLazily(output.address)
-    optSeq(output.registers).foreach(register => dictionary.addDeclarationLazily(register))
+    dictionary.addDeclarationLater(output.address)
+    optSeq(output.registers).foreach(register => dictionary.addDeclarationLater(register))
     optSeq(output.tokens).foreach { outToken =>
-      outToken.id.foreach(dictionary.addDeclarationLazily)
-      outToken.amount.foreach(dictionary.addDeclarationLazily)
+      outToken.id.foreach(dictionary.addDeclarationLater)
+      outToken.amount.foreach(dictionary.addDeclarationLater)
     }
-    dictionary.addDeclarationLazily(output.nanoErgs)
+    dictionary.addDeclarationLater(output.nanoErgs)
     dictionary.commit
   }
 
@@ -32,24 +32,24 @@ class OffChainLoader(implicit dictionary: Dictionary) {
   private def loadInput(input: Input)(implicit inputUuid: UUID, inputIndex: Int, inputType: InputType.Type): Unit = {
     input.id.foreach { id =>
       id.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, inputType, getInput(_).map(_.boxId)))
-      dictionary.addDeclarationLazily(id)
+      dictionary.addDeclarationLater(id)
     }
     input.address.foreach { ergoTree =>
       ergoTree.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, inputType, getInput(_).map(_.address)))
-      dictionary.addDeclarationLazily(ergoTree)
+      dictionary.addDeclarationLater(ergoTree)
     }
     optSeq(input.registers).foreach(loadRegister)
     optSeq(input.tokens).foreach(loadToken)
     input.nanoErgs.foreach { long =>
       long.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, inputType, getInput(_).map(_.nanoErgs)))
-      dictionary.addDeclarationLazily(long)
+      dictionary.addDeclarationLater(long)
     }
     dictionary.commit
   }
 
   private def loadRegister(register: Register)(implicit inputUuid: UUID, inputIndex: Int, inputType: InputType.Type): Unit = {
     register.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, inputType, getInput(_).map(_.registers(RegNum.getIndex(register.num)))))
-    dictionary.addDeclarationLazily(register)
+    dictionary.addDeclarationLater(register)
   }
 
   private def loadToken(token: Token)(implicit inputUuid: UUID, inputIndex: Int, inputType: InputType.Type): Unit = {
@@ -63,12 +63,12 @@ class OffChainLoader(implicit dictionary: Dictionary) {
     }
     token.id.foreach { id =>
       id.onChainVariable.foreach(dictionary.addOnChainDeclaration(_, inputType, getInput(_).map(_.tokenIds(token.index.getOrElse(noIndexError)))))
-      dictionary.addDeclarationLazily(id)
+      dictionary.addDeclarationLater(id)
     }
     token.amount.foreach { amount =>
       amount.onChainVariable.foreach(
         dictionary.addOnChainDeclaration(_, inputType, inputs => (getInput(inputs) zip getIndicesForAmount(inputs)) map { case (input, index) => input.tokenAmounts(index) }))
-      dictionary.addDeclarationLazily(amount)
+      dictionary.addDeclarationLater(amount)
     }
   }
 }
