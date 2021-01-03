@@ -25,7 +25,7 @@ That said, the only thing needed to use Tx Builder is the ability to write Json 
 
 #### Protocol
 
-The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L12-L30).
+The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L12-L29).
 A **Protocol** is made up of the following items: 
 - Optional sequence of `Constant` declarations, using which we can encode arbitrary values into the script.
 - Optional sequence of box definitions, `auxInputs`. 
@@ -33,14 +33,14 @@ A **Protocol** is made up of the following items:
 - Optional sequence of box definitions, `dataInputs`, defining data-inputs of the transaction.
 - Mandatory sequence of box definitions, `inputs`, defining inputs of the transaction. 
 - Mandatory sequence of box definitions, `outputs`, defining outputs of the transaction.
-- Optional sequence of `Unary` operations, used to convert between same types (example `Long` to `Long`).
+- Optional sequence of `Unary` operations, used to convert one object to another (example ErgoTree to Address).
 - Optional sequence of `Binary` operations, used to compose two objects into a third object (of same types).
-- Optional sequence of `Conversion` operations, used to convert between types (example `Address` to `ErgoTree`).
 - Optional sequence of `Branch` instructions, used for run-time control-flow.
+- Optional sequence of `PostCondition` instructions which must evaluate to true.
 
 #### Declarations
 
-The next level of abstraction is a [**Declaration**](compiler/Declaration.scala), which maps to an instance of a [`Kiosktype[_]`](../ergo/package.scala#L32-40).
+The next level of abstraction is a [**Declaration**](compiler/Declaration.scala), which maps to an instance of a [`Kiosktype[_]`](../ergo/package.scala#L32-L40).
 For instance, an **Id** declaration maps to a `KioskCollByte` object (of size 32), 
 while an **Address** declaration maps to a `KioskErgoTree` object.
 
@@ -48,12 +48,13 @@ We can classify declarations into three types:
 - **Constants**: These specify initial values. Examples:  
   - `{"name":"myInt", "type":"int", "value":"123"}`
   - `{"name":"myAddress", "type":"address", "value":"9fcrXXaJgrGKC8iu98Y2spstDDxNccXSR9QjbfTvtuv7vJ3NQLk"}`
-- **Instructions**: These specify binary and unary operations and conversions. Examples:
-  - Binary Op: `{"name":"mySum", "first":"someValue", "op":"Add", "second":"someOtherValue"}`
-  - Unary Op: `{"out":"myNegativeNumber", "in":"myNumber", "op":"Neg"}`
-  - Conversion: `{"to":"myErgoTree", "from":"myGroupElement", "converter":"ProveDlog"}`
-- **Box declarations**: These are used to define or search for boxes. There are four types: **Address**, **Id**, **Register**, and **Long** (see below).  
-
+- **Box declarations**: These are used to define or search for boxes. There are four types: **Address**, **Id**, **Register**, and **Long** (see below).
+- **Instructions**: These specify binary/unary operations, post-conditions and branches:
+  - Binary Op: `{"name":"mySum", "first":"someValue", "op":"Add", "second":"otherValue"}`
+  - Unary Op: `{"name":"myErgoTree", "from":"myGroupElement", "op":"ProveDlog"}`
+  - Post-condition: `{"first":"someLong", "second":"otherLong", "op":"Ge"}`
+  - Branch: `{"name":"result", "ifTrue":"someValue", "ifFalse":"otherValue", "condition": {"first":"someLong", "second":"otherLong", "op":"Ge"} }`
+  
 See [this page](compiler/model/package.scala) for the detailed schema of all declarations and [this page](compiler/model/Enums.scala) for the enumerations used.
 
 #### Box Declarations
@@ -68,7 +69,7 @@ A box declaration can contain exactly one of:
 - A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
 - A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
 
-The exception to this rule is the [**Long**](compiler/model/package.scala#L92-L106) declaration, which can have both fields, 
+The exception to this rule is the [**Long**](compiler/model/package.scala#L91-L105) declaration, which can have both fields, 
 provided that it also has a third field `filter` present. A [`filter`](compiler/model/Enums.scala#L18) can be any of `Ge, Le, Gt, Lt, Ne`. 
 Thus, a **Long** allows both of the following possibilities: 
 1. Either `name` or `value` as in other declarations.
@@ -108,7 +109,7 @@ The following rules apply for each input:
 - If both `boxId` and `address` declarations have been defined, then both cannot be targets or pointers at the same time.
 
 #### Token rules
-A [**Token**](compiler/model/package.scala#L108-L112) is defined as 
+A [**Token**](compiler/model/package.scala#L107-L111) is defined as 
 `case class Token(index: Option[Int], id: Option[Id], amount: Option[Long])`. 
 The main rule to follow here is that if `index` is empty then `id` must be defined, and that too as a pointer (i.e., it must have a `value` field). 
 This is because the token index must be somehow determinable (either via an explicit `index` field or by matching the tokenId of a pointer.)
@@ -161,7 +162,7 @@ This option applies to tokens only.
 
 #### Matching multiple addresses in one definition
 
-An [`Address`](compiler/model/package.scala#L53-L66) declaration takes an optional sequence, `values`, 
+An [`Address`](compiler/model/package.scala#L52-L65) declaration takes an optional sequence, `values`, 
 using which we can map one box definition to one of many addresses. 
 As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
 We can match such boxes as follows:

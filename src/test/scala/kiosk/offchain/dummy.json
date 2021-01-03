@@ -171,31 +171,29 @@
   ],
   "unaryOps": [
     {
-      "out": "myLong7",
-      "in": "myLong2",
+      "name": "myLong7",
+      "from": "myLong2",
       "op": "Neg"
     },
     {
-      "out": "myLong8",
-      "in": "myLong7",
+      "name": "myLong8",
+      "from": "myLong7",
       "op": "Neg"
-    }
-  ],
-  "conversions": [
+    },
     {
-      "to": "myErgoTree2",
+      "name": "myErgoTree2",
       "from": "myGroupElement",
-      "converter": "ProveDlog"
+      "op": "ProveDlog"
     },
     {
-      "to": "myCollByte2",
+      "name": "myCollByte2",
       "from": "myErgoTree2",
-      "converter": "ToCollByte"
+      "op": "ToCollByte"
     },
     {
-      "to": "myIntToLong",
+      "name": "myIntToLong",
       "from": "myInt",
-      "converter": "ToLong"
+      "op": "ToLong"
     }
   ]
 }

@@ -20,7 +20,6 @@ package object model {
                       // operations
                       binaryOps: Option[Seq[BinaryOp]],
                       unaryOps: Option[Seq[UnaryOp]],
-                      conversions: Option[Seq[Conversion]],
                       branches: Option[Seq[Branch]],
                       postConditions: Option[Seq[PostCondition]]) {
     def withUuid(input: Input): (Input, UUID) = input -> UUID.randomUUID
@@ -121,17 +120,6 @@ package object model {
     require(`type` != DataType.Unknown, "Data type cannot be unknown")
   }
 
-  case class Conversion(to: String, from: String, converter: UnaryConverter.Converter) extends Declaration {
-    override lazy val maybeTargetId = Some(to)
-    override lazy val pointerNames = Seq(from)
-    lazy val types = UnaryConverter.getFromTo(converter)
-    override var `type` = types.to
-    override lazy val pointerTypes = Seq(types.from)
-    override lazy val isLazy = true
-    override lazy val canPointToOnChain: Boolean = false
-    override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = UnaryConverter.convertMulti(converter, dictionary.getDeclaration(from).getValue(dictionary))
-  }
-
   case class BinaryOp(name: String, first: String, op: BinaryOperator.Operator, second: String) extends Declaration {
     override lazy val maybeTargetId = Some(name)
     override lazy val pointerNames = Seq(first, second)
@@ -144,20 +132,20 @@ package object model {
     }
   }
 
-  case class UnaryOp(out: String, in: String, op: UnaryOperator.Operator) extends Declaration {
-    override lazy val maybeTargetId = Some(out)
-    override lazy val pointerNames = Seq(in)
-    override var `type` = DataType.Unknown
-    override lazy val pointerTypes = Seq(DataType.Unknown)
+  case class UnaryOp(name: String, from: String, op: UnaryOperator.Operator) extends Declaration {
+    override lazy val maybeTargetId = Some(name)
+    override lazy val pointerNames = Seq(from)
+    lazy val types = UnaryOperator.getFromTo(op)
+    override var `type` = types.to
+    override lazy val pointerTypes = Seq(types.from)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
-    override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = UnaryOperator.operate(op, dictionary.getDeclaration(in).getValue, `type`)
+    override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = UnaryOperator.operate(op, dictionary.getDeclaration(from).getValue, `type`)
   }
 
   case class Condition(first: String, second: String, op: FilterOp.Op) {
     lazy val pointerNames = Seq(first, second)
     def evaluate(implicit dictionary: Dictionary): Boolean = evaluateWithResult._1
-
     def evaluateWithResult(implicit dictionary: Dictionary): (Boolean, Seq[KioskType[_]], Seq[KioskType[_]]) = {
       Try(getMultiPairs(first, second))
         .fold(ex => throw new Exception(s"Error evaluating condition $op").initCause(ex), pairs => pairs)

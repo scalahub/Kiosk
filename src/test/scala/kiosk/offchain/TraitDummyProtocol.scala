@@ -12,7 +12,7 @@ trait TraitDummyProtocol {
     val myErgoTree1 = Constant("myErgoTree1", DataType.ErgoTree, "10010101D17300")
     val myAddress = Constant("myAddress", DataType.Address, "9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")
 
-    val myIntToLong = Conversion("myIntToLong", "myInt", UnaryConverter.ToLong)
+    val myIntToLong = UnaryOp("myIntToLong", "myInt", UnaryOperator.ToLong)
     val myLong2 = BinaryOp("myLong2", "myLong1", BinaryOperator.Add, "myIntToLong")
     val myLong3 = BinaryOp("myLong3", "myLong2", BinaryOperator.Max, "myLong1")
     val myLong4 = BinaryOp("myLong4", "myLong2", BinaryOperator.Add, "myLong3")
@@ -22,12 +22,11 @@ trait TraitDummyProtocol {
     val myLong7 = UnaryOp("myLong7", "myLong2", UnaryOperator.Neg)
     val myLong8 = UnaryOp("myLong8", "myLong7", UnaryOperator.Neg)
 
-    val myErgoTree2 = Conversion("myErgoTree2", "myGroupElement", UnaryConverter.ProveDlog)
-    val myCollByte2 = Conversion("myCollByte2", "myErgoTree2", UnaryConverter.ToCollByte)
+    val myErgoTree2 = UnaryOp("myErgoTree2", "myGroupElement", UnaryOperator.ProveDlog)
+    val myCollByte2 = UnaryOp("myCollByte2", "myErgoTree2", UnaryOperator.ToCollByte)
 
     val constants = Some(Seq(myLong1, myCollByte, myInt, myTokenId, myGroupElement, myErgoTree1, myAddress))
-    val unaryOps = Some(Seq(myLong7, myLong8))
-    val conversions = Some(Seq(myErgoTree2, myCollByte2, myIntToLong))
+    val unaryOps = Some(Seq(myLong7, myLong8, myErgoTree2, myCollByte2, myIntToLong))
     val binaryOps = Some(Seq(myLong2, myLong3, myLong4, myLong5, myLong6))
 
     val myRegister1 = Register(Some("myRegister1"), value = None, RegNum.R4, DataType.CollByte)
@@ -96,7 +95,6 @@ trait TraitDummyProtocol {
     fee = Some(10000L),
     binaryOps,
     unaryOps,
-    conversions,
     branches = None,
     postConditions = None
   )

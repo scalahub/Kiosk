@@ -32,13 +32,6 @@ object Parser {
     override def writes(o: MatchingOptions.Options): JsValue = JsString(MatchingOptions.toString(o))
   }
 
-  private implicit val readsUnaryConverter = new Reads[UnaryConverter.Converter] {
-    override def reads(json: JsValue): JsResult[UnaryConverter.Converter] = JsSuccess(UnaryConverter.fromString(json.as[String]))
-  }
-  private implicit val writesUnaryConverter = new Writes[UnaryConverter.Converter] {
-    override def writes(o: UnaryConverter.Converter): JsValue = JsString(UnaryConverter.toString(o))
-  }
-
   private implicit val readsUnaryOperator = new Reads[UnaryOperator.Operator] {
     override def reads(json: JsValue): JsResult[UnaryOperator.Operator] = JsSuccess(UnaryOperator.fromString(json.as[String]))
   }
@@ -78,8 +71,6 @@ object Parser {
   private implicit val writesBinaryOp = Json.writes[BinaryOp]
   private implicit val readsUnaryOp = checkedReads(Json.reads[UnaryOp])
   private implicit val writesUnaryOp = Json.writes[UnaryOp]
-  private implicit val readsConversion = checkedReads(Json.reads[Conversion])
-  private implicit val writesConversion = Json.writes[Conversion]
   private implicit val readsLong = checkedReads(Json.reads[model.Long])
   private implicit val writesLong = Json.writes[model.Long]
   private implicit val readsRegister = checkedReads(Json.reads[Register])
