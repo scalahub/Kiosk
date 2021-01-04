@@ -93,12 +93,52 @@ object BinaryOperator extends MyEnum { // input and output types are same
 
 object UnaryOperator extends MyEnum { // input and output types are same
   type Operator = Value
-  val Hash, Neg, Abs, Sum, Avg, Min, Max = Value
-  val aggregates: Set[Operator] = Set(Sum, Avg, Min, Max)
+  val Hash, Neg, Abs, Sum, Avg, Min, Max, ProveDlog, ToCollByte, ToLong, ToInt, ToAddress, ToErgoTree, Count = Value
+  private val aggregates: Set[Operator] = Set(Sum, Avg, Min, Max)
+  private val converters: Set[Operator] = Set(ProveDlog, ToCollByte, ToLong, ToInt, ToAddress, ToErgoTree, Count)
 
   def operate(operator: Operator, values: Multiple[KioskType[_]], `type`: DataType.Type): Multiple[KioskType[_]] = {
-    if (aggregates.contains(operator)) operateAggregate(operator, values, `type`)
-    else values.map(operateSingle(operator, _))
+    operator match {
+      case op if aggregates.contains(op) => aggregate(operator, values, `type`)
+      case op if converters.contains(op) => convert(operator, values)
+      case _                             => values.map(operateSingle(operator, _))
+    }
+  }
+
+  private def convert(converter: Operator, fromValues: Multiple[KioskType[_]]): Multiple[KioskType[_]] = {
+    converter match {
+      case Count => Multiple(KioskInt(fromValues.seq.size))
+      case _     => fromValues.map(convertSingle(converter, _))
+    }
+  }
+
+  private def convertSingle(converter: Operator, fromValue: KioskType[_]): KioskType[_] = {
+    converter match {
+      case ProveDlog =>
+        val g = fromValue.asInstanceOf[KioskGroupElement]
+        val env = new KioskScriptEnv()
+        env.$addIfNotExist("g", g)
+        val compiler = new KioskScriptCreator(env)
+        KioskErgoTree(compiler.$compile("proveDlog(g)"))
+      case ToCollByte => KioskCollByte(fromValue.asInstanceOf[KioskErgoTree].serialize)
+      case ToLong     => KioskLong(fromValue.asInstanceOf[KioskInt].value.toLong)
+      case ToInt      => KioskInt(fromValue.asInstanceOf[KioskLong].value.toInt)
+      case ToAddress  => fromValue.ensuring(_.isInstanceOf[KioskErgoTree])
+      case ToErgoTree => fromValue.ensuring(_.isInstanceOf[KioskErgoTree])
+    }
+  }
+
+  def getFromTo(operator: Operator): FromTo = {
+    operator match {
+      case ProveDlog  => FromTo(from = DataType.GroupElement, to = DataType.ErgoTree)
+      case ToCollByte => FromTo(from = DataType.ErgoTree, to = DataType.CollByte)
+      case ToLong     => FromTo(from = DataType.Int, to = DataType.Long)
+      case ToInt      => FromTo(from = DataType.Long, to = DataType.Int)
+      case ToAddress  => FromTo(from = DataType.ErgoTree, to = DataType.Address)
+      case ToErgoTree => FromTo(from = DataType.Address, to = DataType.ErgoTree)
+      case Count      => FromTo(from = DataType.Unknown, to = DataType.Int)
+      case _          => FromTo(from = DataType.Unknown, to = DataType.Unknown)
+    }
   }
 
   private def operateSingle(operator: Operator, in: KioskType[_]): KioskType[_] = {
@@ -113,7 +153,7 @@ object UnaryOperator extends MyEnum { // input and output types are same
     }
   }
 
-  private def operateAggregate(aggregate: Operator, values: Multiple[KioskType[_]], `type`: DataType.Type): Multiple[KioskType[_]] = {
+  private def aggregate(aggregate: Operator, values: Multiple[KioskType[_]], `type`: DataType.Type): Multiple[KioskType[_]] = {
     def requiringNonEmpty(f: => Multiple[KioskType[_]]): Multiple[KioskType[_]] = {
       if (values.isEmpty) throw new Exception(s"Empty sequence found when evaluating aggregate $aggregate for type ${`type`}") else f
     }
@@ -133,45 +173,6 @@ object UnaryOperator extends MyEnum { // input and output types are same
 }
 
 case class FromTo(from: DataType.Type, to: DataType.Type)
-
-object UnaryConverter extends MyEnum { // input and output types are different
-  type Converter = Value
-  val ProveDlog, ToCollByte, ToLong, ToInt, ToAddress, ToErgoTree, Count = Value
-  def getFromTo(converter: Converter) = {
-    converter match {
-      case ProveDlog  => FromTo(from = DataType.GroupElement, to = DataType.ErgoTree)
-      case ToCollByte => FromTo(from = DataType.ErgoTree, to = DataType.CollByte)
-      case ToLong     => FromTo(from = DataType.Int, to = DataType.Long)
-      case ToInt      => FromTo(from = DataType.Long, to = DataType.Int)
-      case ToAddress  => FromTo(from = DataType.ErgoTree, to = DataType.Address)
-      case ToErgoTree => FromTo(from = DataType.Address, to = DataType.ErgoTree)
-      case Count      => FromTo(from = DataType.Unknown, to = DataType.Int)
-    }
-  }
-
-  private def convertSingle(converter: Converter, fromValue: KioskType[_]): KioskType[_] = {
-    converter match {
-      case ProveDlog =>
-        val g = fromValue.asInstanceOf[KioskGroupElement]
-        val env = new KioskScriptEnv()
-        env.$addIfNotExist("g", g)
-        val compiler = new KioskScriptCreator(env)
-        KioskErgoTree(compiler.$compile("proveDlog(g)"))
-      case ToCollByte => KioskCollByte(fromValue.asInstanceOf[KioskErgoTree].serialize)
-      case ToLong     => KioskLong(fromValue.asInstanceOf[KioskInt].value.toLong)
-      case ToInt      => KioskInt(fromValue.asInstanceOf[KioskLong].value.toInt)
-      case ToAddress  => fromValue.ensuring(_.isInstanceOf[KioskErgoTree])
-      case ToErgoTree => fromValue.ensuring(_.isInstanceOf[KioskErgoTree])
-    }
-  }
-
-  def convertMulti(converter: Converter, fromValues: Multiple[KioskType[_]]): Multiple[KioskType[_]] = {
-    converter match {
-      case Count => Multiple(KioskInt(fromValues.seq.size))
-      case _     => fromValues.map(convertSingle(converter, _))
-    }
-  }
-}
 
 object MatchingOptions extends MyEnum {
   type Options = Value

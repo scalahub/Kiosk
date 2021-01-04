@@ -6,7 +6,7 @@ import java.util.UUID
 
 class OffChainLoader(implicit dictionary: Dictionary) {
   def load(p: Protocol): Unit = {
-    (optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.conversions) ++ optSeq(p.branches) ++ optSeq(p.postConditions)).foreach(dictionary.addDeclaration)
+    (optSeq(p.constants) ++ optSeq(p.unaryOps) ++ optSeq(p.binaryOps) ++ optSeq(p.branches) ++ optSeq(p.postConditions)).foreach(dictionary.addDeclaration)
     optSeq(p.auxInputUuids).zipWithIndex.foreach { case ((input, uuid), index)  => loadInput(input)(uuid, index, InputType.Aux) }
     optSeq(p.dataInputUuids).zipWithIndex.foreach { case ((input, uuid), index) => loadInput(input)(uuid, index, InputType.Data) }
     p.inputUuids.zipWithIndex.foreach { case ((input, uuid), index)             => loadInput(input)(uuid, index, InputType.Code) }
