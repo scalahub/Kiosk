@@ -2,6 +2,7 @@ package kiosk.offchain.compiler
 
 import kiosk.ergo.{KioskCollByte, KioskErgoTree, KioskInt, KioskLong, KioskType}
 import kiosk.offchain.compiler.model.DataType.Type
+import kiosk.offchain.compiler.model.FilterOp.Op
 import kiosk.offchain.compiler.model.MatchingOptions.Options
 import kiosk.offchain.compiler.model.RegNum.Num
 
@@ -32,9 +33,8 @@ package object model {
     atLeastOne(this)("id", "address")(id, address)
     private lazy val inputOptions: Set[Options] = options.getOrElse(Set.empty)
     lazy val strict: Boolean = inputOptions.contains(MatchingOptions.Strict) // applies to token matching only
-    lazy val multi = inputOptions.contains(MatchingOptions.Multi)
-    lazy val optional = inputOptions.contains(MatchingOptions.Optional)
-    for { boxId <- id; ergoTree <- address } exactlyOne(this)("id.name", "address.name")(boxId.name, ergoTree.name)
+    lazy val multi: Boolean = inputOptions.contains(MatchingOptions.Multi)
+    lazy val optional: Boolean = inputOptions.contains(MatchingOptions.Optional)
   }
 
   case class Output(address: Address, registers: Option[Seq[Register]], tokens: Option[Seq[Token]], nanoErgs: Long, options: Option[Set[MatchingOptions.Options]]) {
@@ -44,40 +44,38 @@ package object model {
     requireEmpty(optSeq(registers).map(_.name -> "Output register.name"): _*)
     requireEmpty(address.name -> "Output address.name", nanoErgs.name -> "Output nanoErgs.name", nanoErgs.filter -> "Output nanoErgs.filter")
     private lazy val outputOptions: Set[Options] = options.getOrElse(Set.empty)
-    lazy val multi = outputOptions.contains(MatchingOptions.Multi)
-    lazy val optional = outputOptions.contains(MatchingOptions.Optional)
+    lazy val multi: Boolean = outputOptions.contains(MatchingOptions.Multi)
+    lazy val optional: Boolean = outputOptions.contains(MatchingOptions.Optional)
     options.fold()(optionSet => if (optionSet.contains(MatchingOptions.Strict)) throw new Exception(s"'Strict' option not allowed in output"))
   }
 
   case class Address(name: Option[String], value: Option[String], values: Option[Seq[String]]) extends Declaration {
-    override lazy val maybeTargetId = name
+    override lazy val maybeTargetId: Option[String] = name
     override lazy val pointerNames: Seq[String] = value.toSeq ++ optSeq(values)
-    override var `type` = DataType.Address
-    override lazy val pointerTypes = pointerNames.map(_ => DataType.Address)
+    override var `type`: Type = DataType.Address
+    override lazy val pointerTypes: Seq[Type] = pointerNames.map(_ => DataType.Address)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
     atLeastOne(this)("name", "value", "values")(name, value, values)
     for { _ <- value; _ <- values } exactlyOne(this)("value", "values")(value, values)
-    for { _ <- name; _ <- value } exactlyOne(this)("name", "value")(name, value)
     values.map(valueSeq => require(valueSeq.size > 1, s"Values must contain at least two addresses in $this"))
     override def getValue(implicit dictionary: Dictionary): Multiple[KioskErgoTree] = to[KioskErgoTree](super.getValue)
     def getTargets(implicit dictionary: Dictionary): Seq[KioskErgoTree] = pointerNames.flatMap(pointerName => to[KioskErgoTree](dictionary.getDeclaration(pointerName).getValue).seq)
   }
 
   case class Register(name: Option[String], value: Option[String], num: Num, var `type`: Type) extends Declaration {
-    override lazy val maybeTargetId = name
-    override lazy val pointerNames = value.toSeq
-    override lazy val pointerTypes = pointerNames.map(_ => `type`)
+    override lazy val maybeTargetId: Option[String] = name
+    override lazy val pointerNames: Seq[String] = value.toSeq
+    override lazy val pointerTypes: Seq[Type] = pointerNames.map(_ => `type`)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
-    exactlyOne(this)("name", "value")(name, value)
   }
 
   case class Id(name: Option[String], value: Option[String]) extends Declaration {
-    override lazy val maybeTargetId = name
-    override lazy val pointerNames = value.toSeq
-    override var `type` = DataType.CollByte
-    override lazy val pointerTypes = pointerNames.map(_ => DataType.CollByte)
+    override lazy val maybeTargetId: Option[String] = name
+    override lazy val pointerNames: Seq[String] = value.toSeq
+    override var `type`: Type = DataType.CollByte
+    override lazy val pointerTypes: Seq[Type] = pointerNames.map(_ => DataType.CollByte)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
     override def getValue(implicit dictionary: Dictionary): Multiple[KioskCollByte] = {
@@ -85,17 +83,16 @@ package object model {
       kioskCollBytes.foreach(kioskCollByte => require(kioskCollByte.arrayBytes.length == 32, s"Id $this (${kioskCollByte.hex}) size (${kioskCollByte.arrayBytes.length}) != 32"))
       kioskCollBytes
     }
-    exactlyOne(this)("name", "value")(name, value)
   }
 
   case class Long(name: Option[String], value: Option[String], filter: Option[FilterOp.Op]) extends Declaration {
-    override lazy val maybeTargetId = name
-    override lazy val pointerNames = value.toSeq
-    override var `type` = DataType.Long
-    override lazy val pointerTypes = pointerNames.map(_ => DataType.Long)
+    override lazy val maybeTargetId: Option[String] = name
+    override lazy val pointerNames: Seq[String] = value.toSeq
+    override var `type`: Type = DataType.Long
+    override lazy val pointerTypes: Seq[Type] = pointerNames.map(_ => DataType.Long)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
-    lazy val filterOp = filter.getOrElse(FilterOp.Eq)
+    lazy val filterOp: Op = filter.getOrElse(FilterOp.Eq)
     def getTargets(implicit dictionary: Dictionary): Seq[KioskLong] = value.fold(Seq[KioskLong]())(pointer => to[KioskLong](dictionary.getDeclaration(pointer).getValue).seq)
     override def getValue(implicit dictionary: Dictionary): Multiple[KioskLong] = to[KioskLong](super.getValue)
     if (filter.nonEmpty && value.isEmpty) throw new Exception(s"Value cannot be empty if filter is defined")
@@ -107,13 +104,13 @@ package object model {
   case class Token(index: Option[Int], id: Option[Id], amount: Option[Long]) {
     index.map(int => require(int >= 0, s"Token index must be >= 0. $this"))
     atLeastOne(this)("index", "id")(index, id)
-    id.foreach(someId => atLeastOne(someId)("index", "id.value")(index, someId.value))
+    id.map(someId => atLeastOne(someId)("index", "id.value")(index, someId.value))
   }
 
   case class Constant(name: String, var `type`: DataType.Type, value: String) extends Declaration {
-    override lazy val maybeTargetId = Some(name)
-    override lazy val pointerNames = Nil
-    override lazy val pointerTypes = Nil
+    override lazy val maybeTargetId: Option[String] = Some(name)
+    override lazy val pointerNames: Seq[String] = Nil
+    override lazy val pointerTypes: Seq[Type] = Nil
     override lazy val isLazy = true
     override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = Multiple(DataType.getValue(value, `type`))
     override lazy val canPointToOnChain: Boolean = false
@@ -121,9 +118,9 @@ package object model {
   }
 
   case class BinaryOp(name: String, first: String, op: BinaryOperator.Operator, second: String) extends Declaration {
-    override lazy val maybeTargetId = Some(name)
-    override lazy val pointerNames = Seq(first, second)
-    override var `type` = DataType.Unknown
+    override lazy val maybeTargetId: Option[String] = Some(name)
+    override lazy val pointerNames: Seq[String] = Seq(first, second)
+    override var `type`: Type = DataType.Unknown
     override lazy val pointerTypes = Seq(DataType.Unknown, DataType.Unknown)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
@@ -133,10 +130,10 @@ package object model {
   }
 
   case class UnaryOp(name: String, from: String, op: UnaryOperator.Operator) extends Declaration {
-    override lazy val maybeTargetId = Some(name)
+    override lazy val maybeTargetId: Option[String] = Some(name)
     override lazy val pointerNames = Seq(from)
-    lazy val types = UnaryOperator.getFromTo(op)
-    override var `type` = types.to
+    lazy val types: FromTo = UnaryOperator.getFromTo(op)
+    override var `type`: Type = types.to
     override lazy val pointerTypes = Seq(types.from)
     override lazy val isLazy = true
     override lazy val canPointToOnChain: Boolean = false
@@ -144,7 +141,7 @@ package object model {
   }
 
   case class Condition(first: String, second: String, op: FilterOp.Op) {
-    lazy val pointerNames = Seq(first, second)
+    lazy val pointerNames: Seq[String] = Seq(first, second)
     def evaluate(implicit dictionary: Dictionary): Boolean = evaluateWithResult._1
     def evaluateWithResult(implicit dictionary: Dictionary): (Boolean, Seq[KioskType[_]], Seq[KioskType[_]]) = {
       Try(getMultiPairs(first, second))
@@ -169,7 +166,7 @@ package object model {
   case class Branch(name: String, ifTrue: String, ifFalse: String, condition: Condition) extends Declaration {
     override protected lazy val maybeTargetId: Option[String] = Some(name)
     override protected lazy val pointerNames: Seq[String] = Seq(ifTrue, ifFalse) ++ condition.pointerNames
-    override var `type` = DataType.Unknown
+    override var `type`: Type = DataType.Unknown
     override protected lazy val pointerTypes: Seq[Type] = pointerNames.map(_ => DataType.Unknown)
     override lazy val isLazy: Boolean = true
     override lazy val canPointToOnChain: Boolean = false
@@ -180,7 +177,7 @@ package object model {
     override protected lazy val maybeTargetId: Option[String] = None
     private lazy val condition = Condition(first, second, op)
     override protected lazy val pointerNames: Seq[String] = condition.pointerNames
-    override var `type` = DataType.Unknown
+    override var `type`: Type = DataType.Unknown
     override protected lazy val pointerTypes: Seq[Type] = pointerNames.map(_ => DataType.Unknown)
     override lazy val isLazy: Boolean = true
     override lazy val canPointToOnChain: Boolean = false

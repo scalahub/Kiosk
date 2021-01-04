@@ -25,7 +25,7 @@ That said, the only thing needed to use Tx Builder is the ability to write Json 
 
 #### Protocol
 
-The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L12-L29).
+The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L13-L30).
 A **Protocol** is made up of the following items: 
 - Optional sequence of `Constant` declarations, using which we can encode arbitrary values into the script.
 - Optional sequence of box definitions, `auxInputs`. 
@@ -65,15 +65,12 @@ There are four type of box declarations:
 - **Long**: NanoErgs or token quantity, internally stored as `KioskLong`.
 
 #### Names and Values
-A box declaration can contain exactly one of:
+A box declaration can contain one or both of the following fields:
 - A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
 - A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
 
-The exception to this rule is the [**Long**](compiler/model/package.scala#L91-L105) declaration, which can have both fields, 
-provided that it also has a third field `filter` present. A [`filter`](compiler/model/Enums.scala#L18) can be any of `Ge, Le, Gt, Lt, Ne`. 
-Thus, a **Long** allows both of the following possibilities: 
-1. Either `name` or `value` as in other declarations.
-2. All of `name`, `value` and `filter`.   
+The [**Long**](compiler/model/package.scala#L88-L102) declaration can have an additional field, [`filter`](compiler/model/Enums.scala#L18) (which cen be any of `Ge, Le, Gt, Lt, Ne`). 
+This field is used for matching using inequalities (example, if the number of certain tokens is greater than some value).
 
 The following are some example declarations:
 1. `{"name":"myAddress"}`
@@ -84,6 +81,36 @@ The following are some example declarations:
 - The second references that address.
 - The third defines the (Long) value `actualNanoErgs` and references `someMinValue`.
   An error occurs if `actualNanoErgs < someMinValue`. 
+
+#### Matching multiple addresses in one definition
+
+An [`Address`](compiler/model/package.scala#L52-L64) declaration also has the additional field, `values`. 
+We can use this to match a declaration to one of many addresses. As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
+We can match such boxes as follows:
+
+```json
+"address": {
+  "values": [
+    "epochPreparationAddress",
+    "liveEpochAddress"
+  ]
+}
+```
+
+For sanity, the  `values` field must have at least two elements. If we need to match a single address, we must instead use the `value` field as in other declarations.
+Additionally, we cannot have both fields (`value` and `values`) in the same Address declaration. 
+
+Note: when matching multiple addresses using `values`, we can use `name` to store the actual address matched:
+
+```json
+"address": {
+  "name": "actualPoolAddress",
+  "values": [
+    "epochPreparationAddress",
+    "liveEpochAddress"
+  ]
+}
+```
 
 #### Targets and Pointers
 
@@ -103,13 +130,12 @@ For example, in `"boxId":{"value":"myBoxId"}`, the value contained in `myBoxId` 
 - A target maps to some data in a box that has already been fetched from the blockchain.
 For example, in `"address":{"name":"myAddress"}`, the address of the box will be stored in a variable called `myAddress`.
 
-#### Input rules
-The following rules apply for each input:
+#### Input rule
+The following rule applies for each input:
 - It must have at least one of `boxId` or `address` declarations defined.
-- If both `boxId` and `address` declarations have been defined, then both cannot be targets or pointers at the same time.
 
 #### Token rules
-A [**Token**](compiler/model/package.scala#L107-L111) is defined as 
+A [**Token**](compiler/model/package.scala#L104-L108) is defined as 
 `case class Token(index: Option[Int], id: Option[Id], amount: Option[Long])`. 
 The main rule to follow here is that if `index` is empty then `id` must be defined, and that too as a pointer (i.e., it must have a `value` field). 
 This is because the token index must be somehow determinable (either via an explicit `index` field or by matching the tokenId of a pointer.)
@@ -160,44 +186,15 @@ For instance, to select a box with no tokens, skip `tokens` field (or set it to 
 
 This option applies to tokens only.
 
-#### Matching multiple addresses in one definition
-
-An [`Address`](compiler/model/package.scala#L52-L65) declaration takes an optional sequence, `values`, 
-using which we can map one box definition to one of many addresses. 
-As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
-We can match such boxes as follows:
-
-```json
-"address": {
-  "values": [
-    "epochPreparationAddress",
-    "liveEpochAddress"
-  ]
-}
-```
-
-A `values` field must have at least two elements. If we need to match a single address, we must instead use the `value` field as in other declarations.
-
-We can use `name` to capture the actual matched address when multiple addresses are supplied via values `values`:
-
-```json
-"address": {
-  "name": "actualPoolAddress",
-  "values": [
-    "epochPreparationAddress",
-    "liveEpochAddress"
-  ]
-}
-```
-
 #### Order of evaluation
 Declarations are evaluated in the following order:
 - Constants
 - Computation boxes (`boxes`)  (from low to high index)
 - Data-input boxes (from low to high index) 
-- Input boxes (from low to high index) 
+- Input boxes (from low to high index)
+- Post-conditions
 - Output boxes
-- Binary Ops, Unary Ops and Conversions are "Lazy" (i.e., evaluated only if needed)
+- Binary Ops, Unary Ops are "Lazy" (i.e., evaluated only if needed)
 
 #### Referencing rules
 - The order of evaluation determines what can and cannot be referenced. A pointer can only refer to a target that has been evaluated previously. 
