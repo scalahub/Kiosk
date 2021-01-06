@@ -4,13 +4,13 @@ import kiosk.offchain.compiler.model._
 
 trait TraitDummyProtocol {
   object DummyDeclarations {
-    val myLong1 = Constant("myLong1", DataType.Long, "1234")
-    val myInt = Constant("myInt", DataType.Int, "1234")
-    val myCollByte = Constant("myCollByte", DataType.CollByte, "506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7")
-    val myTokenId = Constant("myTokenId", DataType.CollByte, "ae57e4add0f181f5d1e8fd462969e4cc04f13b0da183676660d280ad0b64563f")
-    val myGroupElement = Constant("myGroupElement", DataType.GroupElement, "028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67")
-    val myErgoTree1 = Constant("myErgoTree1", DataType.ErgoTree, "10010101D17300")
-    val myAddress = Constant("myAddress", DataType.Address, "9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")
+    val myLong1 = Constant("myLong1", DataType.Long, Some("1234"), None)
+    val myInt = Constant("myInt", DataType.Int, Some("1234"), None)
+    val myCollByte = Constant("myCollByte", DataType.CollByte, Some("506dfb0a34d44f2baef77d99f9da03b1f122bdc4c7c31791a0c706e23f1207e7"), None)
+    val myTokenId = Constant("myTokenId", DataType.CollByte, Some("ae57e4add0f181f5d1e8fd462969e4cc04f13b0da183676660d280ad0b64563f"), None)
+    val myGroupElement = Constant("myGroupElement", DataType.GroupElement, Some("028182257d34ec7dbfedee9e857aadeb8ce02bb0c757871871cff378bb52107c67"), None)
+    val myErgoTree1 = Constant("myErgoTree1", DataType.ErgoTree, Some("10010101D17300"), None)
+    val myAddress = Constant("myAddress", DataType.Address, Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"), None)
 
     val myIntToLong = UnaryOp("myIntToLong", "myInt", UnaryOperator.ToLong)
     val myLong2 = BinaryOp("myLong2", "myLong1", BinaryOperator.Add, "myIntToLong")
@@ -60,7 +60,7 @@ trait TraitDummyProtocol {
 
     val myInput1 = Input(
       id = Some(Id(name = None, value = Some("myCollByte"))),
-      address = Some(Address(name = Some("myAddressName"), value = None, values = None)),
+      address = Some(Address(name = Some("myAddressName"), value = None)),
       registers = Some(Seq(myRegister3)),
       tokens = Some(Seq(myToken1)),
       nanoErgs = Some(Long(name = Some("input1NanoErgs"), value = None, filter = None)),
@@ -69,7 +69,7 @@ trait TraitDummyProtocol {
 
     val myInput2 = Input(
       None,
-      Some(Address(name = None, value = Some("myAddress"), values = None)),
+      Some(Address(name = None, value = Some("myAddress"))),
       registers = Some(Seq(myRegister4)),
       tokens = Some(Seq(myToken2)),
       nanoErgs = Some(Long(name = None, value = Some("input1NanoErgs"), filter = Some(FilterOp.Ne))),
@@ -78,7 +78,7 @@ trait TraitDummyProtocol {
 
     val myInput3 = Input(
       id = None,
-      address = Some(Address(name = None, value = Some("myAddress"), values = None)),
+      address = Some(Address(name = None, value = Some("myAddress"))),
       registers = Some(Seq(myRegister1, myRegister2)),
       tokens = Some(Seq(myToken3)),
       nanoErgs = Some(Long(name = None, value = Some("someLong1"), filter = Some(FilterOp.Ge))),

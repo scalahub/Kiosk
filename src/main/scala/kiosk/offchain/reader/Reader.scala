@@ -16,7 +16,7 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
 
     val boxesByAddress: Option[Seq[OnChainBox]] = for {
       address <- input.address
-      _ <- address.values.orElse(address.value)
+      _ <- address.value
     } yield address.getTargets.map(tree2str).flatMap(explorer.getUnspentBoxes).map(OnChainBox.fromKioskBox)
 
     val matchedBoxes: Seq[OnChainBox] = optSeq(boxesByAddress) ++ optSeq(boxesById)
@@ -85,9 +85,9 @@ class Reader(explorer: Explorer)(implicit dictionary: Dictionary) {
       case (None, Some(_)) =>
         val expectedIds: Seq[String] = tokenId.getValue.map(_.toString).seq
         def findToken(tokenBox: TokenBox) = {
-          tokenBox -> tokenBox.onChainBox.stringTokenIds.indices.find {
-            case index => expectedIds.contains(tokenBox.onChainBox.stringTokenIds(index)) && matches(tokenBox.onChainBox.tokenAmounts(index), amount)
-          }
+          tokenBox -> tokenBox.onChainBox.stringTokenIds.indices.find(
+            index => expectedIds.contains(tokenBox.onChainBox.stringTokenIds(index)) && matches(tokenBox.onChainBox.tokenAmounts(index), amount)
+          )
         }
 
         tokenBoxes

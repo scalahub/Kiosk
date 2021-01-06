@@ -18,7 +18,7 @@ package object compiler {
 
   case class Variable(name: String, `type`: DataType.Type)
 
-  def height(actualHeight: Int) = Constant("HEIGHT", DataType.Int, actualHeight.toString)
+  def height(actualHeight: Int) = Constant("HEIGHT", DataType.Int, Some(actualHeight.toString), values = None)
 
   def randId = UUID.randomUUID.toString
 
@@ -29,7 +29,6 @@ package object compiler {
   }
 
   case class Multiple[+This](seq: This*) {
-
     def exists(f: This => Boolean): Boolean = seq.exists(f)
 
     def take(i: Int): Multiple[This] = seq.take(i)

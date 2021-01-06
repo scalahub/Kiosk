@@ -207,7 +207,7 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TraitTo
             inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = Some(Set(MatchingOptions.Optional)))),
             outputs = Seq(
               Output(
-                address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"), values = None),
+                address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")),
                 registers = None,
                 tokens = None,
                 nanoErgs = model.Long(name = None, value = Some("thirdTokenAmount"), filter = None),
@@ -227,7 +227,7 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TraitTo
             inputs = Seq(tokenFilterProtocol.inputs(0), tokenFilterProtocol.inputs(1).copy(options = Some(Set(MatchingOptions.Optional)))),
             outputs = Seq(
               Output(
-                address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"), values = None),
+                address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")),
                 registers = None,
                 tokens = None,
                 nanoErgs = model.Long(name = None, value = Some("thirdTokenAmount"), filter = None),
@@ -246,7 +246,7 @@ class MatchingSpec extends WordSpec with MockitoSugar with Matchers with TraitTo
           tokenFilterProtocol.copy(
             outputs = Seq(
               Output(
-                address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"), values = None),
+                address = model.Address(name = None, value = Some("9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK")),
                 registers = None,
                 tokens = None,
                 nanoErgs = model.Long(name = None, value = Some("thirdTokenAmount"), filter = None),

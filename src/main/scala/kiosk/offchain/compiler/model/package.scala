@@ -49,16 +49,14 @@ package object model {
     options.fold()(optionSet => if (optionSet.contains(MatchingOptions.Strict)) throw new Exception(s"'Strict' option not allowed in output"))
   }
 
-  case class Address(name: Option[String], value: Option[String], values: Option[Seq[String]]) extends Declaration {
+  case class Address(name: Option[String], value: Option[String]) extends Declaration {
     override lazy val maybeTargetId: Option[String] = name
-    override lazy val pointerNames: Seq[String] = value.toSeq ++ optSeq(values)
+    override lazy val pointerNames: Seq[String] = value.toSeq
     override var `type`: Type = DataType.Address
     override lazy val pointerTypes: Seq[Type] = pointerNames.map(_ => DataType.Address)
     override lazy val isLazy = false
     override lazy val canPointToOnChain: Boolean = true
-    atLeastOne(this)("name", "value", "values")(name, value, values)
-    for { _ <- value; _ <- values } exactlyOne(this)("value", "values")(value, values)
-    values.map(valueSeq => require(valueSeq.size > 1, s"Values must contain at least two addresses in $this"))
+    atLeastOne(this)("name", "value")(name, value)
     override def getValue(implicit dictionary: Dictionary): Multiple[KioskErgoTree] = to[KioskErgoTree](super.getValue)
     def getTargets(implicit dictionary: Dictionary): Seq[KioskErgoTree] = pointerNames.flatMap(pointerName => to[KioskErgoTree](dictionary.getDeclaration(pointerName).getValue).seq)
   }
@@ -107,13 +105,15 @@ package object model {
     id.map(someId => atLeastOne(someId)("index", "id.value")(index, someId.value))
   }
 
-  case class Constant(name: String, var `type`: DataType.Type, value: String) extends Declaration {
+  case class Constant(name: String, var `type`: DataType.Type, value: Option[String], values: Option[Seq[String]]) extends Declaration {
     override lazy val maybeTargetId: Option[String] = Some(name)
     override lazy val pointerNames: Seq[String] = Nil
     override lazy val pointerTypes: Seq[Type] = Nil
     override lazy val isLazy = true
-    override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = Multiple(DataType.getValue(value, `type`))
+    override def getValue(implicit dictionary: Dictionary): Multiple[KioskType[_]] = Multiple((value.toSeq ++ optSeq(values)).map(DataType.getValue(_, `type`)): _*)
     override lazy val canPointToOnChain: Boolean = false
+    exactlyOne(this)("value", "values")(value, values)
+    values.map(strings => require(strings.size > 1, s"At least two constants must be defined using 'values'. For single constant, use 'value'"))
     require(`type` != DataType.Unknown, "Data type cannot be unknown")
   }
 
