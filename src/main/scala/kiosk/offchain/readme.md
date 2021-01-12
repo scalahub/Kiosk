@@ -1,15 +1,16 @@
-# Tx Builder
+# JSON dApp Environment (JDE) 
+(aka Tx Builder)
 
 #### What is it?
 
-- A tool for developing the offchain part of an Ergo dApp
+- JDE tool for developing the offchain part of an Ergo dApp
 - Enables one to create a transaction by specifying a **script** in Json. 
 - Built on top of Kiosk with an example implementation in [KioskWallet](../wallet/KioskWallet.scala#L95-L138).  
 - Can be used for many existing dApps, such as *Oracle-pools*, *Timestamping* and *Auctions*.
 
 #### How does it work?
 
-- Tx Builder allows us to define the input and data inputs of a transaction, along with some auxiliary boxes that are neither inputs nor data-inputs.  Auxiliary boxes are used only during computation.
+- JDE allows us to define the input and data inputs of a transaction, along with some auxiliary boxes that are neither inputs nor data-inputs.  Auxiliary boxes are used only during computation.
 - Each such box is defined using a **box definition**. A box definition is a sequence of **instructions** to filter boxes. Currently, we can filter using tokens, registers and nanoErgs. 
 - Currently, boxes can be searched either by address or by box-id. With box-id, there can be at most one box, so we can unambiguously define a box. 
   However, when matching with address, there can be multiple boxes. These are handled as follows: 
@@ -19,13 +20,13 @@
 - An error is thrown if no boxes match a definition.
 
 
-Tx Builder is more verbose than, for example, Scala. As an example, the Scala code `c = a + b` must be written in Tx Builder as
+JDE is more verbose than, for example, Scala. As an example, the Scala code `c = a + b` must be written in JDE as
 `{"name":"c", "first":"a", "op":"Add", "second":"b"}`.
-That said, the only thing needed to use Tx Builder is the ability to write Json (and possibly use a pen and paper).
+That said, the only thing needed to use JDE is the ability to write Json (and possibly use a pen and paper).
 
 #### Protocol
 
-The highest level of abstraction in Tx Builder is a [**Protocol**](compiler/model/package.scala#L13-L30).
+The highest level of abstraction in JDE is a [**Protocol**](compiler/model/package.scala#L13-L30).
 A **Protocol** is made up of the following items: 
 - Optional sequence of `Constant` declarations, using which we can encode arbitrary values into the script.
 - Optional sequence of box definitions, `auxInputs`. 
@@ -338,9 +339,9 @@ The following is an example of a script to timestamp a box using the dApp descri
 }
 ```
 
-#### Using Tx Builder in your own wallet
+#### Using JDE in your own wallet
 
-Tx Builder is written in Scala, and therefore supports any JVM language. The following shows how to use it from Scala.
+JDE is written in Scala, and therefore supports any JVM language. The following shows how to use it from Scala.
 First include Kiosk in your project by doing the following in `build.sbt`:
 ```Scala
 lazy val Kiosk = RootProject(uri("git://github.com/scalahub/Kiosk.git"))
