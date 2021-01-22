@@ -95,8 +95,9 @@ class KioskWallet($ergoBox: KioskBoxCreator) extends EasyMirrorSession {
   def txBuilder(script: Text, additionalSecrets: Array[String], broadcast: Boolean) = {
     val $INFO$ =
       """This creates a transaction using the script specified in TxBuilder. 
-If there any lacking Ergs or tokens in the inputs, the wallet will attempt to add its own unspent boxes. 
-If some of the inputs need additional (proveDlog) secrets, they should be added to Env (as BigInts) and referenced in additionalSecrets"""
+If there are any lacking Ergs or tokens in the inputs, the wallet will attempt to add its own unspent boxes. 
+If some of the inputs need additional (proveDlog) secrets, they should be added to Env (as BigInts) and referenced in additionalSecrets.
+The wallet does not currently support proveDlog secrets."""
 
     val $broadcast$ = "false"
 

@@ -1,7 +1,7 @@
 # JSON dApp Environment (JDE) 
 (aka Tx Builder)
 
-#### What is it?
+#### What is JDE?
 
 - JDE tool for developing the offchain part of an Ergo dApp
 - Enables one to create a transaction by specifying a **script** in Json. 
@@ -19,194 +19,14 @@
   - The first box (if any) is selected as the matched box.
 - An error is thrown if no boxes match a definition.
 
-
 JDE is more verbose than, for example, Scala. As an example, the Scala code `c = a + b` must be written in JDE as
 `{"name":"c", "first":"a", "op":"Add", "second":"b"}`.
 That said, the only thing needed to use JDE is the ability to write Json (and possibly use a pen and paper).
 
-#### Protocol
+#### A complete example
 
-The highest level of abstraction in JDE is a [**Protocol**](compiler/model/package.scala#L13-L30).
-A **Protocol** is made up of the following items: 
-- Optional sequence of `Constant` declarations, using which we can encode arbitrary values into the script.
-- Optional sequence of box definitions, `auxInputs`. 
-  These are for accessing arbitrary boxes without having to use them as data inputs (or inputs).
-- Optional sequence of box definitions, `dataInputs`, defining data-inputs of the transaction.
-- Mandatory sequence of box definitions, `inputs`, defining inputs of the transaction. 
-- Mandatory sequence of box definitions, `outputs`, defining outputs of the transaction.
-- Optional sequence of `Unary` operations, used to convert one object to another (example ErgoTree to Address).
-- Optional sequence of `Binary` operations, used to compose two objects into a third object (of same types).
-- Optional sequence of `Branch` instructions, used for run-time control-flow.
-- Optional sequence of `PostCondition` instructions which must evaluate to true.
-
-#### Declarations
-
-The next level of abstraction is a [**Declaration**](compiler/Declaration.scala), which maps to an instance of a [`Kiosktype[_]`](../ergo/package.scala#L32-L40).
-For instance, an **Id** declaration maps to a `KioskCollByte` object (of size 32), 
-while an **Address** declaration maps to a `KioskErgoTree` object.
-
-We can classify declarations into three types:
-- **Constants**: These specify initial values. Examples:  
-  - `{"name":"myInt", "type":"int", "value":"123"}`
-  - `{"name":"myAddress", "type":"address", "value":"9fcrXXaJgrGKC8iu98Y2spstDDxNccXSR9QjbfTvtuv7vJ3NQLk"}`
-- **Box declarations**: These are used to define or search for boxes. There are four types: **Address**, **Id**, **Register**, and **Long** (see below).
-- **Instructions**: These specify binary/unary operations, post-conditions and branches:
-  - Binary Op: `{"name":"mySum", "first":"someValue", "op":"Add", "second":"otherValue"}`
-  - Unary Op: `{"name":"myErgoTree", "from":"myGroupElement", "op":"ProveDlog"}`
-  - Post-condition: `{"first":"someLong", "second":"otherLong", "op":"Ge"}`
-  - Branch: `{"name":"result", "ifTrue":"someValue", "ifFalse":"otherValue", "condition": {"first":"someLong", "second":"otherLong", "op":"Ge"} }`
-  
-See [this page](compiler/model/package.scala) for the detailed schema of all declarations and [this page](compiler/model/Enums.scala) for the enumerations used.
-
-#### Box Declarations
-There are four type of box declarations:
-- **Address**: The address of the box, internally stored as `KioskErgoTree`.
-- **Id**: Box Id or token Id, internally stored as a `KioskCollByte` of size 32.
-- **Register**: Register contents, internally stored as `KioskType[_]`.
-- **Long**: NanoErgs or token quantity, internally stored as `KioskLong`.
-
-#### Names and Values
-A box declaration can contain one or both of the following fields:
-- A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
-- A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
-
-The [**Long**](compiler/model/package.scala#L88-L102) declaration can have an additional field, [`filter`](compiler/model/Enums.scala#L18) (which cen be any of `Ge, Le, Gt, Lt, Ne`). 
-This field is used for matching using inequalities (example, if the number of certain tokens is greater than some value).
-
-The following are some example declarations:
-1. `{"name":"myAddress"}`
-2. `{"value":"myAddress"}`
-3. `{"name":"actualNanoErgs", "value":"someMinValue", "filter":"Ge"}`
-
-- The first defines the address `myAddress`.
-- The second references that address.
-- The third defines the (Long) value `actualNanoErgs` and references `someMinValue`.
-  An error occurs if `actualNanoErgs < someMinValue`. 
-
-#### Matching multiple addresses in one definition
-
-An [`Address`](compiler/model/package.scala#L52-L64) declaration also has the additional field, `values`. 
-We can use this to match a declaration to one of many addresses. As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
-We can match such boxes as follows:
-
-```json
-"address": {
-  "values": [
-    "epochPreparationAddress",
-    "liveEpochAddress"
-  ]
-}
-```
-
-For sanity, the  `values` field must have at least two elements. If we need to match a single address, we must instead use the `value` field as in other declarations.
-Additionally, we cannot have both fields (`value` and `values`) in the same Address declaration. 
-
-Note: when matching multiple addresses using `values`, we can use `name` to store the actual address matched:
-
-```json
-"address": {
-  "name": "actualPoolAddress",
-  "values": [
-    "epochPreparationAddress",
-    "liveEpochAddress"
-  ]
-}
-```
-
-#### Targets and Pointers
-
-For clarity, we use the following terminology when describing box declarations:
-- A declaration that defines a variable is a "target".
-- A declaration that references a variable is a "pointer".
-
-We can then rewrite the rules for box declarations as follows:
-- It can be either a target or a pointer but not both, with **Long** being the exception.
-- An input can contain both pointers and targets.
-- An output can only contain pointers.
-
-The following rules apply for pointers and targets in an input:
-- A pointer is a "search filter", i.e., used to fetch boxes from the blockchain.
-For example, in `"boxId":{"value":"myBoxId"}`, the value contained in `myBoxId` (of type `KioskCollByte`) 
- will be used for fetching a box with that id.
-- A target maps to some data in a box that has already been fetched from the blockchain.
-For example, in `"address":{"name":"myAddress"}`, the address of the box will be stored in a variable called `myAddress`.
-
-#### Input rule
-The following rule applies for each input:
-- It must have at least one of `boxId` or `address` declarations defined.
-
-#### Token rules
-A [**Token**](compiler/model/package.scala#L104-L108) is defined as 
-`case class Token(index: Option[Int], id: Option[Id], amount: Option[Long])`. 
-The main rule to follow here is that if `index` is empty then `id` must be defined, and that too as a pointer (i.e., it must have a `value` field). 
-This is because the token index must be somehow determinable (either via an explicit `index` field or by matching the tokenId of a pointer.)
-
-To illustrate this, the following are some valid token definitions:
-1. `{"index":0, "id":{"name":"myTokenId"}, "amount":{"value":"otherTokenAmount"}}`.
-   - Matches the token at index `0` if the amount is same as that of pointer `otherTokenAmount`. 
-   - Creates a new target called `myTokenId` with the matched tokenId.
-2. `{"index":0, "id":{"name":"myTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
-   - Matches the token at index `0`
-   - Creates a new target called `myTokenId` containing the matched tokenId.
-   - Creates a new target called `myTokenAmount` containing the matched token amount.
-3. `{"id":{"value":"otherTokenId"}`. 
-   - Matches the token at some index if the tokenId is same as that of pointer `otherTokenId`.
-4. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount"}}}`. 
-   - Matches the token at some index if both conditions hold:
-     - The tokenId is the same as that of pointer `otherTokenId`. 
-     - The amount is the same as that of `otherTokenAmount`.
-5. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount", "filter":"Ge"}}`. 
-   - Matches the token at some index if both conditions hold:
-     - The tokenId is the same as that of pointer `otherTokenId`. 
-     - The amount is >= the value returned by `otherTokenAmount`.
-6. `{"id":{"value":"otherTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
-   - Matches the token at some index if the tokenId is the same as that of pointer `otherTokenId`. 
-   - Creates a new target called `myTokenAmount` containing the matched token amount.
-
-The following is an invalid token definition:
-- `{"id":{"name":"myTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
-
-This is because if `id` is a target (i.e., has a `name` field) then `index` must be defined.
-
-#### Strict token matching 
-
-To ensure that the matched input has exactly those tokens defined in the search criteria and nothing more, use the `Strict` flag for that input definition:
-
-```json
-"inputs": [ 
-  { 
-    "address": { ... },
-    "tokens": [ ... ],
-    "registers": [ ... ],
-    "options": ["Strict"]
-  }
-]
-```
-
-For instance, to select a box with no tokens, skip `tokens` field (or set it to empty array) and add the `Strict` option. 
-
-This option applies to tokens only.
-
-#### Order of evaluation
-Declarations are evaluated in the following order:
-- Constants
-- Computation boxes (`boxes`)  (from low to high index)
-- Data-input boxes (from low to high index) 
-- Input boxes (from low to high index)
-- Post-conditions
-- Output boxes
-- Binary Ops, Unary Ops are "Lazy" (i.e., evaluated only if needed)
-
-#### Referencing rules
-- The order of evaluation determines what can and cannot be referenced. A pointer can only refer to a target that has been evaluated previously. 
-  - Thus, a pointer in inputs can refer to a target in data-inputs, but a pointer in data-inputs cannot refer to a target in inputs.
-  - Similarly, a pointer in the second input can refer to a target in the first input, but a pointer in the first input cannot refer to a target in the second input.
-- It is not possible for a pointer to refer to a target in the same input or data-input.
-- As mentioned earlier, an output cannot contain targets. It can only contain pointers.
-
-#### Complete example
-
-The following is an example of a script to timestamp a box using the dApp described [here](https://www.ergoforum.org/t/a-trustless-timestamping-service-for-boxes/432/9?u=scalahub).
+Before describing further, it is instructive to see a complete example in action. 
+The following script is used to timestamp a box using the dApp described [here](https://www.ergoforum.org/t/a-trustless-timestamping-service-for-boxes/432/9?u=scalahub).
 ```JSON
 {
   "constants": [
@@ -335,9 +155,212 @@ The following is an example of a script to timestamp a box using the dApp descri
       "op": "Sub",
       "second": "one"
     }
+  ],
+  "fee": 2000000
+}
+```
+
+#### Protocol
+
+The above JSON maps to an instance of the [**Protocol**](compiler/model/package.scala#L13-L30) class.
+A *Protocol* is the highest level of abstraction in JDE and can be thought of as a sequence of instructions for interacting with a dApp.
+As can be seen from the source, such an instance contains the following fields: 
+- Optional sequence of `Constant` declarations, using which we can encode arbitrary values into the script.
+- Optional sequence of box definitions, `auxInputs`. 
+  These are for accessing arbitrary boxes without having to use them as data inputs (or inputs).
+- Optional sequence of box definitions, `dataInputs`, defining data-inputs of the transaction.
+- Mandatory sequence of box definitions, `inputs`, defining inputs of the transaction. 
+- Mandatory sequence of box definitions, `outputs`, defining outputs of the transaction.
+- Optional sequence of `Unary` operations, used to convert one object to another (example ErgoTree to Address).
+- Optional sequence of `Binary` operations, used to compose two objects into a third object (of same types).
+- Optional sequence of `Branch` instructions, used for run-time control-flow.
+- Optional sequence of `PostCondition` instructions which must evaluate to true.
+
+#### Declarations
+
+The next level of abstraction is a [**Declaration**](compiler/Declaration.scala). 
+
+We can classify declarations into three types:
+- **Constants**: These specify initial values. Examples:  
+  - `{"name":"myInt", "type":"int", "value":"123"}`
+  - `{"name":"myAddress", "type":"address", "value":"9fcrXXaJgrGKC8iu98Y2spstDDxNccXSR9QjbfTvtuv7vJ3NQLk"}`
+- **Box declarations**: These are used to define or search for boxes. There are four types: **Address**, **Id**, **Register**, and **Long** (see below).
+- **Instructions**: These specify binary/unary operations, post-conditions and branches:
+  - Binary Op: `{"name":"mySum", "first":"someValue", "op":"Add", "second":"otherValue"}`
+  - Unary Op: `{"name":"myErgoTree", "from":"myGroupElement", "op":"ProveDlog"}`
+  - Post-condition: `{"first":"someLong", "second":"otherLong", "op":"Ge"}`
+  - Branch: `{"name":"result", "ifTrue":"someValue", "ifFalse":"otherValue", "condition": {"first":"someLong", "second":"otherLong", "op":"Ge"} }`
+  
+See [this page](compiler/model/package.scala) for the detailed schema of all declarations and [this page](compiler/model/Enums.scala) for the enumerations used.
+
+#### Box Declarations
+
+There are four type of box declarations:
+- **Address**: The address of the box.
+- **Id**: Box Id or token Id.
+- **Register**: Register contents.
+- **Long**: NanoErgs or token quantity.
+
+#### Names and Values
+A box declaration can contain one or both of the following fields:
+- A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
+- A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
+
+The [**Long**](compiler/model/package.scala#L86-L100) declaration can have an additional field, [`filter`](compiler/model/Enums.scala#L18) (which cen be any of `Ge, Le, Gt, Lt, Ne`). 
+This field is used for matching using inequalities (example, if the number of certain tokens is greater than some value).
+
+The following are some example declarations:
+1. `{"name":"myAddress"}`
+2. `{"value":"myAddress"}`
+3. `{"name":"actualNanoErgs", "value":"someMinValue", "filter":"Ge"}`
+
+- The first defines the address `myAddress`.
+- The second references that address.
+- The third defines the (Long) value `actualNanoErgs` and references `someMinValue`.
+  An error occurs if `actualNanoErgs < someMinValue`. 
+
+#### Matching multiple addresses in one definition
+
+An [`Address`](compiler/model/package.scala#L52-L62) declaration also has the additional field, `values`. 
+We can use this to match a declaration to one of many addresses. As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
+We can match such boxes as follows:
+
+```json
+"address": {
+  "values": [
+    "epochPreparationAddress",
+    "liveEpochAddress"
   ]
 }
 ```
+
+For sanity, the  `values` field must have at least two elements. If we need to match a single address, we must instead use the `value` field as in other declarations.
+Additionally, we cannot have both fields (`value` and `values`) in the same Address declaration. 
+
+Note: when matching multiple addresses using `values`, we can use `name` to store the actual address matched:
+
+```json
+"address": {
+  "name": "actualPoolAddress",
+  "values": [
+    "epochPreparationAddress",
+    "liveEpochAddress"
+  ]
+}
+```
+
+#### Targets and Pointers
+
+For clarity, we use the following terminology when describing box declarations:
+- A declaration that defines a variable is a "target".
+- A declaration that references a variable is a "pointer".
+
+We can then rewrite the rules for box declarations as follows:
+- It can be either a target or a pointer but not both, with **Long** being the exception.
+- An input can contain both pointers and targets.
+- An output can only contain pointers.
+
+The following rules apply for pointers and targets in an input:
+- A pointer is a "search filter", i.e., used to fetch boxes from the blockchain.
+For example, in `"boxId":{"value":"myBoxId"}`, the value contained in `myBoxId` (of type `KioskCollByte`) 
+ will be used for fetching a box with that id.
+- A target maps to some data in a box that has already been fetched from the blockchain.
+For example, in `"address":{"name":"myAddress"}`, the address of the box will be stored in a variable called `myAddress`.
+
+#### Input rule
+The following rule applies for each input:
+- It must have at least one of `boxId` or `address` declarations defined.
+
+#### Token rules
+A [**Token**](compiler/model/package.scala#L102-L106) is defined as 
+`case class Token(index: Option[Int], id: Option[Id], amount: Option[Long])`. 
+The main rule to follow here is that if `index` is empty then `id` must be defined, and that too as a pointer (i.e., it must have a `value` field). 
+This is because the token index must be somehow determinable (either via an explicit `index` field or by matching the tokenId of a pointer.)
+
+To illustrate this, the following are some valid token definitions:
+1. `{"index":0, "id":{"name":"myTokenId"}, "amount":{"value":"otherTokenAmount"}}`.
+   - Matches the token at index `0` if the amount is same as that of pointer `otherTokenAmount`. 
+   - Creates a new target called `myTokenId` with the matched tokenId.
+2. `{"index":0, "id":{"name":"myTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
+   - Matches the token at index `0`
+   - Creates a new target called `myTokenId` containing the matched tokenId.
+   - Creates a new target called `myTokenAmount` containing the matched token amount.
+3. `{"id":{"value":"otherTokenId"}`. 
+   - Matches the token at some index if the tokenId is same as that of pointer `otherTokenId`.
+4. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount"}}}`. 
+   - Matches the token at some index if both conditions hold:
+     - The tokenId is the same as that of pointer `otherTokenId`. 
+     - The amount is the same as that of `otherTokenAmount`.
+5. `{"id":{"value":"otherTokenId"}, "amount":{"value":"otherTokenAmount", "filter":"Ge"}}`. 
+   - Matches the token at some index if both conditions hold:
+     - The tokenId is the same as that of pointer `otherTokenId`. 
+     - The amount is >= the value returned by `otherTokenAmount`.
+6. `{"id":{"value":"otherTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
+   - Matches the token at some index if the tokenId is the same as that of pointer `otherTokenId`. 
+   - Creates a new target called `myTokenAmount` containing the matched token amount.
+
+The following is an invalid token definition:
+- `{"id":{"name":"myTokenId"}, "amount":{"name":"myTokenAmount"}}`. 
+
+This is because if `id` is a target (i.e., has a `name` field) then `index` must be defined.
+
+#### Strict token matching 
+
+To ensure that the matched input has exactly those tokens defined in the search criteria and nothing more, use the `Strict` flag for that input definition:
+
+```json
+"inputs": [ 
+  { 
+    "address": { ... },
+    "tokens": [ ... ],
+    "registers": [ ... ],
+    "options": ["Strict"]
+  }
+]
+```
+
+For instance, to select a box with no tokens, skip `tokens` field (or set it to empty array) and add the `Strict` option. 
+
+This option applies to tokens only.
+
+#### Order of evaluation
+Declarations are evaluated in the following order:
+- Constants
+- Computation boxes (`boxes`)  (from low to high index)
+- Data-input boxes (from low to high index) 
+- Input boxes (from low to high index)
+- Post-conditions
+- Output boxes
+- Binary Ops, Unary Ops are "Lazy" (i.e., evaluated only if needed)
+
+#### Referencing rules
+- The order of evaluation determines what can and cannot be referenced. A pointer can only refer to a target that has been evaluated previously. 
+  - Thus, a pointer in inputs can refer to a target in data-inputs, but a pointer in data-inputs cannot refer to a target in inputs.
+  - Similarly, a pointer in the second input can refer to a target in the first input, but a pointer in the first input cannot refer to a target in the second input.
+- It is not possible for a pointer to refer to a target in the same input or data-input.
+- As mentioned earlier, an output cannot contain targets. It can only contain pointers.
+
+#### Internals of JDE
+
+JDE is built on top of Kiosk and each instance of a **Declaration** maps to an instance of a [`Kiosktype[_]`](../ergo/package.scala#L32-L40). Speficially:
+
+- **Address** maps to `KioskErgoTree`.
+- **Id** maps to `KioskCollByte` of size 32.
+- **Register** maps to `KioskType[_]`.
+- **Long** maps to `KioskLong`.
+
+The JDE compiler takes as input an instance of **Protocol** and outputs and instance of 
+[**CompileResult**](compiler/package.scala#L15), which contains the following details:
+
+1. A sequence of box ids called `dataInputBoxIds` to use as data inputs.
+2. A sequence of box ids called `inputBoxIds` to use as inputs. 
+3. The sum of the nanoErgs of inputs, called `inputNanoErgs`.
+4. A sequence of `(String, Long)` called `inputTokens` indicating the tokens in the inputs.
+5. A sequence of `KioskBox` called `outputs` objects containing the built outputs.
+6. An optional `Long` called `fee` indicating fee if any is specified in the script.
+
+If the outputs contain more nanoErgs or tokens than specified above, then the wallet must add its own input box ids to cover the missing funds.
+This is what happens in KioskWallet, which is a thin wrapper on JDE. 
 
 #### Using JDE in your own wallet
 
