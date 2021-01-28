@@ -238,6 +238,7 @@ trait EpochPool {
        |                       storedNewHash == epochPrepBoxOutHash &&
        |                       epochPrepBoxIn.propositionBytes != epochPrepBoxOut.propositionBytes &&
        |                       epochPrepBoxIn.R4[Long].get == epochPrepBoxOut.R4[Long].get &&
+       |                       epochPrepBoxIn.R5[Int].get == epochPrepBoxOut.R5[Int].get &&
        |                       epochPrepBoxIn.value == epochPrepBoxOut.value
        |
        |    val validUpdateBox = updateBoxIn.R4[Coll[Byte]].get == updateBoxOut.R4[Coll[Byte]].get &&
