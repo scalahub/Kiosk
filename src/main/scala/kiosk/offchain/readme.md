@@ -162,9 +162,9 @@ The following script is used to timestamp a box using the dApp described [here](
 
 #### Protocol
 
-The above JSON maps to an instance of the [**Protocol**](compiler/model/package.scala#L13-L30) class.
+Internally, the above JSON maps to an instance of the [**Protocol**](compiler/model/package.scala#L13-L30) class.
 A *Protocol* is the highest level of abstraction in JDE and can be thought of as a sequence of instructions for interacting with a dApp.
-As can be seen from the source, such an instance contains the following fields: 
+As can be seen from the source code, such an instance contains the following fields: 
 - Optional sequence of `Constant` declarations, using which we can encode arbitrary values into the script.
 - Optional sequence of box definitions, `auxInputs`. 
   These are for accessing arbitrary boxes without having to use them as data inputs (or inputs).
@@ -191,7 +191,8 @@ We can classify declarations into three types:
   - Post-condition: `{"first":"someLong", "second":"otherLong", "op":"Ge"}`
   - Branch: `{"name":"result", "ifTrue":"someValue", "ifFalse":"otherValue", "condition": {"first":"someLong", "second":"otherLong", "op":"Ge"} }`
   
-See [this page](compiler/model/package.scala) for the detailed schema of all declarations and [this page](compiler/model/Enums.scala) for the enumerations used.
+See [this page](compiler/model/package.scala) for the source code of all declarations and [this page](compiler/model/Enums.scala) for the enumerations used.
+The schema can be inferred from the source. 
 
 #### Box Declarations
 
@@ -206,7 +207,7 @@ A box declaration can contain one or both of the following fields:
 - A `name` field (i.e., the declaration defines a new variable that will be referenced elsewhere), or
 - A `value` field (i.e., the declaration references another variable that is already defined elsewhere).
 
-The [**Long**](compiler/model/package.scala#L86-L100) declaration can have an additional field, [`filter`](compiler/model/Enums.scala#L18) (which cen be any of `Ge, Le, Gt, Lt, Ne`). 
+Looking at the source of the [**Long**](compiler/model/package.scala#L86-L100) declaration, we see an additional field, [`filter`](compiler/model/Enums.scala#L18) (which cen be any of `Ge, Le, Gt, Lt, Ne`). 
 This field is used for matching using inequalities (example, if the number of certain tokens is greater than some value).
 
 The following are some example declarations:
@@ -218,36 +219,6 @@ The following are some example declarations:
 - The second references that address.
 - The third defines the (Long) value `actualNanoErgs` and references `someMinValue`.
   An error occurs if `actualNanoErgs < someMinValue`. 
-
-#### Matching multiple addresses in one definition
-
-An [`Address`](compiler/model/package.scala#L52-L62) declaration also has the additional field, `values`. 
-We can use this to match a declaration to one of many addresses. As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
-We can match such boxes as follows:
-
-```json
-"address": {
-  "values": [
-    "epochPreparationAddress",
-    "liveEpochAddress"
-  ]
-}
-```
-
-For sanity, the  `values` field must have at least two elements. If we need to match a single address, we must instead use the `value` field as in other declarations.
-Additionally, we cannot have both fields (`value` and `values`) in the same Address declaration. 
-
-Note: when matching multiple addresses using `values`, we can use `name` to store the actual address matched:
-
-```json
-"address": {
-  "name": "actualPoolAddress",
-  "values": [
-    "epochPreparationAddress",
-    "liveEpochAddress"
-  ]
-}
-```
 
 #### Targets and Pointers
 
@@ -272,7 +243,7 @@ The following rule applies for each input:
 - It must have at least one of `boxId` or `address` declarations defined.
 
 #### Token rules
-A [**Token**](compiler/model/package.scala#L102-L106) is defined as 
+A [**Token**](compiler/model/package.scala#L102-L106) is internally defined as 
 `case class Token(index: Option[Int], id: Option[Id], amount: Option[Long])`. 
 The main rule to follow here is that if `index` is empty then `id` must be defined, and that too as a pointer (i.e., it must have a `value` field). 
 This is because the token index must be somehow determinable (either via an explicit `index` field or by matching the tokenId of a pointer.)
@@ -339,6 +310,63 @@ Declarations are evaluated in the following order:
   - Similarly, a pointer in the second input can refer to a target in the first input, but a pointer in the first input cannot refer to a target in the second input.
 - It is not possible for a pointer to refer to a target in the same input or data-input.
 - As mentioned earlier, an output cannot contain targets. It can only contain pointers.
+
+#### Defining and matching multiple items
+
+There may be cases where we need to map a single variable to mutiple objects. As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
+In this case, we would prefer to use a single variable `poolAddress` to handle both values.
+
+The [`Constant`](compiler/model/package.scala#L52-L62) declaration has the additional field `values` that allows us to define multiple items, sort of like an array, but much more restricted.
+```json
+"constants": [
+  {
+    "name": "poolAddresses",
+    "type": "Address",
+    "values": [
+      "epochPreparationAddress",
+      "liveEpochAddress"
+    ]
+  }
+]
+```
+For sanity, the  `values` field must have at least two elements. If we need to define a single object, we must instead use the `value` field.
+Additionally, we cannot have both `value` and `values` fields.
+
+We can use then this to match one of many addresses as follows:
+
+```json
+"address": {
+  "value": "poolAddresses"
+}
+```
+
+Note: when matching multiple addresses, we can use `name` to store the actual address matched:
+
+```json
+"address": {
+  "name": "actualPoolAddress",
+  "value": "poolAddresses"
+}
+```
+
+#### Matching multiple inputs
+
+Each input definition matches at most one input by default. If multiple inputs are matched, the first one is selected. In order to select all matched inputs use the `Multi` option for that input definiton:
+
+```json
+"inputs": [
+  {
+    "address": { ... },
+    "tokens": [ ... ],
+    "registers": [ ... ],
+    "options": ["Multi"]
+  }
+]
+```
+
+#### The Multiple type
+
+Multiple objects defined via `Constant` or matched using the `Multi` option are internally stored as an instance of the [`Multiple` class](compiler/model/package.scala#L52-L62).
 
 #### Internals of JDE
 
