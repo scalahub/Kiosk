@@ -7,7 +7,9 @@ import scorex.crypto.hash.Blake2b256
 class EpochPoolLiveAddressSpec extends PropSpec with Matchers {
   lazy val minBoxValue = 2000000 // min value to remain AFTER paying rewards. For min value to keep BEFORE rewards, see minPoolBoxValue
   val epochPoolLive = new EpochPoolLive {}
+
   import epochPoolLive._
+
   property("Display Addresses") {
     println("minPoolBoxValue " + minPoolBoxValue)
     println(s"Live Epoch script length       : ${liveEpochErgoTree.bytes.length}")

@@ -1,12 +1,12 @@
 package kiosk.oraclepool.v1
 
 import kiosk.encoding.ScalaErgoConverters
-import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
+import kiosk.ergo.KioskType
+import kiosk.script.ScriptUtil
+
+import scala.collection.mutable.{Map => MMap}
 
 trait FixedEpochPool {
-  val env = new KioskScriptEnv()
-  val scriptCreator = new KioskScriptCreator(env)
-
   /*
         <--------------livePeriod------------><---------prepPeriod-------->
  ... ------------------------------------------------------------------------------
@@ -29,6 +29,10 @@ trait FixedEpochPool {
 
   val oracleReward: Long // Nano ergs. One reward per data point to be paid to oracle
   val minPoolBoxValue: Long // how much min must exist in oracle pool box
+
+  val env = MMap[String, KioskType[_]]()
+
+  import kiosk.script.ScriptUtil._
 
   env.setCollByte("oracleTokenId", oracleTokenId)
   env.setCollByte("poolTokenId", poolTokenId)
@@ -171,12 +175,12 @@ trait FixedEpochPool {
 
   import ScalaErgoConverters._
 
-  val liveEpochErgoTree = scriptCreator.$compile(liveEpochScript)
+  val liveEpochErgoTree = ScriptUtil.compile(env.toMap, liveEpochScript)
   env.setCollByte("liveEpochScriptBytes", liveEpochErgoTree.bytes)
-  val epochPrepErgoTree = scriptCreator.$compile(epochPrepScript)
-  val dataPointErgoTree = scriptCreator.$compile(dataPointScript)
+  val epochPrepErgoTree = ScriptUtil.compile(env.toMap, epochPrepScript)
+  val dataPointErgoTree = ScriptUtil.compile(env.toMap, dataPointScript)
   env.setCollByte("epochPrepScriptBytes", epochPrepErgoTree.bytes)
-  val poolDepositErgoTree = scriptCreator.$compile(poolDepositScript)
+  val poolDepositErgoTree = ScriptUtil.compile(env.toMap, poolDepositScript)
 
   val liveEpochAddress = getStringFromAddress(getAddressFromErgoTree(liveEpochErgoTree))
   val epochPrepAddress = getStringFromAddress(getAddressFromErgoTree(epochPrepErgoTree))

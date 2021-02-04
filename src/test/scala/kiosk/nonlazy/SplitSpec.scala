@@ -1,12 +1,11 @@
 package kiosk.nonlazy
 
-import kiosk.Box
 import kiosk.ergo.{DhtData, KioskBox, KioskCollByte, KioskInt, KioskLong}
-import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, HttpClientTesting, InputBox, SignedTransaction}
+import kiosk.nonlazy.Split.splitAddress
+import kiosk.tx.TxUtil
+import org.ergoplatform.appkit._
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
-
-import scala.util.Try
 
 class SplitSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
 
@@ -17,6 +16,9 @@ class SplitSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChec
 
   property("Not-so-lazy evaluation") {
     ergoClient.execute { implicit ctx: BlockchainContext =>
+      assert(
+        splitAddress == "2PELCgrp5nNgVKMAEky7GjT8VxL7Xsc7z7ocVcEW4e1zhKSrzwVSavg3C4AbbN2xM4vRSFQv4EVDarTChJnwg6wwEURFj5VjMv7nVpAm8jaahzZZoJJqJRHaEu2zteSzMXsYBHGsQDD5m5JPsp3hkZ8qzXcgBd29TzTfEqh9i8FnFe3X")
+
       val fee = 1500000
 
       val splitBoxToCreate = KioskBox(
@@ -49,7 +51,7 @@ class SplitSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChec
         .build()
         .convertToInputWith(dummyTxId, 0)
 
-      val splitBoxCreationTx: SignedTransaction = Box.$createTx(
+      val splitBoxCreationTx: SignedTransaction = TxUtil.createTx(
         inputBoxes = Array(customInputBox),
         dataInputs = Array[InputBox](),
         boxesToCreate = Array(splitBoxToCreate, leftBranchBoxToCreate, rightBranchBoxToCreate),
@@ -96,7 +98,7 @@ class SplitSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChec
         .build()
         .convertToInputWith(dummyTxId, 0)
 
-      Box.$createTx(
+      TxUtil.createTx(
         inputBoxes = Array(splitBox, leftBranchBox),
         dataInputs = Array[InputBox](dataBoxWithLong),
         boxesToCreate = Array(leftSelectionBox),
@@ -107,7 +109,7 @@ class SplitSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChec
         false
       )
 
-      Box.$createTx(
+      TxUtil.createTx(
         inputBoxes = Array(splitBox, rightBranchBox),
         dataInputs = Array[InputBox](dataBoxWithCollByte),
         boxesToCreate = Array(rightSelectionBox),

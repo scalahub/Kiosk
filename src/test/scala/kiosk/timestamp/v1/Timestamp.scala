@@ -1,20 +1,23 @@
 package kiosk.timestamp.v1
 
 import kiosk.encoding.ScalaErgoConverters.{getAddressFromErgoTree, getStringFromAddress}
-import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
 import scorex.crypto.hash.Blake2b256
 import kiosk.ergo._
+import kiosk.script.ScriptUtil
+
+import scala.collection.mutable.{Map => MMap}
 
 object Timestamp {
-
-  val env = new KioskScriptEnv()
-  val scriptCreator = new KioskScriptCreator(env)
 
   val buffer: Int = 5 // blocks
   val minStorageRent: Long = 1500000L
 
   val timestampScript = "sigmaProp(false)"
-  val timestampErgoTree = scriptCreator.$compile(timestampScript)
+  val timestampErgoTree = ScriptUtil.compile(Map(), timestampScript)
+
+  val env = MMap[String, KioskType[_]]()
+
+  import ScriptUtil._
 
   env.setCollByte("timestampScriptBytes", timestampErgoTree.bytes)
 
@@ -47,7 +50,7 @@ object Timestamp {
        |}
        |""".stripMargin
 
-  val emissionErgoTree = scriptCreator.$compile(emissionScript)
+  val emissionErgoTree = ScriptUtil.compile(env.toMap, emissionScript)
   val emissionScriptHash = Blake2b256(emissionErgoTree.bytes)
 
   env.setCollByte("emissionScriptHash", emissionScriptHash)
@@ -73,7 +76,7 @@ object Timestamp {
        |""".stripMargin
   val emissionAddress = getStringFromAddress(getAddressFromErgoTree(emissionErgoTree))
 
-  val masterErgoTree = scriptCreator.$compile(masterScript)
+  val masterErgoTree = ScriptUtil.compile(env.toMap, masterScript)
   val masterAddress = getStringFromAddress(getAddressFromErgoTree(masterErgoTree))
 
   def main(args: Array[String]): Unit = {

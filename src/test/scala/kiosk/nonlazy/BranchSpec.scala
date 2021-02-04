@@ -1,7 +1,8 @@
 package kiosk.nonlazy
 
-import kiosk.Box
 import kiosk.ergo.{DhtData, KioskBox, KioskCollByte, KioskInt, KioskLong}
+import kiosk.nonlazy.Branch.branchBoxAddress
+import kiosk.tx.TxUtil
 import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, HttpClientTesting, InputBox, SignedTransaction}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -17,6 +18,8 @@ class BranchSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
 
   property("Not-so-lazy evaluation") {
     ergoClient.execute { implicit ctx: BlockchainContext =>
+      assert(branchBoxAddress == "88dwYDNXcCq9UyA7VBcSdqJRgooKVqS8ixprCknxcm2sba4jbhQYGphjutEebtr3ZeC4tmT9oEWKS2Bq")
+
       val fee = 1500000
 
       val branchBoxToCreate = KioskBox(
@@ -35,7 +38,7 @@ class BranchSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         .build()
         .convertToInputWith(dummyTxId, 0)
 
-      val branchBoxCreationTx: SignedTransaction = Box.$createTx(
+      val branchBoxCreationTx: SignedTransaction = TxUtil.createTx(
         inputBoxes = Array(customInputBox),
         dataInputs = Array[InputBox](),
         boxesToCreate = Array(branchBoxToCreate),
@@ -80,7 +83,7 @@ class BranchSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         tokens = Array()
       )
 
-      Box.$createTx(
+      TxUtil.createTx(
         inputBoxes = Array(branchBox, customInputBox),
         dataInputs = Array[InputBox](dataBoxWithCollByte),
         boxesToCreate = Array(collByteSelectionBox),
@@ -94,7 +97,7 @@ class BranchSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
       // below should work ideally (with truly lazy evaluation). However, it currently fails
       assert(
         Try(
-          Box.$createTx(
+          TxUtil.createTx(
             inputBoxes = Array(branchBox, customInputBox),
             dataInputs = Array[InputBox](dataBoxWithLong),
             boxesToCreate = Array(longSelectionBox),

@@ -1,7 +1,7 @@
 package kiosk.oraclepool.v1
 
-import kiosk.Box
 import kiosk.ergo._
+import kiosk.tx.TxUtil
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.ergoplatform.appkit._
 import org.scalatest.{Matchers, PropSpec}
@@ -49,7 +49,7 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
 
       // create funding boxes
       val fundingBox1ToCreate = KioskBox(pool.poolDepositAddress, value = 2000000000, registers = Array(), tokens = Array())
-      val createNewFundingBox1Tx = Box.$createTx(Array(customInputBox1), Array[InputBox](), Array(fundingBox1ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val createNewFundingBox1Tx = TxUtil.createTx(Array(customInputBox1), Array[InputBox](), Array(fundingBox1ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val fundingBox1 = createNewFundingBox1Tx.getOutputsToSpend.get(0)
 
       // bootstrap pool (create EpochPrep box)
@@ -59,10 +59,18 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
       // collect funds
 
       // define box to spend
-      val dummyEpochPrepBox = ctx.newTxBuilder().outBoxBuilder.value(2000000000L).tokens(new ErgoToken(poolToken._1, poolToken._2)).registers(
-        r4epochPrep.getErgoValue,
-        r5epochPrep.getErgoValue
-      ).contract(new ErgoTreeContract(pool.epochPrepErgoTree)).build().convertToInputWith(dummyTxId0, 0)
+      val dummyEpochPrepBox = ctx
+        .newTxBuilder()
+        .outBoxBuilder
+        .value(2000000000L)
+        .tokens(new ErgoToken(poolToken._1, poolToken._2))
+        .registers(
+          r4epochPrep.getErgoValue,
+          r5epochPrep.getErgoValue
+        )
+        .contract(new ErgoTreeContract(pool.epochPrepErgoTree))
+        .build()
+        .convertToInputWith(dummyTxId0, 0)
 
       // define box to create
       val epochPrepBoxToCreate = KioskBox(
@@ -72,8 +80,17 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
         tokens = Array(poolToken)
       )
 
-      noException shouldBe thrownBy{
-        Box.$createTx(Array(dummyEpochPrepBox, fundingBox1, customInputBox1), Array[InputBox](), Array(epochPrepBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      noException shouldBe thrownBy {
+        TxUtil.createTx(
+          Array(dummyEpochPrepBox, fundingBox1, customInputBox1),
+          Array[InputBox](),
+          Array(epochPrepBoxToCreate),
+          fee,
+          changeAddress,
+          Array[String](),
+          Array[DhtData](),
+          false
+        )
       }
 
     }

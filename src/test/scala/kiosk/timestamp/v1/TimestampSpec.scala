@@ -1,7 +1,7 @@
 package kiosk.timestamp.v1
 
-import kiosk.Box
 import kiosk.ergo.{DhtData, KioskBox, KioskCollByte, KioskInt}
+import kiosk.tx.TxUtil
 import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, HttpClientTesting, InputBox, SignedTransaction}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -42,7 +42,7 @@ class TimestampSpec extends PropSpec with Matchers with ScalaCheckDrivenProperty
         .build()
         .convertToInputWith(dummyTxId, 0)
 
-      val bootstrapTx: SignedTransaction = Box.$createTx(
+      val bootstrapTx: SignedTransaction = TxUtil.createTx(
         inputBoxes = Array(customInputBox),
         dataInputs = Array[InputBox](),
         boxesToCreate = Array(masterBoxInToCreate),
@@ -73,7 +73,7 @@ class TimestampSpec extends PropSpec with Matchers with ScalaCheckDrivenProperty
       )
 
       val createEmissionBoxTx: SignedTransaction =
-        Box.$createTx(
+        TxUtil.createTx(
           inputBoxes = Array(masterBoxIn, customInputBox),
           dataInputs = Array[InputBox](),
           boxesToCreate = Array(masterBoxOutToCreate, emissionBoxInToCreate),
@@ -116,7 +116,7 @@ class TimestampSpec extends PropSpec with Matchers with ScalaCheckDrivenProperty
       )
 
       val createTimestampTx: SignedTransaction =
-        Box.$createTx(
+        TxUtil.createTx(
           inputBoxes = Array(emissionBoxIn, customInputBox),
           dataInputs = Array[InputBox](boxToTimestamp),
           boxesToCreate = Array(emissionBoxOutToCreate, timestampBoxToCreate),
@@ -137,7 +137,7 @@ class TimestampSpec extends PropSpec with Matchers with ScalaCheckDrivenProperty
 
       val timestampBox = createTimestampTx.getOutputsToSpend.get(1)
 
-      Box.$createTx(
+      TxUtil.createTx(
         inputBoxes = Array(masterBoxOut, customInputBox),
         dataInputs = Array[InputBox](),
         boxesToCreate = Array(masterBox2OutToCreate, emissionBoxInToCreate),
@@ -149,7 +149,7 @@ class TimestampSpec extends PropSpec with Matchers with ScalaCheckDrivenProperty
       )
 
       val tried = Try(
-        Box.$createTx(
+        TxUtil.createTx(
           inputBoxes = Array(masterBoxOut, timestampBox, customInputBox),
           dataInputs = Array[InputBox](),
           boxesToCreate = Array(masterBox2OutToCreate, emissionBoxInToCreate),

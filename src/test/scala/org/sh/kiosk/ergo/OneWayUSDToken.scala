@@ -1,12 +1,14 @@
 package org.sh.kiosk.ergo
 
-import kiosk.ECC
+import kiosk.ErgoUtil
 import kiosk.ergo.{KioskErgoTree, _}
-import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
+import kiosk.script.ScriptUtil
 import org.ergoplatform.Pay2SAddress
 import scorex.crypto.hash.Blake2b256
 
-object OneWayUSDToken extends App {
+import scala.collection.mutable.{Map => MMap}
+
+trait OneWayUSDToken {
   /* using the description at https://www.ergoforum.org/t/tethering-a-token-to-usd-using-the-rate-oracle/118/4
 
 Bob can create a “token box” with a large number of “USD tokens” that can be exchanged for Ergs at the current rate in USD/Erg. The contract in the token box only allows changing Ergs to tokens and not the other way round.
@@ -21,17 +23,6 @@ To accept tokens in lieu of USD at 1:1 rate.
 Bob only sells those tokens via the token box whose code is given in the contract below.
 
    */
-  val rateOracleTokenID:Array[Byte] = Blake2b256("rate").toArray // To use the correct id in real world
-
-  val env = new KioskScriptEnv
-  env.setCollByte("rateTokenID", rateOracleTokenID)
-
-  // lender
-  val bobPrivateKey = ECC.$randBigInt
-  val bob = ECC.$gX(bobPrivateKey)
-
-  env.setGroupElement("bob", bob)
-
   val source =
     """{
       |  val newSelf = OUTPUTS(0) // new box created as a replica of current box
@@ -63,21 +54,4 @@ Bob only sells those tokens via the token box whose code is given in the contrac
       |  tokenDiff <= usdCDiff && validRateBox && validNewSelf && validBobBox
       |}""".stripMargin
 
-  val ergoCompiler = new KioskScriptCreator(env) {}
-
-  val ergoTree = ergoCompiler.$compile(source)
-
-  val serializedScript = {
-    env.$envMap.map{
-      case (keyword, value) =>
-        keyword + " = " + value.serialize.encodeHex
-    }.toArray ++ Array(
-      KioskErgoTree(ergoTree).hex.grouped(120).mkString("\n")
-    )
-  }
-
-  import KioskScriptCreator.$ergoAddressEncoder
-
-  println("Bobs address: "+Pay2SAddress(ergoTree))
 }
-

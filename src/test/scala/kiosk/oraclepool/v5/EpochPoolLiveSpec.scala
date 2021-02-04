@@ -1,8 +1,9 @@
 package kiosk.oraclepool.v5
 
+import kiosk.ErgoUtil
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
-import kiosk.{Box, ECC}
+import kiosk.tx.TxUtil
 import org.ergoplatform.appkit._
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -60,7 +61,7 @@ class EpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenProp
         .build()
         .convertToInputWith(dummyTxId, 0)
 
-      val poolBootStrapTx: SignedTransaction = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(epochPrepBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val poolBootStrapTx: SignedTransaction = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(epochPrepBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val epochPrepBox: InputBox = poolBootStrapTx.getOutputsToSpend.get(0)
 
       // create new epoch
@@ -75,16 +76,16 @@ class EpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenProp
         tokens = Array(poolToken)
       )
 
-      val createNewEpochTx = Box.$createTx(Array(epochPrepBox, customInputBox), Array[InputBox](), Array(liveEpochBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val createNewEpochTx = TxUtil.createTx(Array(epochPrepBox, customInputBox), Array[InputBox](), Array(liveEpochBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val liveEpochBox = createNewEpochTx.getOutputsToSpend.get(0)
 
       // create oracle boxes
       import ScalaErgoConverters._
-      val r4oracle0 = KioskGroupElement(stringToGroupElement(ECC.addressToGroupElement(pool.addresses(0))))
-      val r4oracle1 = KioskGroupElement(stringToGroupElement(ECC.addressToGroupElement(pool.addresses(1))))
-      val r4oracle2 = KioskGroupElement(stringToGroupElement(ECC.addressToGroupElement(pool.addresses(2))))
-      val r4oracle3 = KioskGroupElement(stringToGroupElement(ECC.addressToGroupElement(pool.addresses(3))))
-      val r4oracle4 = KioskGroupElement(stringToGroupElement(ECC.addressToGroupElement(pool.addresses(4))))
+      val r4oracle0 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(0))))
+      val r4oracle1 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(1))))
+      val r4oracle2 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(2))))
+      val r4oracle3 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(3))))
+      val r4oracle4 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(4))))
       val r5oracle = KioskCollByte(Array(0x01))
 
       val oracle0Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle0, r5oracle), tokens = Array(oracleToken))
@@ -93,19 +94,19 @@ class EpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenProp
       val oracle3Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle3, r5oracle), tokens = Array(oracleToken))
       val oracle4Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle4, r5oracle), tokens = Array(oracleToken))
 
-      val bootStrapOracle0Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(oracle0Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val bootStrapOracle0Tx = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(oracle0Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val oracleBox0ToSpend = bootStrapOracle0Tx.getOutputsToSpend.get(0)
 
-      val bootStrapOracle1Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(oracle1Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val bootStrapOracle1Tx = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(oracle1Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val oracleBox1ToSpend = bootStrapOracle1Tx.getOutputsToSpend.get(0)
 
-      val bootStrapOracle2Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(oracle2Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val bootStrapOracle2Tx = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(oracle2Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val oracleBox2ToSpend = bootStrapOracle2Tx.getOutputsToSpend.get(0)
 
-      val bootStrapOracle3Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(oracle3Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val bootStrapOracle3Tx = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(oracle3Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val oracleBox3ToSpend = bootStrapOracle3Tx.getOutputsToSpend.get(0)
 
-      val bootStrapOracle4Tx = Box.$createTx(Array(customInputBox), Array[InputBox](), Array(oracle4Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val bootStrapOracle4Tx = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(oracle4Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val oracleBox4ToSpend = bootStrapOracle4Tx.getOutputsToSpend.get(0)
 
       val r5dataPoint = KioskCollByte(liveEpochBox.getId.getBytes)
@@ -164,7 +165,7 @@ class EpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenProp
           registers = Array(r4dataPoint, r5dataPoint, r6dataPoint),
           tokens = Array(oracleToken)
         )
-        val createDataPointTx = Box.$createTx(
+        val createDataPointTx = TxUtil.createTx(
           Array(dataPointBox, customInputBox),
           Array(liveEpochBox),
           Array(commitBoxToCreate),
@@ -209,7 +210,7 @@ class EpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenProp
         }
         rewardBoxes(0) = rewardBoxes(0).copy(registers = Array(KioskInt(myIndex)))
 
-        Box.$createTx(
+        TxUtil.createTx(
           Array(liveEpochBox, customInputBox),
           dataPointBoxesSorted,
           Array(epoch1PrepBoxToCreate) ++ rewardBoxes ++ Array(change),

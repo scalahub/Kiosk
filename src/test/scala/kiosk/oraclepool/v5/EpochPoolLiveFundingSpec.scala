@@ -1,7 +1,7 @@
 package kiosk.oraclepool.v5
 
-import kiosk.Box
 import kiosk.ergo._
+import kiosk.tx.TxUtil
 import org.ergoplatform.appkit._
 import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.scalatest.{Matchers, PropSpec}
@@ -36,7 +36,7 @@ class EpochPoolLiveFundingSpec extends PropSpec with Matchers with ScalaCheckDri
 
       // create funding boxes
       val fundingBox1ToCreate = KioskBox(pool.poolDepositAddress, value = 2000000000, registers = Array(), tokens = Array())
-      val createNewFundingBox1Tx = Box.$createTx(Array(customInputBox1), Array[InputBox](), Array(fundingBox1ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val createNewFundingBox1Tx = TxUtil.createTx(Array(customInputBox1), Array[InputBox](), Array(fundingBox1ToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val fundingBox1 = createNewFundingBox1Tx.getOutputsToSpend.get(0)
 
       // bootstrap pool (create EpochPrep box)
@@ -71,7 +71,7 @@ class EpochPoolLiveFundingSpec extends PropSpec with Matchers with ScalaCheckDri
       val dummyInputBox = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId1, 0)
 
       noException shouldBe thrownBy {
-        Box.$createTx(
+        TxUtil.createTx(
           Array(dummyEpochPrepBox, fundingBox1, dummyInputBox),
           Array[InputBox](),
           Array(epochPrepBoxToCreate),

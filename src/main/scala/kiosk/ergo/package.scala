@@ -1,9 +1,8 @@
 package kiosk
 
-import org.apache.commons.codec.binary.Hex
+import org.bouncycastle.util.encoders.Hex
 import org.ergoplatform.appkit.{ErgoType, ErgoValue}
-import org.json.JSONObject
-import org.sh.utils.json.JSONUtil.JsonFormatted
+import play.api.libs.json.{JsString, JsValue, Json, Writes}
 import sigmastate.SGroupElement
 import sigmastate.Values.{ByteArrayConstant, CollectionConstant, ErgoTree}
 import sigmastate.basics.SecP256K1
@@ -14,17 +13,18 @@ import special.collection.Coll
 import special.sigma
 import special.sigma.GroupElement
 
+import scala.io.BufferedSource
 import scala.util.Try
 
 package object ergo {
   class BetterString(string: String) {
-    def decodeHex = Hex.decodeHex(string)
+    def decodeHex = Hex.decode(string)
   }
 
   implicit def ByteArrayToBetterByteArray(bytes: Array[Byte]) = new BetterByteArray(bytes)
 
   class BetterByteArray(bytes: Seq[Byte]) {
-    def encodeHex: String = Hex.encodeHexString(bytes.toArray).toLowerCase
+    def encodeHex: String = Hex.toHexString(bytes.toArray).toLowerCase
   }
 
   implicit def StringToBetterString(string: String) = new BetterString(string)
@@ -88,15 +88,20 @@ package object ergo {
   case class KioskErgoTree(value: ErgoTree) extends KioskType[ErgoTree] {
     override val serialize: Array[Byte] = DefaultSerializer.serializeErgoTree(value)
     override val typeName: String = "ErgoTree"
+
     override def getErgoValue = ??? // should never be needed
     override def toString: ID = "<ergo tree>"
   }
 
   implicit def groupElementToKioskGroupElement(g: GroupElement) = KioskGroupElement(g)
 
-  case class DhtData(g: GroupElement, h: GroupElement, u: GroupElement, v: GroupElement, x: BigInt) extends JsonFormatted {
-    val keys = Array("g", "h", "u", "v")
-    val vals = Array(g.hex, h.hex, u.hex, v.hex)
+  private implicit val writesGroupElement = new Writes[GroupElement] {
+    override def writes(o: GroupElement): JsValue = new JsString(o.hex)
+  }
+  private implicit val writesDhtData = Json.writes[DhtData]
+
+  case class DhtData(g: GroupElement, h: GroupElement, u: GroupElement, v: GroupElement, x: BigInt) {
+    override def toString = Json.toJson(this).toString()
   }
 
   type ID = String
@@ -105,36 +110,19 @@ package object ergo {
   type Token = (ID, Amount)
   type Tokens = Array[Token]
 
-  def regs2Json(registers: Array[KioskType[_]]) = {
-    var ctr = 4
-    registers.map { register =>
-      val jo = new JSONObject()
-      val name = s"R$ctr"
-      jo.put(name, register.serialize.encodeHex)
-      jo.put("type", register.typeName)
-      ctr += 1
-      jo
-    }
-  }
-
-  def tokens2Json(tokens: Tokens) = {
-    var ctr = 0
-    tokens.map { token =>
-      val jo = new JSONObject()
-      val (id, amount) = token
-      jo.put("index", ctr)
-      jo.put("id", id)
-      jo.put("amount", amount)
-      ctr += 1
-      jo
-    }
-  }
-
   def decodeBigInt(encoded: String): BigInt = Try(BigInt(encoded, 10)).recover { case ex => BigInt(encoded, 16) }.get
 
-  case class KioskBox(address: String, value: Long, registers: Array[KioskType[_]], tokens: Tokens, optBoxId: Option[String] = None, spentTxId: Option[String] = None) extends JsonFormatted {
-    val keys = Array[String]("address", "value", "registers", "tokens", "boxId", "spentTxId")
-    val vals = Array[Any](address, value, regs2Json(registers), tokens2Json(tokens), optBoxId.getOrElse("none"), spentTxId.getOrElse("none"))
+  private implicit val writesKioskType = new Writes[KioskType[_]] {
+    override def writes(o: KioskType[_]): JsValue = JsString(o.toString)
   }
+  private implicit val writesKioskBox = Json.writes[KioskBox]
+
+  case class KioskBox(address: String, value: Long, registers: Array[KioskType[_]], tokens: Tokens, optBoxId: Option[String] = None, spentTxId: Option[String] = None) {
+    override def toString = Json.toJson(this).toString()
+  }
+
+  def usingSource[B](param: BufferedSource)(f: BufferedSource => B): B =
+    try f(param)
+    finally param.close
 
 }

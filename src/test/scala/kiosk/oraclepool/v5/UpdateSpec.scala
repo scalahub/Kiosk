@@ -1,8 +1,8 @@
 package kiosk.oraclepool.v5
 
-import kiosk.Box
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
+import kiosk.tx.TxUtil
 import org.ergoplatform.appkit._
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -91,7 +91,7 @@ class UpdateSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         tokens = Array(epochPool.updateNFT.encodeHex -> 1L)
       )
 
-      Box.$createTx(
+      TxUtil.createTx(
         inputBoxes = Array(epochPrepBoxIn, updateBoxIn, dummyFundingBox),
         dataInputs = Array(),
         boxesToCreate = Array(epochPrepBoxOut, updateBoxOut),

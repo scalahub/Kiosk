@@ -1,9 +1,8 @@
 package kiosk.encoding
 
 import java.math.BigInteger
-
 import kiosk.ergo._
-import kiosk.script.KioskScriptCreator
+import kiosk.script.ScriptUtil
 import org.ergoplatform.ErgoAddress
 import sigmastate.Values.{ConstantNode, ErgoTree}
 import sigmastate._
@@ -28,11 +27,11 @@ object ScalaErgoConverters {
 
   def ergoTreeToString(tree: ErgoTree): String = KioskErgoTree(tree).hex
 
-  def getAddressFromErgoTree(ergoTree: ErgoTree) = KioskScriptCreator.$ergoAddressEncoder.fromProposition(ergoTree).get
+  def getAddressFromErgoTree(ergoTree: ErgoTree) = ScriptUtil.ergoAddressEncoder.fromProposition(ergoTree).get
 
-  def getStringFromAddress(ergoAddress: ErgoAddress): String = KioskScriptCreator.$ergoAddressEncoder.toString(ergoAddress)
+  def getStringFromAddress(ergoAddress: ErgoAddress): String = ScriptUtil.ergoAddressEncoder.toString(ergoAddress)
 
-  def getAddressFromString(string: String) = Try(KioskScriptCreator.$ergoAddressEncoder.fromString(string).get).getOrElse(throw new Exception(s"Invalid address [$string]"))
+  def getAddressFromString(string: String) = Try(ScriptUtil.ergoAddressEncoder.fromString(string).get).getOrElse(throw new Exception(s"Invalid address [$string]"))
 
   def deserialize(hex: String): KioskType[_] = {
     val bytes = hex.decodeHex

@@ -1,27 +1,33 @@
 package kiosk.oraclepool.v4b
 
 import kiosk.encoding.ScalaErgoConverters
-import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
+import kiosk.ergo.KioskType
+import kiosk.script.ScriptUtil
 import scorex.crypto.hash.Blake2b256
 import sigmastate.Values
 
-trait FixedEpochPool {
-  val env = new KioskScriptEnv()
-  val scriptCreator = new KioskScriptCreator(env)
+import scala.collection.mutable.{Map => MMap}
 
+trait FixedEpochPool {
   // constants
   def livePeriod: Int // blocks
   def prepPeriod: Int // blocks
   val epochPeriod: Int = livePeriod + prepPeriod
+
   def buffer: Int // blocks
   def maxDeviation: Int // percent 0 to 100 (what the first and last data point should differ max by)
   def minOracleBoxes: Int // percent 0 to 100
 
   def oracleTokenId: Array[Byte]
+
   def poolTokenId: Array[Byte]
 
   def oracleReward: Long // Nano ergs. One reward per data point to be paid to oracle
   def minPoolBoxValue: Long // how much min must exist in oracle pool box
+
+  val env = MMap[String, KioskType[_]]()
+
+  import kiosk.script.ScriptUtil._
 
   env.setCollByte("oracleTokenId", oracleTokenId)
   env.setCollByte("poolTokenId", poolTokenId)
@@ -180,12 +186,12 @@ trait FixedEpochPool {
 
   import ScalaErgoConverters._
 
-  val liveEpochErgoTree: Values.ErgoTree = scriptCreator.$compile(liveEpochScript)
+  val liveEpochErgoTree: Values.ErgoTree = ScriptUtil.compile(env.toMap, liveEpochScript)
   env.setCollByte("liveEpochScriptHash", Blake2b256(liveEpochErgoTree.bytes))
-  val epochPrepErgoTree: Values.ErgoTree = scriptCreator.$compile(epochPrepScript)
-  val dataPointErgoTree: Values.ErgoTree = scriptCreator.$compile(dataPointScript)
+  val epochPrepErgoTree: Values.ErgoTree = ScriptUtil.compile(env.toMap, epochPrepScript)
+  val dataPointErgoTree: Values.ErgoTree = ScriptUtil.compile(env.toMap, dataPointScript)
   env.setCollByte("epochPrepScriptHash", Blake2b256(epochPrepErgoTree.bytes))
-  val poolDepositErgoTree: Values.ErgoTree = scriptCreator.$compile(poolDepositScript)
+  val poolDepositErgoTree: Values.ErgoTree = ScriptUtil.compile(env.toMap, poolDepositScript)
 
   val liveEpochAddress: String = getStringFromAddress(getAddressFromErgoTree(liveEpochErgoTree))
   val epochPrepAddress: String = getStringFromAddress(getAddressFromErgoTree(epochPrepErgoTree))
