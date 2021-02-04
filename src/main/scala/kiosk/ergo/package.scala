@@ -95,10 +95,10 @@ package object ergo {
 
   implicit def groupElementToKioskGroupElement(g: GroupElement) = KioskGroupElement(g)
 
-  private implicit val writesGroupElement = new Writes[GroupElement] {
+  implicit val writesGroupElement = new Writes[GroupElement] {
     override def writes(o: GroupElement): JsValue = new JsString(o.hex)
   }
-  private implicit val writesDhtData = Json.writes[DhtData]
+  implicit val writesDhtData = Json.writes[DhtData]
 
   case class DhtData(g: GroupElement, h: GroupElement, u: GroupElement, v: GroupElement, x: BigInt) {
     override def toString = Json.toJson(this).toString()
@@ -112,10 +112,10 @@ package object ergo {
 
   def decodeBigInt(encoded: String): BigInt = Try(BigInt(encoded, 10)).recover { case ex => BigInt(encoded, 16) }.get
 
-  private implicit val writesKioskType = new Writes[KioskType[_]] {
+  implicit val writesKioskType = new Writes[KioskType[_]] {
     override def writes(o: KioskType[_]): JsValue = JsString(o.toString)
   }
-  private implicit val writesKioskBox = Json.writes[KioskBox]
+  implicit val writesKioskBox = Json.writes[KioskBox]
 
   case class KioskBox(address: String, value: Long, registers: Array[KioskType[_]], tokens: Tokens, optBoxId: Option[String] = None, spentTxId: Option[String] = None) {
     override def toString = Json.toJson(this).toString()
