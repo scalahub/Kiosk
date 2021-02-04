@@ -16,7 +16,7 @@ class Explorer {
     getBoxFromJson(Curl.get(boxUrl + boxId))
   }
 
-  def getHeight: Int = Client.usingClient(_.getHeight)
+  def getHeight: Int = Client.usingContext(_.getHeight)
 
   private def getBoxFromJson(j: Json): KioskBox = {
     val id = (j \\ "id").map(v => v.asString.get).apply(0)
