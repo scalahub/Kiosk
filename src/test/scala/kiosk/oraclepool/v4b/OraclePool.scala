@@ -1,4 +1,4 @@
-package kiosk.oraclepool.v4a
+package kiosk.oraclepool.v4b
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo.KioskType
@@ -8,7 +8,7 @@ import sigmastate.Values
 
 import scala.collection.mutable.{Map => MMap}
 
-trait FixedEpochPool {
+trait OraclePool {
   // constants
   def livePeriod: Int // blocks
   def prepPeriod: Int // blocks

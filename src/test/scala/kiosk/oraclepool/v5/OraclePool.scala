@@ -8,7 +8,7 @@ import sigmastate.Values
 
 import scala.collection.mutable.{Map => MMap}
 
-trait EpochPool {
+trait OraclePool {
   // constants
   def livePeriod: Int // blocks
   def prepPeriod: Int // blocks

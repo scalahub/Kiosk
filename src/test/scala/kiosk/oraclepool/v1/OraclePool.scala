@@ -6,7 +6,7 @@ import kiosk.script.ScriptUtil
 
 import scala.collection.mutable.{Map => MMap}
 
-trait FixedEpochPool {
+trait OraclePool {
   /*
         <--------------livePeriod------------><---------prepPeriod-------->
  ... ------------------------------------------------------------------------------

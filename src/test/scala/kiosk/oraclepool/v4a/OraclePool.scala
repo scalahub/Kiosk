@@ -1,4 +1,4 @@
-package kiosk.oraclepool.v3
+package kiosk.oraclepool.v4a
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo.KioskType
@@ -8,25 +8,15 @@ import sigmastate.Values
 
 import scala.collection.mutable.{Map => MMap}
 
-trait FixedEpochPool {
-  /*
-        <--------------livePeriod------------><---------prepPeriod-------->
- ... ------------------------------------------------------------------------------
-        ^                                     ^                           ^
-        |                                     |                           |
-        epoch start                           epoch end                   epoch preparation end
-                                              (epoch preparation start)   (next epoch start)
-
-
-   */
-
+trait OraclePool {
   // constants
   def livePeriod: Int // blocks
   def prepPeriod: Int // blocks
   val epochPeriod: Int = livePeriod + prepPeriod
 
   def buffer: Int // blocks
-  def errorMargin: Int // percent 0 to 100
+  def maxDeviation: Int // percent 0 to 100 (what the first and last data point should differ max by)
+  def minOracleBoxes: Int // percent 0 to 100
 
   def oracleTokenId: Array[Byte]
 
@@ -44,9 +34,6 @@ trait FixedEpochPool {
   env.setLong("minPoolBoxValue", minPoolBoxValue)
   env.setLong("oracleReward", oracleReward)
 
-  require(errorMargin > 0)
-  require(errorMargin < 100)
-
   val liveEpochScript: String =
     s"""{ // This box:
        |  // R4: The latest finalized datapoint (from the previous epoch)
@@ -58,40 +45,50 @@ trait FixedEpochPool {
        |  // R5: Epoch box Id (this box's Id)
        |  // R6: Data point
        |
-       |  val oldDatapoint = SELF.R4[Long].get
-       |  val delta = oldDatapoint / 100 * $errorMargin
-       |  val minDatapoint = oldDatapoint - delta
-       |  val maxDatapoint = oldDatapoint + delta
        |
        |  val oracleBoxes = CONTEXT.dataInputs.filter{(b:Box) =>
        |    b.R5[Coll[Byte]].get == SELF.id &&
-       |    b.tokens(0)._1 == oracleTokenId &&
-       |    b.R6[Long].get >= minDatapoint &&
-       |    b.R6[Long].get <= maxDatapoint
+       |    b.tokens(0)._1 == oracleTokenId
        |  }
        |
-       |  val pubKey = oracleBoxes.map{(b:Box) => proveDlog(b.R4[GroupElement].get)}(0)
+       |  val pubKey = oracleBoxes.map{(b:Box) => proveDlog(b.R4[GroupElement].get)}(OUTPUTS(1).R4[Int].get)
        |
        |  val sum = oracleBoxes.fold(0L, { (t:Long, b: Box) => t + b.R6[Long].get })
        |
-       |  val average = sum / oracleBoxes.size // do we need to check for division by zero here?
+       |  val average = sum / oracleBoxes.size
        |
-       |  val oracleRewardOutputs = oracleBoxes.fold((1, true), { (t:(Int, Boolean), b:Box) =>
-       |    (t._1 + 1, t._2 &&
-       |               OUTPUTS(t._1).propositionBytes == proveDlog(b.R4[GroupElement].get).propBytes &&
-       |               OUTPUTS(t._1).value >= $oracleReward)
-       |  })
+       |  val firstOracleDataPoint = oracleBoxes(0).R6[Long].get
+       |
+       |  def getPrevOracleDataPoint(index:Int) = if (index <= 0) firstOracleDataPoint else oracleBoxes(index - 1).R6[Long].get
+       |
+       |  val rewardAndDeviationCheck = oracleBoxes.fold((1, true), {
+       |      (t:(Int, Boolean), b:Box) =>
+       |         val currOracleDataPoint = b.R6[Long].get
+       |         val prevOracleDataPoint = getPrevOracleDataPoint(t._1 - 1)
+       |
+       |         (t._1 + 1, t._2 &&
+       |                    OUTPUTS(t._1).propositionBytes == proveDlog(b.R4[GroupElement].get).propBytes &&
+       |                    OUTPUTS(t._1).value >= $oracleReward &&
+       |                    prevOracleDataPoint >= currOracleDataPoint
+       |         )
+       |     }
+       |  )
+       |
+       |  val lastDataPoint = getPrevOracleDataPoint(rewardAndDeviationCheck._1 - 1)
+       |  val firstDataPoint = oracleBoxes(0).R6[Long].get
+       |  val delta = firstDataPoint * $maxDeviation / 100
        |
        |  val epochPrepScriptHash = SELF.R6[Coll[Byte]].get
        |
        |  sigmaProp(
        |    blake2b256(OUTPUTS(0).propositionBytes) == epochPrepScriptHash &&
-       |    oracleBoxes.size > 0 &&
+       |    oracleBoxes.size >= $minOracleBoxes &&
        |    OUTPUTS(0).tokens == SELF.tokens &&
        |    OUTPUTS(0).R4[Long].get == average &&
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get + $epochPeriod &&
        |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * $oracleReward &&
-       |    oracleRewardOutputs._2
+       |    rewardAndDeviationCheck._2 &&
+       |    lastDataPoint >= firstDataPoint - delta
        |  ) && pubKey
        |}
        |""".stripMargin

@@ -33,12 +33,12 @@ class UpdateSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
       val scCircIn = 1L
       val rcCircIn = 4380000L
 
-      val epochPool = new EpochPoolLive {}
-      val newEpochPool = new EpochPoolLive {
+      val epochPool = new OraclePoolLive {}
+      val newOraclePool = new OraclePoolLive {
         override lazy val maxNumOracles = 13
       }
 
-      require(epochPool.epochPrepAddress != newEpochPool.epochPrepAddress)
+      require(epochPool.epochPrepAddress != newOraclePool.epochPrepAddress)
       // dummy custom input box for funding various transactions
       val dummyFundingBox = ctx
         .newTxBuilder()
@@ -64,13 +64,13 @@ class UpdateSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
 
       // new pool box
       val epochPrepBoxOut = KioskBox(
-        newEpochPool.epochPrepAddress,
+        newOraclePool.epochPrepAddress,
         value = epochPrepBoxIn.getValue,
         registers = Array(KioskLong(100), KioskInt(100)),
         tokens = Array(epochPool.poolNFT.encodeHex -> 1L)
       )
 
-      val updatedPoolScriptHash = KioskCollByte(Blake2b256(newEpochPool.epochPrepErgoTree.bytes))
+      val updatedPoolScriptHash = KioskCollByte(Blake2b256(newOraclePool.epochPrepErgoTree.bytes))
 
       // old update box
       val updateBoxIn = ctx

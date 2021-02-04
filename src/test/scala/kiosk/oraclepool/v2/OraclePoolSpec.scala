@@ -1,21 +1,22 @@
-package kiosk.oraclepool.v1
+package kiosk.oraclepool.v2
 
 import kiosk.ErgoUtil
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
 import kiosk.tx.TxUtil
-import org.ergoplatform.appkit._
+import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, HttpClientTesting, InputBox, SignedTransaction}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+import scorex.crypto.hash.Blake2b256
 
-class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
+class OraclePoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
 
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
 
   property("One complete epoch") {
 
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val pool = new FixedEpochPool {
+      val pool = new OraclePool {
         val minBoxValue = 2000000
         override lazy val livePeriod = 4 // blocks
         override lazy val prepPeriod = 4 // blocks
@@ -50,18 +51,6 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       val poolToken = (pool.poolToken, 1L)
       val oracleToken = (pool.oracleToken, 1L)
 
-      val dummyPoolToken = new ErgoToken(pool.poolToken, 10000)
-      val dummyOracleToken = new ErgoToken(pool.oracleToken, 10000)
-      // dummy custom input box for funding various transactions
-      val customInputBox = ctx
-        .newTxBuilder()
-        .outBoxBuilder
-        .value(10000000000000L)
-        .tokens(dummyOracleToken, dummyPoolToken)
-        .contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript))
-        .build()
-        .convertToInputWith(dummyTxId, 0)
-
       // bootstrap pool (create EpochPrep box)
       val r4epochPrep = KioskLong(1) // dummy data point
       val r5epochPrep = KioskInt(20000) // end height of epoch
@@ -73,13 +62,24 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         tokens = Array(poolToken)
       )
 
+      val dummyPoolToken = new ErgoToken(pool.poolToken, 10000)
+      val dummyOracleToken = new ErgoToken(pool.oracleToken, 10000)
+      val customInputBox = ctx
+        .newTxBuilder()
+        .outBoxBuilder
+        .value(10000000000000L)
+        .tokens(dummyOracleToken, dummyPoolToken)
+        .contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript))
+        .build()
+        .convertToInputWith(dummyTxId, 0)
+
       val poolBootStrapTx: SignedTransaction = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(epochPrepBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val epochPrepBox: InputBox = poolBootStrapTx.getOutputsToSpend.get(0)
 
       // create new epoch
       val r4liveEpoch = r4epochPrep
       val r5liveEpoch = KioskInt(ctx.getHeight + pool.epochPeriod + pool.buffer) // end height of epoch
-      val r6liveEpoch = KioskCollByte(pool.epochPrepErgoTree.bytes)
+      val r6liveEpoch = KioskCollByte(Blake2b256(pool.epochPrepErgoTree.bytes))
 
       val liveEpochBoxToCreate = KioskBox(
         pool.liveEpochAddress,
@@ -141,20 +141,18 @@ class FixedEpochPoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey)
       )
 
-      // collect two dataPoints
+      // collect one dataPoints
       val dataPointInfo2 = Array(
         (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey),
         (oracleBox2ToSpend, r4oracle2, r6dataPoint2, pool.addresses(2), pool.oracle2PrivateKey),
       )
 
-      // collect three dataPoints
       val dataPointInfo3 = Array(
         (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),
         (oracleBox2ToSpend, r4oracle2, r6dataPoint2, pool.addresses(2), pool.oracle2PrivateKey),
         (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey)
       )
 
-      // collect all dataPoints
       val dataPointInfoAll = Array(
         (oracleBox0ToSpend, r4oracle0, r6dataPoint0, pool.addresses(0), pool.oracle0PrivateKey),
         (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),

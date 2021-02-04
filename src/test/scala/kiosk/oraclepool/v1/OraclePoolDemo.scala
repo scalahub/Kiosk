@@ -3,7 +3,7 @@ package kiosk.oraclepool.v1
 import kiosk.ergo._
 import org.scalatest.{Matchers, PropSpec}
 
-class FixedEpochPoolDemo extends PropSpec with FixedEpochPool with Matchers {
+class OraclePoolDemo extends PropSpec with OraclePool with Matchers {
   val minBoxValue = 2000000
   override lazy val livePeriod = 5 // blocks
   override lazy val prepPeriod = 5 // blocks
@@ -38,7 +38,7 @@ class FixedEpochPoolDemo extends PropSpec with FixedEpochPool with Matchers {
     println("dataPointAddress: " + dataPointAddress)
     println("poolDepositAddress: " + poolDepositAddress)
     println("EpochPrepErgoTree: (for R6) " + KioskErgoTree(epochPrepErgoTree).serialize.encodeHex)
-    println("minPoolBoxValue: "+minPoolBoxValue)
+    println("minPoolBoxValue: " + minPoolBoxValue)
 
     liveEpochAddress shouldEqual "25JND1NjgzRvw6U2odqUSgakbLnnogZr2KyaWkasuv72cpWUVJin8xd17by19DqcumVWGVrTeyT9P6u52snd4XNXLgU1hkBJedGKXz14ujnLUiyjd5ddn3JY5qyHGKRrx47qzxtjLms4ykFZPU6VkTt7vjKXh3JUeaAwzWMdqZnC8jzYvC464Sy2yv5VVBb7RyPeo152U4xHu6XexspKLRDKUWmPWzrQJw4sRWy97Zkf9iGmHJngoq9UjETb3u4qigKdYZ1k8UAFrM5Xdq4EW2FVbjnbkJMt6Afb3zyTThmSMzfdw9gyym823qZHHQEtq5bs7zLcC9oTTC7uB5MLagrkD9SRAA6VNPSfQ8o1vo7Te4YHpV1tTghFURD154aUYf9rZAQWXLMSgPx2k2mBS6BxbkFZ7UZH6xgA9j6zLEix9BT7BCg34sqsx"
     epochPrepAddress shouldEqual "eqVbENamPw1TX46pzL2LD4nkTeKDFCUWxEp943WCeoF734kwCD6RVMHpCwFQ58AF8Fo5CpkE9QgyL6Tqi4KeSu3qzh8oFDNasT1VXbeoFrbg44LY2qbgbGtMwHna6d3xNsyfYBy1a2QBG3oZDoFHLyN3tsThU8FqKufWuLjwuAw1KkuV6drbTdZVQzU9QbPBqDL4pHVhAs2b6qKiygc4Rigfkta5uaLmBHTq6Pv1ZkP1ZQnUbge3npo6ccAhoY89Scte2SssFxtsDfC7fmNnaFvXxwyxF2fAmmz4oL62EBVnXk8184MDx9t5sj4doLNaaWxiJWqr1D8Hud6GwkouBCjkTBAnAA13Vt1HMH8BxWefEzdZnhKHVb3ethL3xCpPVBGuinK9QSRE2mGu3TcdPbYKc8pwtLgFAafza7ZoLp6Kk1zphkL8zqXefkiKhM7RQ8fM7U4QrrHg1qGJGUggSfF6Ydvnr7Tzyr4vZpwgtuYotzoXEpH6xscufJV5hk9oXHCTD6FJ2SU3QPLFiVdFJP9eJuCDfXzjZriHGMotvrYcQAkzM7uFgXyXEAMcnttMvrSvkfUGbC2USVzitv6iH6oXyiW7EN9qEWuS6ESCzL5Zosb3MPThFkmD1izgxTzEveDEenEg1ViZQfnAB4nAefwueE5mJvuuwf2dN257tYjDQkrfCBxsU5DTtSvYq5TGk72nbDjeV26ppWQHZJdTsLRSB58akCx5SMg9W1pyxbewPeb9AJZSPoLmiiSM7jc35HDk3jURV6yARaN6rMJ"

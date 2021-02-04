@@ -4,7 +4,7 @@ import kiosk.ergo._
 import org.scalatest.{Matchers, PropSpec}
 import scorex.crypto.hash.Blake2b256
 
-trait EpochPoolLive extends EpochPool {
+trait OraclePoolLive extends OraclePool {
   lazy val minBoxValue = 2000000 // min value to remain AFTER paying rewards. For min value to keep BEFORE rewards, see minPoolBoxValue
   override def livePeriod = 20 // blocks
   override def prepPeriod = 10 // blocks
@@ -36,6 +36,7 @@ trait EpochPoolLive extends EpochPool {
   lazy val ballotTokenId = "004b2ca8adbcf9f15c1149fab8264dbcafbdd3c784bb4fae7ee549c16774914b".decodeHex
 
   override def oracleTokenId: Array[Byte] = oracleToken.decodeHex
+
   override def poolNFT: Array[Byte] = poolToken.decodeHex
 
   override def oracleReward = 20000000 // Nano ergs. One reward per data point to be paid to oracle

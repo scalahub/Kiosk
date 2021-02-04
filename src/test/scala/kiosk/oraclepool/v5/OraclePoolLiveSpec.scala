@@ -1,4 +1,4 @@
-package kiosk.oraclepool.v4b
+package kiosk.oraclepool.v5
 
 import kiosk.ErgoUtil
 import kiosk.encoding.ScalaErgoConverters
@@ -9,24 +9,26 @@ import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scorex.crypto.hash.Blake2b256
 
-class FixedEpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
+class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
 
   property("One complete epoch") {
 
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val pool = new FixedEpochPoolLive {
+      val pool = new OraclePoolLive {
         lazy val addresses = Seq(
           "9eiuh5bJtw9oWDVcfJnwTm1EHfK5949MEm5DStc2sD1TLwDSrpx", // private key is 37cc5cb5b54f98f92faef749a53b5ce4e9921890d9fb902b4456957d50791bd0
           "9f9q6Hs7vXZSQwhbrptQZLkTx15ApjbEkQwWXJqD2NpaouiigJQ", // private key is 5878ae48fe2d26aa999ed44437cffd2d4ba1543788cff48d490419aef7fc149d
           "9fGp73EsRQMpFC7xaYD5JFy2abZeKCUffhDBNbQVtBtQyw61Vym", // private key is 3ffaffa96b2fd6542914d3953d05256cd505d4beb6174a2601a4e014c3b5a78e
-          "9fSqnSHKLzRz7sRkfwNW4Rqtmig2bHNaaspsQms1gY2sU6LA2Ng" // private key is 148bb91ada6ad5e6b1bba02fe70ecd96095e00cbaf0f1f9294f02fedf9855ea0
+          "9fSqnSHKLzRz7sRkfwNW4Rqtmig2bHNaaspsQms1gY2sU6LA2Ng", // private key is 148bb91ada6ad5e6b1bba02fe70ecd96095e00cbaf0f1f9294f02fedf9855ea0
+          "9g3izpikC6xuvhnXxNHT1y5nwJNofMsoPiCgr4JXcZV6GUgWPqh" // private key is 148bb91ada6ad5e6b1bba02fe70ecd96095e00cbaf0f1f9294f02fedf9855ea1
         ).toArray
 
         val oracle0PrivateKey: scala.BigInt = scala.BigInt("37cc5cb5b54f98f92faef749a53b5ce4e9921890d9fb902b4456957d50791bd0", 16)
         val oracle1PrivateKey: scala.BigInt = scala.BigInt("5878ae48fe2d26aa999ed44437cffd2d4ba1543788cff48d490419aef7fc149d", 16)
         val oracle2PrivateKey: scala.BigInt = scala.BigInt("3ffaffa96b2fd6542914d3953d05256cd505d4beb6174a2601a4e014c3b5a78e", 16)
         val oracle3PrivateKey: scala.BigInt = scala.BigInt("148bb91ada6ad5e6b1bba02fe70ecd96095e00cbaf0f1f9294f02fedf9855ea0", 16)
+        val oracle4PrivateKey: scala.BigInt = scala.BigInt("148bb91ada6ad5e6b1bba02fe70ecd96095e00cbaf0f1f9294f02fedf9855ea1", 16)
       }
 
       val fee = 1500000
@@ -77,18 +79,20 @@ class FixedEpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrive
       val createNewEpochTx = TxUtil.createTx(Array(epochPrepBox, customInputBox), Array[InputBox](), Array(liveEpochBoxToCreate), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val liveEpochBox = createNewEpochTx.getOutputsToSpend.get(0)
 
-      // create oracle box
+      // create oracle boxes
       import ScalaErgoConverters._
       val r4oracle0 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(0))))
       val r4oracle1 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(1))))
       val r4oracle2 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(2))))
       val r4oracle3 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(3))))
+      val r4oracle4 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(4))))
       val r5oracle = KioskCollByte(Array(0x01))
 
       val oracle0Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle0, r5oracle), tokens = Array(oracleToken))
       val oracle1Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle1, r5oracle), tokens = Array(oracleToken))
       val oracle2Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle2, r5oracle), tokens = Array(oracleToken))
       val oracle3Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle3, r5oracle), tokens = Array(oracleToken))
+      val oracle4Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle4, r5oracle), tokens = Array(oracleToken))
 
       val bootStrapOracle0Tx = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(oracle0Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val oracleBox0ToSpend = bootStrapOracle0Tx.getOutputsToSpend.get(0)
@@ -101,6 +105,9 @@ class FixedEpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrive
 
       val bootStrapOracle3Tx = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(oracle3Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
       val oracleBox3ToSpend = bootStrapOracle3Tx.getOutputsToSpend.get(0)
+
+      val bootStrapOracle4Tx = TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(oracle4Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
+      val oracleBox4ToSpend = bootStrapOracle4Tx.getOutputsToSpend.get(0)
 
       val r5dataPoint = KioskCollByte(liveEpochBox.getId.getBytes)
 
@@ -117,10 +124,11 @@ class FixedEpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrive
       type PrivateKey = BigInt
 
       // dataPoints to commit
-      val r6dataPoint0: DataPoint = KioskLong(100)
-      val r6dataPoint1: DataPoint = KioskLong(102)
-      val r6dataPoint2: DataPoint = KioskLong(103)
-      val r6dataPoint3: DataPoint = KioskLong(105)
+      val r6dataPoint0: DataPoint = KioskLong(100000)
+      val r6dataPoint1: DataPoint = KioskLong(100102)
+      val r6dataPoint2: DataPoint = KioskLong(100103)
+      val r6dataPoint3: DataPoint = KioskLong(100105)
+      val r6dataPoint4: DataPoint = KioskLong(100107)
 
       val dataPointInfo3 = Array(
         (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),
@@ -128,20 +136,27 @@ class FixedEpochPoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrive
         (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey)
       )
 
-      val dataPointInfoAll = Array(
+      val dataPointInfo4 = Array(
         (oracleBox0ToSpend, r4oracle0, r6dataPoint0, pool.addresses(0), pool.oracle0PrivateKey),
         (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),
         (oracleBox2ToSpend, r4oracle2, r6dataPoint2, pool.addresses(2), pool.oracle2PrivateKey),
         (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey)
       )
 
+      val dataPointInfo5 = Array(
+        (oracleBox0ToSpend, r4oracle0, r6dataPoint0, pool.addresses(0), pool.oracle0PrivateKey),
+        (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),
+        (oracleBox2ToSpend, r4oracle2, r6dataPoint2, pool.addresses(2), pool.oracle2PrivateKey),
+        (oracleBox3ToSpend, r4oracle3, r6dataPoint3, pool.addresses(3), pool.oracle3PrivateKey),
+        (oracleBox4ToSpend, r4oracle4, r6dataPoint4, pool.addresses(4), pool.oracle4PrivateKey)
+      )
+
       assert(liveEpochBox.getErgoTree.bytes.encodeHex == pool.liveEpochErgoTree.bytes.encodeHex)
 
-      // collect three dataPoints
-      commitAndCollect(dataPointInfo3)
-
-      // collect All dataPoints
-      commitAndCollect(dataPointInfoAll)
+      // collect three, four, five dataPoints
+      the[Exception] thrownBy commitAndCollect(dataPointInfo3) should have message "Script reduced to false" // min data points is 4
+      commitAndCollect(dataPointInfo4)
+      commitAndCollect(dataPointInfo5)
 
       def commitDataPoint(dataPointBox: DataPointBox, r4dataPoint: KioskGroupElement, r6dataPoint: DataPoint, oraclePrivateKey: PrivateKey) = {
         val commitBoxToCreate = KioskBox(

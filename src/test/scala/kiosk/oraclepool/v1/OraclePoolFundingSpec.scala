@@ -1,20 +1,20 @@
-package kiosk.oraclepool.v2
+package kiosk.oraclepool.v1
 
-import kiosk.tx.TxUtil
 import kiosk.ergo._
+import kiosk.tx.TxUtil
 import org.ergoplatform.appkit.impl.ErgoTreeContract
-import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, ErgoToken, HttpClientTesting, InputBox}
+import org.ergoplatform.appkit._
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
+class OraclePoolFundingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
 
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
 
   property("Fund collection") {
 
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val pool = new FixedEpochPool {
+      val pool = new OraclePool {
         val minBoxValue = 2000000
         override lazy val livePeriod = 4 // blocks
         override lazy val prepPeriod = 4 // blocks
@@ -39,6 +39,7 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
       val fee = 1500000
 
       val changeAddress = "9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"
+      val dummyTxId0 = "f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b810"
       val dummyTxId1 = "f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809"
       val dummyScript = "{sigmaProp(1 < 2)}"
       val poolToken = (pool.poolToken, 1L)
@@ -56,7 +57,6 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
       val r5epochPrep = KioskInt(20000) // end height of epoch
 
       // collect funds
-      // first try without putting dummy value in R6
 
       // define box to spend
       val dummyEpochPrepBox = ctx
@@ -70,21 +70,19 @@ class FixedEpochPoolFundingSpec extends PropSpec with Matchers with ScalaCheckDr
         )
         .contract(new ErgoTreeContract(pool.epochPrepErgoTree))
         .build()
-        .convertToInputWith(dummyTxId1, 0)
+        .convertToInputWith(dummyTxId0, 0)
 
       // define box to create
       val epochPrepBoxToCreate = KioskBox(
         pool.epochPrepAddress,
-        value = 2000000000L + dummyEpochPrepBox.getValue,
+        value = dummyEpochPrepBox.getValue + fundingBox1.getValue,
         registers = Array(r4epochPrep, r5epochPrep),
         tokens = Array(poolToken)
       )
 
-      val dummyInputBox = ctx.newTxBuilder().outBoxBuilder.value(10000000000000L).contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript)).build().convertToInputWith(dummyTxId1, 0)
-
       noException shouldBe thrownBy {
         TxUtil.createTx(
-          Array(dummyEpochPrepBox, fundingBox1, dummyInputBox),
+          Array(dummyEpochPrepBox, fundingBox1, customInputBox1),
           Array[InputBox](),
           Array(epochPrepBoxToCreate),
           fee,

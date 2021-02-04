@@ -4,10 +4,12 @@ import kiosk.ergo._
 import org.scalatest.{Matchers, PropSpec}
 import scorex.crypto.hash.Blake2b256
 
-class FixedEpochPoolLiveAddressSpec extends PropSpec with Matchers {
+class OraclePoolLiveAddressSpec extends PropSpec with Matchers {
   lazy val minBoxValue = 2000000 // min value to remain AFTER paying rewards. For min value to keep BEFORE rewards, see minPoolBoxValue
-  val fixedEpochPoolLive = new FixedEpochPoolLive {}
+  val fixedEpochPoolLive = new OraclePoolLive {}
+
   import fixedEpochPoolLive._
+
   property("Display Addresses") {
     println("minPoolBoxValue " + minPoolBoxValue)
     println(s"Live Epoch script length       : ${liveEpochErgoTree.bytes.length}")

@@ -28,8 +28,8 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
 
   property("Voting") {
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val epochPool = new EpochPoolLive {}
-      val newEpochPool = new EpochPoolLive {
+      val epochPool = new OraclePoolLive {}
+      val newOraclePool = new OraclePoolLive {
         override lazy val maxNumOracles = 13
       }
       // dummy custom input box for funding various transactions
@@ -52,9 +52,9 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         .build()
         .convertToInputWith(dummyTxId, 0)
 
-      val updatedEpochPrepScriptHash = KioskCollByte(Blake2b256(newEpochPool.epochPrepErgoTree.bytes))
+      val updatedEpochPrepScriptHash = KioskCollByte(Blake2b256(newOraclePool.epochPrepErgoTree.bytes))
 
-      require(epochPool.epochPrepAddress != newEpochPool.epochPrepAddress)
+      require(epochPool.epochPrepAddress != newOraclePool.epochPrepAddress)
 
       val updateBoxInBoxId = KioskCollByte(updateBoxIn.getId.getBytes)
 

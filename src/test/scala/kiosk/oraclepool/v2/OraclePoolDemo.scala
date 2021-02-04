@@ -4,7 +4,7 @@ import kiosk.ergo._
 import org.scalatest.{Matchers, PropSpec}
 import scorex.crypto.hash.Blake2b256
 
-class FixedEpochPoolDemo extends PropSpec with FixedEpochPool with Matchers {
+class OraclePoolDemo extends PropSpec with OraclePool with Matchers {
   val minBoxValue = 2000000
   override lazy val livePeriod = 5 // blocks
   override lazy val prepPeriod = 5 // blocks
@@ -40,7 +40,7 @@ class FixedEpochPoolDemo extends PropSpec with FixedEpochPool with Matchers {
     println("poolDepositAddress: " + poolDepositAddress)
     println("EpochPrepScriptHash: (for R6 of LiveEpoch box) " + Blake2b256(epochPrepErgoTree.bytes).encodeHex)
     println("LiveEpochScriptHash: (for hardwiring in Datapoint box) " + Blake2b256(liveEpochErgoTree.bytes).encodeHex)
-    println("Min box value: "+minPoolBoxValue)
+    println("Min box value: " + minPoolBoxValue)
 
     Blake2b256(KioskErgoTree(epochPrepErgoTree).serialize).encodeHex shouldEqual Blake2b256(epochPrepErgoTree.bytes).encodeHex
 
