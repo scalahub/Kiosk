@@ -2,5 +2,5 @@
 
 #### Differences with v0.4a
 
-- Different token ids 
-- Different parameters for ADA-USD oracle
+- For ADA-USD oracle in production
+

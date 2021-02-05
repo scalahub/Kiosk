@@ -1,8 +1,8 @@
 package kiosk.oraclepool.v5
 
-import kiosk.Box
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
+import kiosk.tx.TxUtil
 import org.ergoplatform.appkit._
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -28,8 +28,8 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
 
   property("Voting") {
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val epochPool = new EpochPoolLive {}
-      val newEpochPool = new EpochPoolLive {
+      val epochPool = new OraclePoolLive {}
+      val newOraclePool = new OraclePoolLive {
         override lazy val maxNumOracles = 13
       }
       // dummy custom input box for funding various transactions
@@ -52,9 +52,9 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         .build()
         .convertToInputWith(dummyTxId, 0)
 
-      val updatedEpochPrepScriptHash = KioskCollByte(Blake2b256(newEpochPool.epochPrepErgoTree.bytes))
+      val updatedEpochPrepScriptHash = KioskCollByte(Blake2b256(newOraclePool.epochPrepErgoTree.bytes))
 
-      require(epochPool.epochPrepAddress != newEpochPool.epochPrepAddress)
+      require(epochPool.epochPrepAddress != newOraclePool.epochPrepAddress)
 
       val updateBoxInBoxId = KioskCollByte(updateBoxIn.getId.getBytes)
 
@@ -102,7 +102,7 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         .convertToInputWith(dummyTxId, 2)
 
       // Should succeed when having sufficient votes (6)
-      Box.$createTx(
+      TxUtil.createTx(
         inputBoxes = Array(updateBoxIn, dummyFundingBox),
         dataInputs = Array(ballot1, ballot2, ballot3),
         boxesToCreate = Array(updateBoxOut),
@@ -116,7 +116,7 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
       // Should fail when having insufficient votes (5)
       assert(
         Try(
-          Box.$createTx(
+          TxUtil.createTx(
             inputBoxes = Array(updateBoxIn, dummyFundingBox),
             dataInputs = Array(ballot1, ballot2),
             boxesToCreate = Array(updateBoxOut),
@@ -142,7 +142,7 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
 
       assert(
         Try(
-          Box.$createTx(
+          TxUtil.createTx(
             inputBoxes = Array(invalidUpdateBoxIn, dummyFundingBox),
             dataInputs = Array(ballot1, ballot2, ballot3),
             boxesToCreate = Array(updateBoxOut),

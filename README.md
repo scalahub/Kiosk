@@ -1,14 +1,10 @@
 # Kiosk
+
 [![Build Status](https://travis-ci.org/scalahub/Kiosk.svg?branch=master)](https://travis-ci.org/scalahub/Kiosk)
 
-A web-UI for connecting to an Ergo node.
+A library on top of Ergo-Appkit for interacting with the Ergo Blockchain
 
-## Pre-reqisites
+### Examples
 
-- SBT 1.0
-- JDK 8
-
-## Instructions 
-
-To run, first clone this repository and then type `sbt run` in a terminal. The UI will automatically open in the browser. If it does not open, you can open the page at [http://localhost:8080](http://localhost:8080) manually</a>.
-
+- [Basic examples](src/test/scala/org/sh/kiosk/ergo) to compile contracts and get addresses.
+- [Advanced examples](src/test/scala/kiosk) for interacting with dApps on the blockchain.

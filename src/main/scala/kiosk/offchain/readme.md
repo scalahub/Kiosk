@@ -27,7 +27,7 @@ That said, the only thing needed to use JDE is the ability to write Json (and po
 
 Before describing further, it is instructive to see a complete example in action. 
 The following script is used to timestamp a box using the dApp described [here](https://www.ergoforum.org/t/a-trustless-timestamping-service-for-boxes/432/9?u=scalahub).
-```JSON
+```
 {
   "constants": [
     {
@@ -279,7 +279,7 @@ This is because if `id` is a target (i.e., has a `name` field) then `index` must
 
 To ensure that the matched input has exactly those tokens defined in the search criteria and nothing more, use the `Strict` flag for that input definition:
 
-```json
+```
 "inputs": [ 
   { 
     "address": { ... },
@@ -307,17 +307,21 @@ Declarations are evaluated in the following order:
 #### Referencing rules
 - The order of evaluation determines what can and cannot be referenced. A pointer can only refer to a target that has been evaluated previously. 
   - Thus, a pointer in inputs can refer to a target in data-inputs, but a pointer in data-inputs cannot refer to a target in inputs.
-  - Similarly, a pointer in the second input can refer to a target in the first input, but a pointer in the first input cannot refer to a target in the second input.
+  - Similarly, a pointer in the second input can refer to a target in the first input, but a pointer in the first input
+    cannot refer to a target in the second input.
 - It is not possible for a pointer to refer to a target in the same input or data-input.
 - As mentioned earlier, an output cannot contain targets. It can only contain pointers.
 
 #### Defining and matching multiple items
 
-There may be cases where we need to map a single variable to mutiple objects. As an example, in the oracle-pool the pool box addresses oscillate between *Live-epoch* and *Epoch-preparation*.
-In this case, we would prefer to use a single variable `poolAddress` to handle both values.
+There may be cases where we need to map a single variable to mutiple objects. As an example, in the oracle-pool the pool
+box addresses oscillate between *Live-epoch* and *Epoch-preparation*. In this case, we would prefer to use a single
+variable `poolAddress` to handle both values.
 
-The [`Constant`](compiler/model/package.scala#L52-L62) declaration has the additional field `values` that allows us to define multiple items, sort of like an array, but much more restricted.
-```json
+The [`Constant`](compiler/model/package.scala#L52-L62) declaration has the additional field `values` that allows us to
+define multiple items, sort of like an array, but much more restricted.
+
+```
 "constants": [
   {
     "name": "poolAddresses",
@@ -334,7 +338,7 @@ Additionally, we cannot have both `value` and `values` fields.
 
 We can use then this to match one of many addresses as follows:
 
-```json
+```
 "address": {
   "value": "poolAddresses"
 }
@@ -342,7 +346,7 @@ We can use then this to match one of many addresses as follows:
 
 Note: when matching multiple addresses, we can use `name` to store the actual address matched:
 
-```json
+```
 "address": {
   "name": "actualPoolAddress",
   "value": "poolAddresses"
@@ -353,7 +357,7 @@ Note: when matching multiple addresses, we can use `name` to store the actual ad
 
 Each input definition matches at most one input by default. If multiple inputs are matched, the first one is selected. In order to select all matched inputs use the `Multi` option for that input definiton:
 
-```json
+```
 "inputs": [
   {
     "address": { ... },
@@ -394,7 +398,8 @@ This is what happens in KioskWallet, which is a thin wrapper on JDE.
 
 JDE is written in Scala, and therefore supports any JVM language. The following shows how to use it from Scala.
 First include Kiosk in your project by doing the following in `build.sbt`:
-```Scala
+
+```
 lazy val Kiosk = RootProject(uri("git://github.com/scalahub/Kiosk.git"))
 lazy val root = (project in file(".")).dependsOn(Kiosk)
 ```
@@ -402,7 +407,8 @@ lazy val root = (project in file(".")).dependsOn(Kiosk)
 Then use it in your code by importing classes in the package `kiosk.offchain` and its sub-packages. 
 Please refer to [KioskWallet.scala](../wallet/KioskWallet.scala) for details on how to use Tx Assembler to generate your own wallet transaction.
 The following snippet (taken from KioskWallet) shows the main steps. 
-```Scala
+
+```
 def txBuilder(script: String) = {
   val compileResults = compiler.Compiler.compile(Parser.parse(script))
   val feeNanoErgs = compileResults.fee.getOrElse(1000000L)
@@ -418,7 +424,7 @@ def txBuilder(script: String) = {
   // now we have all the information needed to create tx
 
   // the following is specific to KioskWallet. This is where your wallet code will come instead  
-  Client.usingClient { implicit ctx =>    
+  Client.usingContext { implicit ctx =>
     val inputBoxes: Array[InputBox] = ctx.getBoxesById(inputBoxIds: _*)
     val dataInputBoxes: Array[InputBox] = ctx.getBoxesById(compileResults.dataInputBoxIds: _*)
 

@@ -1,20 +1,6 @@
 package org.sh.kiosk.ergo
 
-import kiosk.ECC
-import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
-import org.ergoplatform.Pay2SAddress
-
-object Auction extends App {
-  val env = new KioskScriptEnv
-
-  // seller
-  val alicePrivateKey = ECC.$randBigInt
-  val alice: String = ECC.$gX(alicePrivateKey)
-
-  env.setGroupElement("alice", alice)
-
-  val ergoScript = new KioskScriptCreator(env) {}
-
+trait Auction {
   val source =
     """{
       |  val endTime = 5000 // auction end
@@ -46,13 +32,5 @@ object Auction extends App {
       |  }
       |
       |}""".stripMargin
-
-  val ergoTree = ergoScript.$compile(source)
-
-  import KioskScriptCreator.$ergoAddressEncoder
-
-  println("Auction address: "+Pay2SAddress(ergoTree))
-
-
 
 }

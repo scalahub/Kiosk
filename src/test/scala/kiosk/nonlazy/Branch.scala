@@ -1,14 +1,9 @@
 package kiosk.nonlazy
 
 import kiosk.encoding.ScalaErgoConverters.{getAddressFromErgoTree, getStringFromAddress}
-import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
-import scorex.crypto.hash.Blake2b256
-import kiosk.ergo._
+import kiosk.script.ScriptUtil
 
 object Branch {
-
-  val env = new KioskScriptEnv()
-  val scriptCreator = new KioskScriptCreator(env)
 
   val branchScript =
     s"""{ 
@@ -21,12 +16,8 @@ object Branch {
        |}
        |""".stripMargin
 
-  val branchErgoTree = scriptCreator.$compile(branchScript)
+  val branchErgoTree = ScriptUtil.compile(Map(), branchScript)
 
   val branchBoxAddress = getStringFromAddress(getAddressFromErgoTree(branchErgoTree))
 
-  def main(args: Array[String]): Unit = {
-    println(branchBoxAddress)
-    assert(branchBoxAddress == "88dwYDNXcCq9UyA7VBcSdqJRgooKVqS8ixprCknxcm2sba4jbhQYGphjutEebtr3ZeC4tmT9oEWKS2Bq")
-  }
 }

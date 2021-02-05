@@ -1,22 +1,8 @@
 package org.sh.kiosk.ergo
 
-import kiosk.encoding.ScalaErgoConverters
-import kiosk.ergo._
-import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
-import scorex.crypto.hash.Blake2b256
-import sigmastate.basics.SecP256K1
-import sigmastate.eval.SigmaDsl
-import sigmastate.serialization.ErgoTreeSerializer.DefaultSerializer
-import special.sigma.GroupElement
+trait ErgoMix {
 
-object ErgoMix {
-  // Note: Some of the variables below are prefixed with $ which seems unusual, and it is.
-  // However, note that in Scala, $ is a perfectly legal character for this usage, so there is nothing special about the code. 
-  // The reason for this peculiar syntax has to do with the EasyWeb library, which is a wrapper over Scala-reflect for
-  // auto-generating a web-frontend. Any variable/method starting with $ will not be shown in that frontend.
-  // so anything we want to hide from there is prefixed with $
-
-  val $fullMixScriptSource =
+  val fullMixScriptSource =
     """{
       |  val g = groupGenerator
       |  val c1 = SELF.R4[GroupElement].get
@@ -26,7 +12,7 @@ object ErgoMix {
       |  proveDHTuple(g, c1, gX, c2) // or c2 is u^y = g^xy
       |}""".stripMargin
 
-  val $halfMixScriptSource =
+  val halfMixScriptSource =
     """{
       |  val g = groupGenerator
       |  val gX = SELF.R4[GroupElement].get
@@ -47,59 +33,4 @@ object ErgoMix {
       |  } && SELF.id == INPUTS(0).id
       |}""".stripMargin
 
-  val $env = new KioskScriptEnv
-  val $ergoScript = new KioskScriptCreator($env) {}
-
-  val $g: GroupElement = SigmaDsl.GroupElement(SecP256K1.generator)
-
-  // private key
-  def $x: scala.math.BigInt = BigInt(Blake2b256("correct horse battery staple".getBytes)) // secret
-
-  // public key
-  val $gX = SigmaDsl.GroupElement(SecP256K1.exponentiate(SecP256K1.generator, $x.bigInteger).normalize())
-
-  // encoded public key
-  val $gX_encoded = $gX.getEncoded.toArray.encodeHex
-
-  // ErgoScript source
-  def getSource = {
-    Array(
-      "halfMixScript \n"+$halfMixScriptSource,
-      "fullMixScript \n"+$fullMixScriptSource
-    )
-
-  }
-
-  val $envMap = Map(
-    "ggg" -> $g,
-    "gggX" -> $gX
-  )
-
-  // ergoscript binary
-  def getScripts = {
-    val (halfMixScriptBytes, fullMixScriptBytes) = $getScriptBytes($halfMixScriptSource, $fullMixScriptSource, $envMap)
-    Array(
-      s"gX = ${$gX_encoded}",
-      s"halfMixScript = ${halfMixScriptBytes.encodeHex}".grouped(120).mkString("\n"),
-      s"fullMixScript = ${fullMixScriptBytes.encodeHex}".grouped(120).mkString("\n")
-    )
-  }
-
-  def $getRawScripts(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
-    $ergoScript.$myEnv.deleteAll(true)
-    env.foreach{
-      case (name, value) => $ergoScript.$myEnv.setGroupElement(name, ScalaErgoConverters.groupElementToString(value))
-    }
-    val fullMixTree = $ergoScript.$compile(fullMixScriptSource)
-    val fullMixScriptBytes = DefaultSerializer.serializeErgoTree(fullMixTree)
-    val fullMixScriptHash = scorex.crypto.hash.Blake2b256(fullMixScriptBytes)
-    $ergoScript.$myEnv.setCollByte("fullMixScriptHash", fullMixScriptHash)
-    val halfMixTree = $ergoScript.$compile(halfMixScriptSource)
-    (halfMixTree, fullMixTree)
-  }
-
-  def $getScriptBytes(halfMixScriptSource:String, fullMixScriptSource:String, env:Map[String, GroupElement]) = {
-    val (halfMixTree, fullMixTree) = $getRawScripts(halfMixScriptSource, fullMixScriptSource, env)
-    (DefaultSerializer.serializeErgoTree(halfMixTree), DefaultSerializer.serializeErgoTree(fullMixTree))
-  }
 }

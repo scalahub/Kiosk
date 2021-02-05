@@ -1,7 +1,7 @@
 package kiosk.multisecret
 
 import kiosk.ergo._
-import kiosk.{Box, ECC}
+import kiosk.tx.TxUtil
 import org.ergoplatform.appkit.{BlockchainContext, ConstantsBuilder, HttpClientTesting, InputBox}
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -71,7 +71,7 @@ class MultiProveDlogSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         tokens = Array()
       )
 
-      Box.$createTx(
+      TxUtil.createTx(
         inputBoxes = Array(box1, box2),
         dataInputs = Array[InputBox](),
         boxesToCreate = Array(dummyOutput),

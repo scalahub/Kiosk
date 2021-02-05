@@ -4,7 +4,7 @@ import kiosk.offchain.compiler._
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
 import kiosk.offchain.compiler.Multiple
-import kiosk.script.{KioskScriptCreator, KioskScriptEnv}
+import kiosk.script.ScriptUtil
 import scorex.crypto.hash.Blake2b256
 
 abstract class MyEnum extends Enumeration {
@@ -114,12 +114,7 @@ object UnaryOperator extends MyEnum { // input and output types are same
 
   private def convertSingle(converter: Operator, fromValue: KioskType[_]): KioskType[_] = {
     converter match {
-      case ProveDlog =>
-        val g = fromValue.asInstanceOf[KioskGroupElement]
-        val env = new KioskScriptEnv()
-        env.$addIfNotExist("g", g)
-        val compiler = new KioskScriptCreator(env)
-        KioskErgoTree(compiler.$compile("proveDlog(g)"))
+      case ProveDlog  => KioskErgoTree(ScriptUtil.compile(Map("g" -> fromValue.asInstanceOf[KioskGroupElement]), "proveDlog(g)"))
       case ToCollByte => KioskCollByte(fromValue.asInstanceOf[KioskErgoTree].serialize)
       case ToLong     => KioskLong(fromValue.asInstanceOf[KioskInt].value.toLong)
       case ToInt      => KioskInt(fromValue.asInstanceOf[KioskLong].value.toInt)
