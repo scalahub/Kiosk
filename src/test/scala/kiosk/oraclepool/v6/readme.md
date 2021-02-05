@@ -1,7 +1,6 @@
-## v0.6 (Deviation check with update live - ERG)
+## v0.6 Same as v0.5 (ERG-USD)
 
 #### Differences with v0.5
 
-- Different
-- Different parameters for ERG-USD oracle (num oracles)
-- Incorporates Update (via voting). This is more or less the update protocol in Age-USD
+- Slightly different parameters (num oracles, etc) but same token Ids
+- Created to check the Update protocol (v0.5 -> v0.6) via voting mechanism
