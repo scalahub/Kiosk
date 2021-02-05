@@ -1,8 +1,6 @@
 package kiosk.oraclepool.v5
 
 import kiosk.ergo._
-import org.scalatest.{Matchers, PropSpec}
-import scorex.crypto.hash.Blake2b256
 
 trait OraclePoolLive extends OraclePool {
   lazy val minBoxValue = 2000000 // min value to remain AFTER paying rewards. For min value to keep BEFORE rewards, see minPoolBoxValue
