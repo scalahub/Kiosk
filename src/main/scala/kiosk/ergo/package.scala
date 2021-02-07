@@ -2,7 +2,6 @@ package kiosk
 
 import org.bouncycastle.util.encoders.Hex
 import org.ergoplatform.appkit.{ErgoType, ErgoValue}
-import play.api.libs.json.{JsString, JsValue, Json, Writes}
 import sigmastate.SGroupElement
 import sigmastate.Values.{ByteArrayConstant, CollectionConstant, ErgoTree}
 import sigmastate.basics.SecP256K1
@@ -95,14 +94,7 @@ package object ergo {
 
   implicit def groupElementToKioskGroupElement(g: GroupElement) = KioskGroupElement(g)
 
-  implicit val writesGroupElement = new Writes[GroupElement] {
-    override def writes(o: GroupElement): JsValue = new JsString(o.hex)
-  }
-  implicit val writesDhtData = Json.writes[DhtData]
-
-  case class DhtData(g: GroupElement, h: GroupElement, u: GroupElement, v: GroupElement, x: BigInt) {
-    override def toString = Json.toJson(this).toString()
-  }
+  case class DhtData(g: GroupElement, h: GroupElement, u: GroupElement, v: GroupElement, x: BigInt)
 
   type ID = String
   type Amount = Long
@@ -112,14 +104,7 @@ package object ergo {
 
   def decodeBigInt(encoded: String): BigInt = Try(BigInt(encoded, 10)).recover { case ex => BigInt(encoded, 16) }.get
 
-  implicit val writesKioskType = new Writes[KioskType[_]] {
-    override def writes(o: KioskType[_]): JsValue = JsString(o.toString)
-  }
-  implicit val writesKioskBox = Json.writes[KioskBox]
-
-  case class KioskBox(address: String, value: Long, registers: Array[KioskType[_]], tokens: Tokens, optBoxId: Option[String] = None, spentTxId: Option[String] = None) {
-    override def toString = Json.toJson(this).toString()
-  }
+  case class KioskBox(address: String, value: Long, registers: Array[KioskType[_]], tokens: Tokens, optBoxId: Option[String] = None, spentTxId: Option[String] = None)
 
   def usingSource[B](param: BufferedSource)(f: BufferedSource => B): B =
     try f(param)
