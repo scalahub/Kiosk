@@ -37,7 +37,6 @@ class ScriptSpec extends WordSpec with Matchers {
 
         val kioskErgoTree = ScriptUtil.compile(Map(), ergoScript).bytes.encodeHex
 
-        println("kioskScript = " + kioskErgoTree)
         kioskErgoTree shouldBe appkitErgoTree
       }
     }
@@ -72,7 +71,6 @@ class ScriptSpec extends WordSpec with Matchers {
           .bytes
           .encodeHex
 
-        println("kioskScript = " + kioskErgoTree)
         kioskErgoTree shouldBe appkitErgoTree
       }
     }
@@ -163,7 +161,6 @@ class ScriptSpec extends WordSpec with Matchers {
           .bytes
           .encodeHex
 
-        println("kioskScript = " + kioskErgoTree)
         kioskErgoTree shouldBe appkitErgoTree
       }
     }
