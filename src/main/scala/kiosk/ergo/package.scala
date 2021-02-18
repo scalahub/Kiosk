@@ -104,10 +104,24 @@ package object ergo {
 
   def decodeBigInt(encoded: String): BigInt = Try(BigInt(encoded, 10)).recover { case ex => BigInt(encoded, 16) }.get
 
-  case class KioskBox(address: String, value: Long, registers: Array[KioskType[_]], tokens: Tokens, optBoxId: Option[String] = None, spentTxId: Option[String] = None)
+  case class KioskBox(
+      address: String,
+      value: Long,
+      registers: Array[KioskType[_]],
+      tokens: Tokens,
+      optBoxId: Option[String] = None,
+      spentTxId: Option[String] = None
+  )
 
   def usingSource[B](param: BufferedSource)(f: BufferedSource => B): B =
     try f(param)
     finally param.close
 
+  abstract class MyEnum extends Enumeration {
+    def fromString(str: String): Value =
+      values
+        .find(value => value.toString.equalsIgnoreCase(str))
+        .getOrElse(throw new Exception(s"Invalid op $str. Permitted options are ${values.map(_.toString).reduceLeft(_ + ", " + _)}"))
+    def toString(op: Value): String = op.toString
+  }
 }
