@@ -5,11 +5,10 @@ import kiosk.ergo._
 trait OraclePoolLive extends OraclePool {
   lazy val minBoxValue = 2000000 // min value to remain AFTER paying rewards. For min value to keep BEFORE rewards, see minPoolBoxValue
   override def livePeriod = 10 // blocks          CHANGED!!
-  override def prepPeriod = 5 // blocks
+  override def prepPeriod = 5 // blocks           CHANGED!!
   override def buffer = 3 // blocks               CHANGED!!
-  override def maxDeviation: Int = 6 // percent   CHANGED!!
+  override def maxDeviation: Int = 5 // percent
   override def minOracleBoxes: Int = 4
-
   /*
     poolNFT 54acaa0c6d5d3bc66b88364a423b5f156ed763f7236d437adb44d70787bc0f95
       issued in tx https://explorer.ergoplatform.com/en/transactions/2a895962b963cffca90cee85d4cfe8b81ee8f60a081fcc9851a8136e0a26918b
