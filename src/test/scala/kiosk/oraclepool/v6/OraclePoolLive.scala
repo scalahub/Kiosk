@@ -4,9 +4,9 @@ import kiosk.ergo._
 
 trait OraclePoolLive extends OraclePool {
   lazy val minBoxValue = 2000000 // min value to remain AFTER paying rewards. For min value to keep BEFORE rewards, see minPoolBoxValue
-  override def livePeriod = 25 // blocks          CHANGED!!
-  override def prepPeriod = 10 // blocks
-  override def buffer = 5 // blocks               CHANGED!!
+  override def livePeriod = 10 // blocks          CHANGED!!
+  override def prepPeriod = 5 // blocks
+  override def buffer = 3 // blocks               CHANGED!!
   override def maxDeviation: Int = 6 // percent   CHANGED!!
   override def minOracleBoxes: Int = 4
 
@@ -37,7 +37,7 @@ trait OraclePoolLive extends OraclePool {
 
   override def poolNFT: Array[Byte] = poolToken.decodeHex
 
-  override def oracleReward = 20000000 // Nano ergs. One reward per data point to be paid to oracle
+  override def oracleReward = 10000000 // Nano ergs. One reward per data point to be paid to oracle
   lazy val maxNumOracles = 12
   lazy val minVotes = 6
   lazy val minStorageRent = 10000000L
