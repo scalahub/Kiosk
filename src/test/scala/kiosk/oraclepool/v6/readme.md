@@ -24,25 +24,22 @@ The ballot box has the following structure:
 The following is the ready-made request for the operators to make. They just need to add their node's address. 
 
 ```json
-{
-  "requests": [
+[
+  {
+    "address": "<put your address here>",
+    "value": 1000000,
+    "assets": [
       {
-        "address": "<put your address here>",
-        "value": 1000000,
-        "assets": [
-          {
-            "tokenId": "004b2ca8adbcf9f15c1149fab8264dbcafbdd3c784bb4fae7ee549c16774914b",
-            "amount": 1
-          }
-        ],
-        "registers": { 
-           "R4": "0e20ef45eef675d34d2347148b05346729328790d98d8b4ee95c11940b1d855666e1",
-           "R5": "0e200a5080e899273cb27b21de63ab243ef49150e6764118c50391723159e98fe3d4"
-        }
+        "tokenId": "004b2ca8adbcf9f15c1149fab8264dbcafbdd3c784bb4fae7ee549c16774914b",
+        "amount": 1
       }
-  ], 
-  "fee": 10000000
-}
+    ],
+    "registers": { 
+       "R4": "0e20ef45eef675d34d2347148b05346729328790d98d8b4ee95c11940b1d855666e1",
+       "R5": "0e200a5080e899273cb27b21de63ab243ef49150e6764118c50391723159e98fe3d4"
+    }
+  }
+]
 ```
 
 The request must be made to the endpoint `/wallet/payment/send` on the node (via swagger). See screenshot below:
