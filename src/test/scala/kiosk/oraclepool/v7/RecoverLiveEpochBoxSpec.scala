@@ -64,7 +64,7 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
       require(oldOraclePool.epochPrepAddress != newOraclePool.epochPrepAddress)
 
       // check that live epoch address is different
-//      require(oldOraclePool.liveEpochAddress != newOraclePool.liveEpochAddress)
+      require(oldOraclePool.liveEpochAddress != newOraclePool.liveEpochAddress)
 
       // datapoint script should not change
       require(oldOraclePool.dataPointAddress == newOraclePool.dataPointAddress)
