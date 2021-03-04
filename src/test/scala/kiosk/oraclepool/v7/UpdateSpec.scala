@@ -1,4 +1,4 @@
-package kiosk.oraclepool.v6
+package kiosk.oraclepool.v7
 
 import kiosk.encoding.ScalaErgoConverters
 import kiosk.ergo._
@@ -10,7 +10,7 @@ import scorex.crypto.hash.Blake2b256
 
 class UpdateSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
   /*
-  In Oracle Pool v6, the epochPrepScript has two spending paths:
+  In Oracle Pool v7, the epochPrepScript has two spending paths:
   1. poolAction
   2. updateAction
 
@@ -31,9 +31,17 @@ class UpdateSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
       val epochPool = new OraclePoolLive {}
       val newOraclePool = new OraclePoolLive {
         override lazy val maxNumOracles = 13
+        override def livePeriod = 12 // blocks          CHANGED!!
+        override def prepPeriod = 6 // blocks           CHANGED!!
+        override def buffer = 4 // blocks               CHANGED!!
       }
 
       require(epochPool.epochPrepAddress != newOraclePool.epochPrepAddress)
+
+      require(epochPool.liveEpochAddress != newOraclePool.liveEpochAddress)
+
+      // datapoint script should not change
+      require(epochPool.dataPointAddress == newOraclePool.dataPointAddress)
       // dummy custom input box for funding various transactions
       val dummyFundingBox = ctx
         .newTxBuilder()
