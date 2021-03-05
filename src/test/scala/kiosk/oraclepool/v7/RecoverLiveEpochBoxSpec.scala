@@ -10,26 +10,28 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scorex.crypto.hash.Blake2b256
 
 /*
- * This will test that the oracle-pool does not go into a locked state due to non-existence of data-point boxes
+ * This tests that the (modified) data point script does not get the oracle-pool into a locked state due to non-existence of data-point boxes
  * Earlier the data-point script required all the following conditions:
  *  1. The data-input box contains the pool NFT
  *  2. R4 of the output data-point box contains the data value
  *  3. R5 of the output data-point box contains the box id of data-input
  *  4. The script of data-input equals live epoch script hash
  *
- *  The fixed script has the following conditions (#4 is removed):
+ * The current script has the following conditions (#4 is removed):
  *  1. The data-input box contains the pool NFT
  *  2. R4 of the output data-point box contains the data value
  *  3. R5 of the output data-point box contains the box id of data-input
  *
- * This will allow the data-point box to be attached to any box that has the pool NFT, which could be any box
+ * This will allow the data-point box to be attached to (i.e., contain the box id of) any box that has the pool NFT, not just the live epoch box
  *
- * To produce the lock condition do the following
+ * The test performs the following steps
  *
- * 1. Have a functioning pool and collect data points (old contract)
- * 2. Update epoch prep box to (new contract)
- * 3. Put pool in live epoch state (new contract)
- * 4. Put pool back to epoch prep state (new contract)
+ * 1. Have a functioning pool (based on other tests)
+ * 2. Update epoch prep box to new contract with different parameters but same pool NFT
+ * 3. Put pool in live epoch state with new contract
+ * 4. Put pool back to epoch prep state  with new contract
+ *
+ * Once we are back to the epoch prep state, we can do further updates (we say that the pool is "recoverable")
  */
 
 class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
@@ -38,11 +40,11 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
   1. poolAction
   2. updateAction
 
-  This class tests the updateAction
+  This class tests the updateAction and then puts the pool in a live epoch state (new contract) and back to epoch prep stage (new contract)
+
    */
   val changeAddress = "9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"
   val dummyTxId = "f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809"
-  val dummyTokenId = "f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809"
   val dummyScript = "sigmaProp(true)"
 
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
@@ -74,7 +76,6 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
         .outBoxBuilder
         .value(10000000000L)
         .registers(KioskCollByte(Array(1)).getErgoValue)
-        .tokens(new ErgoToken(dummyTokenId, 1))
         .contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript))
         .build()
         .convertToInputWith(dummyTxId, 0)

@@ -168,12 +168,12 @@ trait OraclePool {
        |
        |  val poolBox = CONTEXT.dataInputs(0)
        |
-       |  // allow datapoint to be tied to either Live Epoch or Epoch Prep boxes
-       |  // (since only those two boxes have poolNFT)
-       |  // (earlier we had tied it to only Live Epoch Bpx)
-       |  // This will prevent the bricked condition where there is a live epoch box
-       |  // To create a datapoint, we will only need a box with the pool token (earlier we needed that box to also match script)
-       |  // To recover from a locked live epoch box, we will only need to create a data point matching its box id
+       |  // Allow datapoint box to contain box id of any box with pool NFT (i.e., either Live Epoch or Epoch Prep boxes)
+       |  // Earlier we additionally required that the box have the live epoch script.
+       |  // In summary:
+       |  //    Earlier: (1st data-input has pool NFT) && (1st data-input has live epoch script) 
+       |  //    Now:     (1st data-input has pool NFT) 
+       |  //
        |  val validPoolBox = poolBox.tokens(0)._1 == poolNFT 
        | 
        |  sigmaProp(
