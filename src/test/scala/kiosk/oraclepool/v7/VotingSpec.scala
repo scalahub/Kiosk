@@ -28,8 +28,8 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
 
   property("Voting") {
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val epochPool = new OraclePoolLive {}
-      val newOraclePool = new OraclePoolLive {
+      val epochPool = new OraclePoolParams {}
+      val newOraclePool = new OraclePoolParams {
         override lazy val maxNumOracles = 13
       }
       // dummy custom input box for funding various transactions
@@ -62,7 +62,7 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         epochPool.updateAddress,
         value = epochPool.minStorageRent,
         registers = Array(updatedEpochPrepScriptHash),
-        tokens = Array(epochPool.updateNFT.encodeHex -> 1)
+        tokens = Array(epochPool.updateNFT -> 1)
       )
 
       // ballot with 2 votes
@@ -70,7 +70,7 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         .newTxBuilder()
         .outBoxBuilder
         .value(epochPool.minStorageRent)
-        .tokens(new ErgoToken(epochPool.ballotTokenId, 2))
+        .tokens(new ErgoToken(epochPool.ballotToken, 2))
         .contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript))
         .registers(
           updatedEpochPrepScriptHash.getErgoValue,
@@ -84,7 +84,7 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         .newTxBuilder()
         .outBoxBuilder
         .value(epochPool.minStorageRent)
-        .tokens(new ErgoToken(epochPool.ballotTokenId, 3))
+        .tokens(new ErgoToken(epochPool.ballotToken, 3))
         .contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript))
         .registers(updatedEpochPrepScriptHash.getErgoValue, updateBoxInBoxId.getErgoValue)
         .build()
@@ -95,7 +95,7 @@ class VotingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         .newTxBuilder()
         .outBoxBuilder
         .value(epochPool.minStorageRent)
-        .tokens(new ErgoToken(epochPool.ballotTokenId, 1))
+        .tokens(new ErgoToken(epochPool.ballotToken, 1))
         .contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript))
         .registers(updatedEpochPrepScriptHash.getErgoValue, updateBoxInBoxId.getErgoValue)
         .build()

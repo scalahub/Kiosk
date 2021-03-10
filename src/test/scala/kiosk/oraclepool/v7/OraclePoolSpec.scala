@@ -9,13 +9,13 @@ import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scorex.crypto.hash.Blake2b256
 
-class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
+class OraclePoolSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
 
   property("One complete epoch") {
 
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val pool = new OraclePoolLive {
+      val pool = new OraclePoolParams {
         lazy val addresses = Seq(
           "9eiuh5bJtw9oWDVcfJnwTm1EHfK5949MEm5DStc2sD1TLwDSrpx", // private key is 37cc5cb5b54f98f92faef749a53b5ce4e9921890d9fb902b4456957d50791bd0
           "9f9q6Hs7vXZSQwhbrptQZLkTx15ApjbEkQwWXJqD2NpaouiigJQ", // private key is 5878ae48fe2d26aa999ed44437cffd2d4ba1543788cff48d490419aef7fc149d
@@ -36,10 +36,9 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       val changeAddress = "9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"
       val dummyTxId = "f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809"
       val dummyScript = "{sigmaProp(1 < 2)}"
-      val poolToken = (pool.poolToken, 1L)
-      val oracleToken = (pool.oracleToken, 1L)
 
-      // bootstrap pool (create EpochPrep box)
+      // Step 1:
+      // bootstrap pool (create a fresh EpochPrep box)
       val r4epochPrep = KioskLong(100) // dummy data point
       val r5epochPrep = KioskInt(20000) // end height of epoch
 
@@ -47,16 +46,14 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         pool.epochPrepAddress,
         value = 2000000000,
         registers = Array(r4epochPrep, r5epochPrep),
-        tokens = Array(poolToken)
+        tokens = Array((pool.poolNFT, 1L))
       )
 
-      val dummyPoolToken = new ErgoToken(pool.poolToken, 10000)
-      val dummyOracleToken = new ErgoToken(pool.oracleToken, 10000)
       val customInputBox = ctx
         .newTxBuilder()
         .outBoxBuilder
         .value(10000000000000L)
-        .tokens(dummyOracleToken, dummyPoolToken)
+        .tokens(new ErgoToken(pool.poolNFT, 1), new ErgoToken(pool.oracleToken, pool.maxNumOracles))
         .contract(ctx.compileContract(ConstantsBuilder.empty(), dummyScript))
         .build()
         .convertToInputWith(dummyTxId, 0)
@@ -73,7 +70,8 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       )
       val epochPrepBox: InputBox = poolBootStrapTx.getOutputsToSpend.get(0)
 
-      // create new epoch
+      // Step 2:
+      // create new epoch prep box
       val r4liveEpoch = r4epochPrep
       val r5liveEpoch = KioskInt(ctx.getHeight + pool.epochPeriod + pool.buffer) // end height of epoch
       val r6liveEpoch = KioskCollByte(Blake2b256(pool.epochPrepErgoTree.bytes))
@@ -82,7 +80,7 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         pool.liveEpochAddress,
         value = 2000000000,
         registers = Array(r4liveEpoch, r5liveEpoch, r6liveEpoch),
-        tokens = Array(poolToken)
+        tokens = Array((pool.poolNFT, 1L))
       )
 
       val createNewEpochTx = TxUtil.createTx(
@@ -97,6 +95,7 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       )
       val liveEpochBox = createNewEpochTx.getOutputsToSpend.get(0)
 
+      // Step 2:
       // create oracle boxes
       import ScalaErgoConverters._
       val r4oracle0 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(0))))
@@ -106,11 +105,11 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       val r4oracle4 = KioskGroupElement(stringToGroupElement(ErgoUtil.addressToGroupElement(pool.addresses(4))))
       val r5oracle = KioskCollByte(Array(0x01))
 
-      val oracle0Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle0, r5oracle), tokens = Array(oracleToken))
-      val oracle1Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle1, r5oracle), tokens = Array(oracleToken))
-      val oracle2Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle2, r5oracle), tokens = Array(oracleToken))
-      val oracle3Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle3, r5oracle), tokens = Array(oracleToken))
-      val oracle4Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle4, r5oracle), tokens = Array(oracleToken))
+      val oracle0Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle0, r5oracle), tokens = Array((pool.oracleToken, 1L)))
+      val oracle1Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle1, r5oracle), tokens = Array((pool.oracleToken, 1L)))
+      val oracle2Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle2, r5oracle), tokens = Array((pool.oracleToken, 1L)))
+      val oracle3Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle3, r5oracle), tokens = Array((pool.oracleToken, 1L)))
+      val oracle4Box = KioskBox(pool.dataPointAddress, value = 200000000, registers = Array(r4oracle4, r5oracle), tokens = Array((pool.oracleToken, 1L)))
 
       val bootStrapOracle0Tx =
         TxUtil.createTx(Array(customInputBox), Array[InputBox](), Array(oracle0Box), fee, changeAddress, Array[String](), Array[DhtData](), false)
@@ -138,7 +137,7 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
         "9fcrXXaJgrGKC8iu98Y2spstDDxNccXSR9QjbfTvtuv7vJ3NQLk",
         414500000,
         Array(),
-        Array((pool.oracleToken, 490))
+        Array()
       )
 
       type DataPointBox = InputBox
@@ -152,6 +151,15 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
       val r6dataPoint2: DataPoint = KioskLong(100103)
       val r6dataPoint3: DataPoint = KioskLong(100105)
       val r6dataPoint4: DataPoint = KioskLong(100107)
+
+      val dataPointInfo1 = Array(
+        (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey)
+      )
+
+      val dataPointInfo2 = Array(
+        (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),
+        (oracleBox2ToSpend, r4oracle2, r6dataPoint2, pool.addresses(2), pool.oracle2PrivateKey)
+      )
 
       val dataPointInfo3 = Array(
         (oracleBox1ToSpend, r4oracle1, r6dataPoint1, pool.addresses(1), pool.oracle1PrivateKey),
@@ -176,8 +184,14 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
 
       assert(liveEpochBox.getErgoTree.bytes.encodeHex == pool.liveEpochErgoTree.bytes.encodeHex)
 
-      // collect three, four, five dataPoints
-      the[Exception] thrownBy commitAndCollect(dataPointInfo3) should have message "Script reduced to false" // min data points is 4
+      // Step 3:
+      // commit and collect data points
+      // The final outcome is a Epoch Prep box
+
+//      the[Exception] thrownBy commitAndCollect(dataPointInfo1) should have message "Script reduced to false" // min data points is 4
+      commitAndCollect(dataPointInfo1)
+      commitAndCollect(dataPointInfo2)
+      commitAndCollect(dataPointInfo3)
       commitAndCollect(dataPointInfo4)
       commitAndCollect(dataPointInfo5)
 
@@ -186,7 +200,7 @@ class OraclePoolLiveSpec extends PropSpec with Matchers with ScalaCheckDrivenPro
           pool.dataPointAddress,
           value = 200000000,
           registers = Array(r4dataPoint, r5dataPoint, r6dataPoint),
-          tokens = Array(oracleToken)
+          tokens = Array((pool.oracleToken, 1L))
         )
         val createDataPointTx = TxUtil.createTx(
           Array(dataPointBox, customInputBox),

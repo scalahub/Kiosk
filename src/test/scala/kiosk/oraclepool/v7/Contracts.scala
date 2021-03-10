@@ -7,8 +7,9 @@ import scorex.crypto.hash.Blake2b256
 import sigmastate.Values
 
 import scala.collection.mutable.{Map => MMap}
+import kiosk.ergo._
 
-trait OraclePool {
+trait Contracts {
   // constants
   def livePeriod: Int // blocks
   def prepPeriod: Int // blocks
@@ -18,27 +19,22 @@ trait OraclePool {
   def maxDeviation: Int // percent 0 to 100 (what the first and last data point should differ max by)
   def minOracleBoxes: Int // percent 0 to 100
 
-  def oracleTokenId: Array[Byte]
-
-  def poolNFT: Array[Byte]
+  def poolNFT: String
+  def oracleToken: String
+  def updateNFT: String
+  def ballotToken: String
+  def minVotes: Int
 
   def oracleReward: Long // Nano ergs. One reward per data point to be paid to oracle
   def minPoolBoxValue: Long // how much min must exist in oracle pool box
-
-  def updateNFT: Array[Byte]
-
-  def ballotTokenId: Array[Byte]
-
-  def minVotes: Int
-
   def minStorageRent: Long
 
   val env = MMap[String, KioskType[_]]()
 
   import kiosk.script.ScriptUtil._
 
-  env.setCollByte("oracleTokenId", oracleTokenId)
-  env.setCollByte("poolNFT", poolNFT)
+  env.setCollByte("oracleTokenId", oracleToken.decodeHex)
+  env.setCollByte("poolNFT", poolNFT.decodeHex)
   env.setLong("minPoolBoxValue", minPoolBoxValue)
   env.setLong("oracleReward", oracleReward)
 
@@ -69,7 +65,7 @@ trait OraclePool {
        |
        |  def getPrevOracleDataPoint(index:Int) = if (index <= 0) firstOracleDataPoint else oracleBoxes(index - 1).R6[Long].get
        |
-       |  val rewardAndDeviationCheck = oracleBoxes.fold((1, true), {
+       |  val rewardAndOrderingCheck = oracleBoxes.fold((1, true), {
        |      (t:(Int, Boolean), b:Box) =>
        |         val currOracleDataPoint = b.R6[Long].get
        |         val prevOracleDataPoint = getPrevOracleDataPoint(t._1 - 1)
@@ -82,7 +78,7 @@ trait OraclePool {
        |     }
        |  )
        |
-       |  val lastDataPoint = getPrevOracleDataPoint(rewardAndDeviationCheck._1 - 1)
+       |  val lastDataPoint = getPrevOracleDataPoint(rewardAndOrderingCheck._1 - 1)
        |  val firstDataPoint = oracleBoxes(0).R6[Long].get
        |  val delta = firstDataPoint * $maxDeviation / 100
        |
@@ -95,13 +91,13 @@ trait OraclePool {
        |    OUTPUTS(0).R4[Long].get == average &&
        |    OUTPUTS(0).R5[Int].get == SELF.R5[Int].get + $epochPeriod &&
        |    OUTPUTS(0).value >= SELF.value - (oracleBoxes.size + 1) * $oracleReward &&
-       |    rewardAndDeviationCheck._2 &&
+       |    rewardAndOrderingCheck._2 &&
        |    lastDataPoint >= firstDataPoint - delta
        |  ) && pubKey
        |}
        |""".stripMargin
 
-  env.setCollByte("updateNFT", updateNFT)
+  env.setCollByte("updateNFT", updateNFT.decodeHex)
 
   val epochPrepScript: String =
     s"""
@@ -154,7 +150,7 @@ trait OraclePool {
        |}
        |""".stripMargin
 
-  env.setCollByte("ballotTokenId", ballotTokenId)
+  env.setCollByte("ballotTokenId", ballotToken.decodeHex)
 
   val dataPointScript: String =
     s"""

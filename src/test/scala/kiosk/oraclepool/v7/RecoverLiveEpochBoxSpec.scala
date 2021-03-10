@@ -55,8 +55,8 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
     ergoClient.execute { implicit ctx: BlockchainContext =>
       val poolBoxValue = 1000000000L
 
-      val oldOraclePool = new OraclePoolLive {}
-      val newOraclePool = new OraclePoolLive {
+      val oldOraclePool = new OraclePoolParams {}
+      val newOraclePool = new OraclePoolParams {
         override def livePeriod = 12 // blocks          CHANGED!!
         override def prepPeriod = 6 // blocks           CHANGED!!
         override def buffer = 4 // blocks               CHANGED!!
@@ -98,7 +98,7 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
         newOraclePool.epochPrepAddress,
         value = oldEpochPrepBox.getValue,
         registers = Array(KioskLong(100), KioskInt(100)),
-        tokens = Array(oldOraclePool.poolNFT.encodeHex -> 1L)
+        tokens = Array(oldOraclePool.poolNFT -> 1L)
       )
 
       val newEpochPrepScriptHash = KioskCollByte(Blake2b256(newOraclePool.epochPrepErgoTree.bytes))
@@ -119,7 +119,7 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
         oldOraclePool.updateAddress,
         value = updateBoxIn.getValue,
         registers = Array(newEpochPrepScriptHash),
-        tokens = Array(oldOraclePool.updateNFT.encodeHex -> 1L)
+        tokens = Array(oldOraclePool.updateNFT -> 1L)
       )
 
       val updateTx = TxUtil.createTx(
@@ -137,6 +137,8 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
 
       val hash: Array[Byte] = Blake2b256(newOraclePool.epochPrepErgoTree.bytes)
 
+      require(newEpochPrepScriptHash.value.toArray.encodeHex == hash.encodeHex)
+
       val endHeight = ctx.getHeight + newOraclePool.epochPeriod
 
       // start next epoch
@@ -144,7 +146,7 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
         newOraclePool.liveEpochAddress,
         value = newEpochPrepBoxCreated.getValue,
         registers = Array(KioskLong(100), KioskInt(endHeight), KioskCollByte(hash)),
-        tokens = Array(oldOraclePool.poolNFT.encodeHex -> 1L)
+        tokens = Array(oldOraclePool.poolNFT -> 1L)
       )
 
       val startLiveEpochTx = TxUtil.createTx(
@@ -232,6 +234,15 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
       val r6dataPoint3: DataPoint = KioskLong(100105)
       val r6dataPoint4: DataPoint = KioskLong(100107)
 
+      val dataPointInfo1 = Array(
+        (oracleBox1ToSpend, r4oracle1, r6dataPoint1, addresses(1), oracle1PrivateKey)
+      )
+
+      val dataPointInfo2 = Array(
+        (oracleBox1ToSpend, r4oracle1, r6dataPoint1, addresses(1), oracle1PrivateKey),
+        (oracleBox2ToSpend, r4oracle2, r6dataPoint2, addresses(2), oracle2PrivateKey)
+      )
+
       val dataPointInfo3 = Array(
         (oracleBox1ToSpend, r4oracle1, r6dataPoint1, addresses(1), oracle1PrivateKey),
         (oracleBox2ToSpend, r4oracle2, r6dataPoint2, addresses(2), oracle2PrivateKey),
@@ -255,8 +266,12 @@ class RecoverLiveEpochBoxSpec extends PropSpec with Matchers with ScalaCheckDriv
 
       assert(liveEpochBox.getErgoTree.bytes.encodeHex == newOraclePool.liveEpochErgoTree.bytes.encodeHex)
 
-      // collect three, four, five dataPoints
-      the[Exception] thrownBy commitAndCollect(dataPointInfo3) should have message "Script reduced to false" // min data points is 4
+      // collect dataPoints
+
+//      the[Exception] thrownBy commitAndCollect(dataPointInfo1) should have message "Script reduced to false" // min data points is 4
+      commitAndCollect(dataPointInfo1)
+      commitAndCollect(dataPointInfo2)
+      commitAndCollect(dataPointInfo3)
       commitAndCollect(dataPointInfo4)
       commitAndCollect(dataPointInfo5)
 

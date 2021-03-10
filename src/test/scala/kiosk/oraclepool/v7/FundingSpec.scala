@@ -7,14 +7,14 @@ import org.ergoplatform.appkit.impl.ErgoTreeContract
 import org.scalatest.{Matchers, PropSpec}
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class OraclePoolLiveFundingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
+class FundingSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChecks with HttpClientTesting {
 
   val ergoClient = createMockedErgoClient(MockData(Nil, Nil))
 
   property("Fund collection") {
 
     ergoClient.execute { implicit ctx: BlockchainContext =>
-      val pool = new OraclePoolLive {
+      val pool = new OraclePoolParams {
         lazy val addresses = Seq(
           "9eiuh5bJtw9oWDVcfJnwTm1EHfK5949MEm5DStc2sD1TLwDSrpx", // private key is 37cc5cb5b54f98f92faef749a53b5ce4e9921890d9fb902b4456957d50791bd0
           "9f9q6Hs7vXZSQwhbrptQZLkTx15ApjbEkQwWXJqD2NpaouiigJQ", // private key is 5878ae48fe2d26aa999ed44437cffd2d4ba1543788cff48d490419aef7fc149d
@@ -29,7 +29,7 @@ class OraclePoolLiveFundingSpec extends PropSpec with Matchers with ScalaCheckDr
       val changeAddress = "9f5ZKbECVTm25JTRQHDHGM5ehC8tUw5g1fCBQ4aaE792rWBFrjK"
       val dummyTxId1 = "f9e5ce5aa0d95f5d54a7bc89c46730d9662397067250aa18a0039631c0f5b809"
       val dummyScript = "{sigmaProp(1 < 2)}"
-      val poolToken = (pool.poolToken, 1L)
+      val poolToken = (pool.poolNFT, 1L)
 
       // dummy custom input box for funding various transactions
       val customInputBox1 = ctx

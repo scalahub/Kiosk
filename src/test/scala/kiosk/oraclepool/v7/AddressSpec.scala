@@ -4,9 +4,9 @@ import kiosk.ergo._
 import org.scalatest.{Matchers, PropSpec}
 import scorex.crypto.hash.Blake2b256
 
-class OraclePoolLiveAddressSpec extends PropSpec with Matchers {
+class AddressSpec extends PropSpec with Matchers {
   lazy val minBoxValue = 2000000 // min value to remain AFTER paying rewards. For min value to keep BEFORE rewards, see minPoolBoxValue
-  val epochPoolLive = new OraclePoolLive {}
+  val epochPoolLive = new OraclePoolParams {}
 
   import epochPoolLive._
 

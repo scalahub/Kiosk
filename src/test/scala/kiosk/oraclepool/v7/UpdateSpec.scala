@@ -28,8 +28,8 @@ class UpdateSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
     ergoClient.execute { implicit ctx: BlockchainContext =>
       val poolBoxIn = 2518217000L
 
-      val epochPool = new OraclePoolLive {}
-      val newOraclePool = new OraclePoolLive {
+      val epochPool = new OraclePoolParams {}
+      val newOraclePool = new OraclePoolParams {
         override lazy val maxNumOracles = 13
         override def livePeriod = 12 // blocks          CHANGED!!
         override def prepPeriod = 6 // blocks           CHANGED!!
@@ -70,7 +70,7 @@ class UpdateSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         newOraclePool.epochPrepAddress,
         value = epochPrepBoxIn.getValue,
         registers = Array(KioskLong(100), KioskInt(100)),
-        tokens = Array(epochPool.poolNFT.encodeHex -> 1L)
+        tokens = Array(epochPool.poolNFT -> 1L)
       )
 
       val updatedPoolScriptHash = KioskCollByte(Blake2b256(newOraclePool.epochPrepErgoTree.bytes))
@@ -91,7 +91,7 @@ class UpdateSpec extends PropSpec with Matchers with ScalaCheckDrivenPropertyChe
         epochPool.updateAddress,
         value = updateBoxIn.getValue,
         registers = Array(updatedPoolScriptHash),
-        tokens = Array(epochPool.updateNFT.encodeHex -> 1L)
+        tokens = Array(epochPool.updateNFT -> 1L)
       )
 
       TxUtil.createTx(
