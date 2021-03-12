@@ -46,7 +46,7 @@ object ErgoUtil {
       address:                     9fSgJ7BmUxBQJ454prQDQ7fQMBkXPLaAmDnimgTtjym6FYPHjAV
      */
     val ergoTree = ScalaErgoConverters.getAddressFromString(address).script.bytes.encodeHex
-    if (ergoTree.size != 72) throw new Exception("A proveDlog address should be 72 chars long")
+    if (ergoTree.size != 72) throw new Exception("A proveDlog ergotree should be 72 chars long")
     if (ergoTree.take(6) != "0008cd") throw new Exception("Invalid address prefix for proveDlog")
     ergoTree.drop(6)
   }
