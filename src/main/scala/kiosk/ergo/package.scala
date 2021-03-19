@@ -1,7 +1,8 @@
 package kiosk
 
+import kiosk.encoding.ScalaErgoConverters
 import org.bouncycastle.util.encoders.Hex
-import org.ergoplatform.appkit.{ErgoType, ErgoValue}
+import org.ergoplatform.appkit.{BlockchainContext, ErgoToken, ErgoType, ErgoValue, InputBox, OutBox}
 import sigmastate.SGroupElement
 import sigmastate.Values.{ByteArrayConstant, CollectionConstant, ErgoTree}
 import sigmastate.basics.SecP256K1
@@ -111,7 +112,22 @@ package object ergo {
       tokens: Tokens,
       optBoxId: Option[String] = None,
       spentTxId: Option[String] = None
-  )
+  ) {
+    def toOutBox(implicit ctx: BlockchainContext): OutBox = {
+      ctx
+        .newTxBuilder()
+        .outBoxBuilder
+        .value(value)
+        .tokens(tokens.map(token => new ErgoToken(token._1, token._2)): _*)
+        .contract(ctx.newContract(ScalaErgoConverters.getAddressFromString(address).script))
+        .registers(registers.map(register => register.getErgoValue): _*)
+        .build()
+    }
+    def toInBox(txId: String, txIndex: Short)(implicit ctx: BlockchainContext): InputBox = {
+      val outBox = toOutBox
+      outBox.convertToInputWith(txId, txIndex)
+    }
+  }
 
   def usingSource[B](param: BufferedSource)(f: BufferedSource => B): B =
     try f(param)
