@@ -13,7 +13,11 @@ class Explorer {
   private val unspentUrl = s"$baseUrl/transactions/boxes/byAddress/unspent/"
 
   def getBoxById(boxId: String) = {
-    getBoxFromJson(Curl.get(boxUrl + boxId))
+    getBoxFromJson(getBoxByIdJson(boxId))
+  }
+
+  def getBoxByIdJson(boxId: String): Json = {
+    Curl.get(boxUrl + boxId)
   }
 
   def getHeight: Int = Client.usingContext(_.getHeight)

@@ -12,7 +12,8 @@ object Curl {
 
   import scala.io.Source
   val requestProperties = Map(
-    "User-Agent" -> "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.1) Gecko/20061204 Firefox/2.0.0.1"
+    "User-Agent" -> "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.1) Gecko/20061204 Firefox/2.0.0.1",
+    "Accept" -> "application/json"
   )
 
   private def is2Str(is: InputStream) = {
