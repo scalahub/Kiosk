@@ -9,7 +9,7 @@ scalaVersion := "2.12.10"
 libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.3",
   "org.bouncycastle" % "bcprov-jdk15on" % "1.+",
-  "org.ergoplatform" %% "ergo-appkit" % "4.0.0",
+  "org.ergoplatform" %% "ergo-appkit" % "4.0.3",
   "com.squareup.okhttp3" % "mockwebserver" % "3.14.9" % Test,
   "org.scalatest" %% "scalatest" % "3.0.8" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.+" % Test,
